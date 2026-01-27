@@ -839,6 +839,13 @@ const firebaseConfig = {
             margin-bottom: 20px;
         }
 
+        /* Signature Image */
+        .signature-image {
+            max-width: 200px;
+            height: auto;
+            margin-top: 10px;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 992px) {
             .form-grid {
@@ -901,6 +908,10 @@ const firebaseConfig = {
             .logo-selector {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+            
+            .signature-image {
+                max-width: 150px;
             }
         }
 
@@ -1375,7 +1386,7 @@ const firebaseConfig = {
                         </div>
                         <div style="text-align: right;">
                             <p><strong>Authorized Signature:</strong></p>
-                            <p>_________________________</p>
+                            <img src="/signature.png" alt="Signature" class="signature-image" onerror="this.style.display='none'; this.parentElement.innerHTML+='<p>_________________________</p>'">
                         </div>
                     </div>
                 </div>
