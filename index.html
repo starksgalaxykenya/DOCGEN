@@ -1723,35 +1723,94 @@ const firebaseConfig = {
         }
 
         // Logo scanning and management
-        async function scanForLogos() {
-            try {
-                // This is a mock function - in production, you would scan your server for logo files
-                // For demonstration, we'll create a list of potential logo files
-                availableLogos = [
-                    'company1.png',
-                    'company2.png',
-                    'company3.png',
-                    'acme.png',
-                    'logo.png',
-                    'business.png'
-                ];
-                
-                const select = document.getElementById('logoSelect');
-                select.innerHTML = '<option value="">Select a logo</option>';
-                
-                availableLogos.forEach(logo => {
-                    const option = document.createElement('option');
-                    option.value = logo;
-                    option.textContent = logo;
-                    select.appendChild(option);
-                });
-                
-                console.log(`Found ${availableLogos.length} logo files`);
-            } catch (error) {
-                console.error("Error scanning for logos:", error);
+       async function scanForLogos() {
+    try {
+        // GitHub Pages is static - we'll scan for image files by checking common patterns
+        availableLogos = [];
+        
+        // First, try to fetch a logos.json file if it exists
+        try {
+            const response = await fetch('/logos.json');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.logos && Array.isArray(data.logos)) {
+                    availableLogos = data.logos;
+                    populateLogoSelect();
+                    console.log(`Found ${availableLogos.length} logos via logos.json`);
+                    return;
+                }
             }
+        } catch (e) {
+            console.log("No logos.json file found, scanning directly...");
         }
+        
+        // Common logo file patterns for GitHub Pages
+        const logoPatterns = [
+            'logo.png', 'logo.jpg', 'logo.jpeg', 'logo.svg', 'logo.gif',
+            'company-logo.png', 'company-logo.jpg', 'company-logo.svg',
+            'brand-logo.png', 'brand-logo.jpg', 'brand-logo.svg',
+            'icon.png', 'icon.jpg', 'icon.svg',
+            'company.png', 'company.jpg', 'company.svg',
+            'business.png', 'business.jpg', 'business.svg',
+            'acme.png', 'acme.jpg', 'acme.svg',
+            'company1.png', 'company2.png', 'company3.png',
+            'organization.png', 'organization.jpg', 'organization.svg',
+            // Add more patterns as needed
+        ];
+        
+        console.log("Scanning for logo files on GitHub Pages...");
+        
+        // Check each logo pattern
+        const checkPromises = logoPatterns.map(logoFile => {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    console.log(`Found: ${logoFile}`);
+                    resolve(logoFile);
+                };
+                img.onerror = function() {
+                    resolve(null); // Logo doesn't exist
+                };
+                // Set a timeout to prevent hanging
+                setTimeout(() => resolve(null), 2000);
+                img.src = `/${logoFile}`;
+            });
+        });
+        
+        // Wait for all checks to complete
+        const foundLogos = await Promise.all(checkPromises);
+        availableLogos = foundLogos.filter(logo => logo !== null);
+        
+        populateLogoSelect();
+        
+        console.log(`Found ${availableLogos.length} logo files on GitHub Pages`);
+        
+        if (availableLogos.length === 0) {
+            console.warn("No logo files found. To add logos:");
+            console.warn("1. Upload logo files (PNG, JPG, SVG) to your GitHub repository root");
+            console.warn("2. OR create a logos.json file with your logo filenames");
+        }
+        
+    } catch (error) {
+        console.error("Error scanning for logos:", error);
+        // Set default empty array
+        availableLogos = [];
+        populateLogoSelect();
+    }
+}
 
+// Helper function to populate the logo select dropdown
+function populateLogoSelect() {
+    const select = document.getElementById('logoSelect');
+    select.innerHTML = '<option value="">Select a logo</option>';
+    
+    availableLogos.forEach(logo => {
+        const option = document.createElement('option');
+        option.value = logo;
+        option.textContent = logo;
+        select.appendChild(option);
+    });
+}
         function updateLogoPreview() {
             const select = document.getElementById('logoSelect');
             const logoFile = select.value;
