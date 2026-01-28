@@ -1432,7 +1432,8 @@ const firebaseConfig = {
                         <div style="text-align: right; position: relative;">
                             <p><strong>Authorized Signature:</strong></p>
                             <div class="signature-overlay-container">
-                                <img id="signatureOverlayImage" class="signature-overlay-image" src="/signature.png" alt="Signature" onerror="this.style.display='none'; document.getElementById('signatureOverlayText').style.display='block';">
+                                <!-- UPDATED: Correct GitHub raw URL -->
+                                <img id="signatureOverlayImage" class="signature-overlay-image" src="https://raw.githubusercontent.com/starksgalaxykenya/DOCGEN/main/signature.png" alt="Signature" onerror="this.style.display='none'; document.getElementById('signatureOverlayText').style.display='block';">
                                 <div class="signature-overlay-text" id="signatureOverlayText" style="display: none;"></div>
                             </div>
                         </div>
@@ -1741,7 +1742,7 @@ const firebaseConfig = {
             updateSerialNumber();
             updateTermsAndConditions();
             loadDefaultPaymentMethods();
-            checkSignatureFile();
+            checkSignatureFile(); // This will now check the correct GitHub URL
             loadCompanies();
             loadDocumentHistory();
             loadClients();
@@ -1758,27 +1759,28 @@ const firebaseConfig = {
             console.log("Main app initialized successfully");
         }
 
-        // Check if signature.png exists
+        // Check if signature.png exists - UPDATED with correct GitHub raw URL
         async function checkSignatureFile() {
             const signatureImg = document.getElementById('signatureOverlayImage');
             const signatureText = document.getElementById('signatureOverlayText');
             
-            // Test if signature.png exists
+            // Test if signature.png exists at the correct GitHub raw URL
             const img = new Image();
             img.onload = function() {
-                console.log("Signature file found at /signature.png");
+                console.log("Signature file found at GitHub raw URL");
                 signatureLoaded = true;
                 signatureImg.style.display = 'block';
                 signatureText.style.display = 'none';
             };
             img.onerror = function() {
-                console.log("Signature file not found at /signature.png");
+                console.log("Signature file not found at GitHub raw URL");
                 signatureLoaded = false;
                 signatureImg.style.display = 'none';
                 signatureText.style.display = 'block';
-               
+                signatureText.textContent = 'Signature not found';
             };
-            img.src = '/signature.png';
+            // UPDATED: Correct GitHub raw URL
+            img.src = 'https://raw.githubusercontent.com/starksgalaxykenya/DOCGEN/main/signature.png';
         }
 
         function showAlert(alertId, message, type) {
