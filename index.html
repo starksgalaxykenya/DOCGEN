@@ -736,6 +736,35 @@ const firebaseConfig = {
             border: 1px solid #ddd;
         }
 
+        /* Currency Selection */
+        .currency-selection {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .currency-btn {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .currency-btn:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .currency-btn.active {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+        }
+
         /* Alerts */
         .alert {
             padding: 15px 20px;
@@ -1039,6 +1068,12 @@ const firebaseConfig = {
                 <h2>Create New Document</h2>
                 <div class="alert" id="createAlert"></div>
                 
+                <!-- Currency Selection (NEW) -->
+                <div class="currency-selection">
+                    <button class="currency-btn active" id="usdCurrency" onclick="selectCurrency('USD')">US Dollars (USD)</button>
+                    <button class="currency-btn" id="kshCurrency" onclick="selectCurrency('KSH')">Kenya Shillings (KSH)</button>
+                </div>
+                
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="documentType" class="required">Document Type</label>
@@ -1094,8 +1129,8 @@ const firebaseConfig = {
                         <tr>
                             <th>Description</th>
                             <th width="120">Quantity</th>
-                            <th width="150">Unit Price ($)</th>
-                            <th width="150">Total ($)</th>
+                            <th width="150">Unit Price (<span id="currencySymbol">$</span>)</th>
+                            <th width="150">Total (<span id="currencySymbol2">$</span>)</th>
                             <th width="50">Actions</th>
                         </tr>
                     </thead>
@@ -1104,22 +1139,22 @@ const firebaseConfig = {
                             <td><input type="text" class="form-control item-desc" placeholder="Item description"></td>
                             <td><input type="number" class="form-control item-qty" value="1" min="1"></td>
                             <td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td>
-                            <td class="item-total">$0.00</td>
+                            <td class="item-total"><span id="currencySymbol3">$</span>0.00</td>
                             <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
                             <td colspan="3" style="text-align: right;"><strong>Subtotal:</strong></td>
-                            <td id="subtotal">$0.00</td>
+                            <td id="subtotal"><span id="currencySymbol4">$</span>0.00</td>
                             <td></td>
                         </tr>
                         <tr>
                             <td colspan="3" style="text-align: right;">
-                                <strong>Discount ($):</strong>
+                                <strong>Discount (<span id="currencySymbol5">$</span>):</strong>
                                 <input type="number" id="discountAmount" class="form-control" style="width: 120px; display: inline-block; margin-left: 10px;" value="0" min="0" step="0.01">
                             </td>
-                            <td id="discountDisplay">$0.00</td>
+                            <td id="discountDisplay">-<span id="currencySymbol6">$</span>0.00</td>
                             <td></td>
                         </tr>
                         <tr>
@@ -1127,12 +1162,12 @@ const firebaseConfig = {
                                 <strong>Tax Rate (%):</strong>
                                 <input type="number" id="taxRate" class="form-control" style="width: 80px; display: inline-block; margin-left: 10px;" value="10" min="0" max="50">
                             </td>
-                            <td id="taxAmount">$0.00</td>
+                            <td id="taxAmount"><span id="currencySymbol7">$</span>0.00</td>
                             <td></td>
                         </tr>
                         <tr>
                             <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
-                            <td id="totalAmount">$0.00</td>
+                            <td id="totalAmount"><span id="currencySymbol8">$</span>0.00</td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -1339,6 +1374,7 @@ const firebaseConfig = {
                             <p><strong>Serial No:</strong> <span id="previewSerialNumber">INV-2023-001</span></p>
                             <p><strong>Date:</strong> <span id="previewDate">January 1, 2023</span></p>
                             <p><strong>Document Type:</strong> <span id="previewDocType">Invoice</span></p>
+                            <p><strong>Currency:</strong> <span id="previewCurrency">USD</span></p>
                         </div>
                     </div>
                     
@@ -1359,19 +1395,19 @@ const firebaseConfig = {
                         <tfoot>
                             <tr>
                                 <td colspan="3" style="text-align: right;"><strong>Subtotal:</strong></td>
-                                <td id="previewSubtotal">$0.00</td>
+                                <td id="previewSubtotal"><span id="previewCurrencySymbol1">$</span>0.00</td>
                             </tr>
                             <tr>
                                 <td colspan="3" style="text-align: right;"><strong>Discount:</strong></td>
-                                <td id="previewDiscount">$0.00</td>
+                                <td id="previewDiscount">-<span id="previewCurrencySymbol2">$</span>0.00</td>
                             </tr>
                             <tr>
                                 <td colspan="3" style="text-align: right;"><strong>Tax:</strong></td>
-                                <td id="previewTax">$0.00</td>
+                                <td id="previewTax"><span id="previewCurrencySymbol3">$</span>0.00</td>
                             </tr>
                             <tr>
                                 <td colspan="3" style="text-align: right;"><strong>Total:</strong></td>
-                                <td id="previewTotal">$0.00</td>
+                                <td id="previewTotal"><span id="previewCurrencySymbol4">$</span>0.00</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1436,6 +1472,7 @@ const firebaseConfig = {
         let paymentMethodDetails = {};
         let discountAmount = 0;
         let signatureLoaded = false;
+        let selectedCurrency = 'USD'; // Default currency (NEW)
 
         // Terms and conditions for each document type
         const documentTerms = {
@@ -1715,6 +1752,9 @@ const firebaseConfig = {
                 year: 'numeric', month: 'long', day: 'numeric'
             });
             
+            // Set initial currency
+            updateCurrencyDisplay();
+            
             console.log("Main app initialized successfully");
         }
 
@@ -1768,12 +1808,6 @@ const firebaseConfig = {
             content.classList.add('active');
         }
     });
-    
-    // REMOVE or COMMENT OUT this block to fix the recursive loop
-    // Special actions
-    // if (tabId === 'preview') {
-    //     previewDocument();
-    // }
 }
 
         function isValidColor(color) {
@@ -1792,6 +1826,49 @@ const firebaseConfig = {
             const previewTerms = document.getElementById('previewTerms');
             const formattedTerms = terms.split('\n').map(line => `<p>${line}</p>`).join('');
             previewTerms.innerHTML = formattedTerms;
+        }
+
+        // Currency selection function (NEW)
+        function selectCurrency(currency) {
+            selectedCurrency = currency;
+            
+            // Update button styles
+            document.getElementById('usdCurrency').classList.remove('active');
+            document.getElementById('kshCurrency').classList.remove('active');
+            
+            if (currency === 'USD') {
+                document.getElementById('usdCurrency').classList.add('active');
+            } else {
+                document.getElementById('kshCurrency').classList.add('active');
+            }
+            
+            // Update currency display
+            updateCurrencyDisplay();
+            updateItemTotals();
+        }
+
+        // Update currency display throughout the app (NEW)
+        function updateCurrencyDisplay() {
+            const symbol = selectedCurrency === 'USD' ? '$' : 'KSh';
+            
+            // Update table headers
+            document.querySelectorAll('#currencySymbol, #currencySymbol2, #currencySymbol3, #currencySymbol4, #currencySymbol5, #currencySymbol6, #currencySymbol7, #currencySymbol8').forEach(el => {
+                el.textContent = symbol;
+            });
+            
+            // Update preview currency symbols
+            document.querySelectorAll('#previewCurrencySymbol1, #previewCurrencySymbol2, #previewCurrencySymbol3, #previewCurrencySymbol4').forEach(el => {
+                el.textContent = symbol;
+            });
+            
+            // Update currency in preview
+            document.getElementById('previewCurrency').textContent = selectedCurrency;
+            
+            // Update discount label
+            const discountLabel = document.querySelector('strong:contains("Discount")');
+            if (discountLabel) {
+                discountLabel.textContent = `Discount (${symbol}):`;
+            }
         }
 
         // Serial Number Generation
@@ -1820,12 +1897,13 @@ const firebaseConfig = {
         // Item Management with Discount
         function addItem() {
             const tableBody = document.getElementById('itemsTableBody');
+            const symbol = selectedCurrency === 'USD' ? '$' : 'KSh';
             const newRow = document.createElement('tr');
             newRow.innerHTML = `
                 <td><input type="text" class="form-control item-desc" placeholder="Item description"></td>
                 <td><input type="number" class="form-control item-qty" value="1" min="1"></td>
                 <td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td>
-                <td class="item-total">$0.00</td>
+                <td class="item-total">${symbol}0.00</td>
                 <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
             `;
             tableBody.appendChild(newRow);
@@ -1839,6 +1917,7 @@ const firebaseConfig = {
         }
 
         function updateItemTotals() {
+            const symbol = selectedCurrency === 'USD' ? '$' : 'KSh';
             let subtotal = 0;
             const rows = document.querySelectorAll('#itemsTableBody tr');
             const previewItems = document.getElementById('previewItems');
@@ -1852,15 +1931,15 @@ const firebaseConfig = {
                 const total = qty * price;
                 subtotal += total;
                 
-                row.querySelector('.item-total').textContent = '$' + total.toFixed(2);
+                row.querySelector('.item-total').textContent = symbol + total.toFixed(2);
                 
                 if (desc.trim()) {
                     const previewRow = document.createElement('tr');
                     previewRow.innerHTML = `
                         <td>${desc}</td>
                         <td>${qty}</td>
-                        <td>$${price.toFixed(2)}</td>
-                        <td>$${total.toFixed(2)}</td>
+                        <td>${symbol}${price.toFixed(2)}</td>
+                        <td>${symbol}${total.toFixed(2)}</td>
                     `;
                     previewItems.appendChild(previewRow);
                 }
@@ -1883,16 +1962,16 @@ const firebaseConfig = {
             const totalAmount = discountedSubtotal + taxAmount;
             
             // Update display
-            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
-            document.getElementById('discountDisplay').textContent = '-$' + discountAmount.toFixed(2);
-            document.getElementById('taxAmount').textContent = '$' + taxAmount.toFixed(2);
-            document.getElementById('totalAmount').textContent = '$' + totalAmount.toFixed(2);
+            document.getElementById('subtotal').innerHTML = symbol + subtotal.toFixed(2);
+            document.getElementById('discountDisplay').innerHTML = '-' + symbol + discountAmount.toFixed(2);
+            document.getElementById('taxAmount').innerHTML = symbol + taxAmount.toFixed(2);
+            document.getElementById('totalAmount').innerHTML = symbol + totalAmount.toFixed(2);
             
             // Update preview
-            document.getElementById('previewSubtotal').textContent = '$' + subtotal.toFixed(2);
-            document.getElementById('previewDiscount').textContent = '-$' + discountAmount.toFixed(2);
-            document.getElementById('previewTax').textContent = '$' + taxAmount.toFixed(2);
-            document.getElementById('previewTotal').textContent = '$' + totalAmount.toFixed(2);
+            document.getElementById('previewSubtotal').innerHTML = symbol + subtotal.toFixed(2);
+            document.getElementById('previewDiscount').innerHTML = '-' + symbol + discountAmount.toFixed(2);
+            document.getElementById('previewTax').innerHTML = symbol + taxAmount.toFixed(2);
+            document.getElementById('previewTotal').innerHTML = symbol + totalAmount.toFixed(2);
         }
 
         // Payment Methods
@@ -2503,6 +2582,7 @@ const firebaseConfig = {
                 const documentData = {
                     type: docType,
                     serialNumber: document.getElementById('serialNumber').value,
+                    currency: selectedCurrency, // NEW: Save currency
                     companyId: companyId,
                     companyName: company.name,
                     companyEmail: company.email,
@@ -2626,6 +2706,9 @@ const firebaseConfig = {
         year: 'numeric', month: 'long', day: 'numeric'
     });
     
+    // Update currency in preview
+    document.getElementById('previewCurrency').textContent = selectedCurrency;
+    
     // Update payment methods in preview
     const previewMethods = document.getElementById('previewPaymentMethods');
     previewMethods.innerHTML = '';
@@ -2694,6 +2777,7 @@ const firebaseConfig = {
                     
                     const date = data.createdAt?.toDate() || new Date();
                     const dateStr = date.toLocaleDateString('en-US');
+                    const currencySymbol = data.currency === 'KSH' ? 'KSh' : '$';
                     
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -2701,7 +2785,7 @@ const firebaseConfig = {
                         <td><span style="text-transform: capitalize;">${data.type || 'Unknown'}</span></td>
                         <td>${data.customerName || 'Unknown'}</td>
                         <td>${dateStr}</td>
-                        <td>$${data.total?.toFixed(2) || '0.00'}</td>
+                        <td>${currencySymbol}${data.total?.toFixed(2) || '0.00'}</td>
                         <td>
                             <span class="status-badge ${data.revoked ? 'status-revoked' : 'status-active'}">
                                 ${data.revoked ? 'Revoked' : 'Active'}
@@ -2711,6 +2795,10 @@ const firebaseConfig = {
                             <div class="action-buttons">
                                 <button class="btn btn-primary btn-sm" onclick="viewDocument('${doc.id}')">View</button>
                                 <button class="btn btn-success btn-sm" onclick="downloadDocumentPDF('${doc.id}')">PDF</button>
+                                <!-- NEW: Document conversion buttons -->
+                                ${data.type === 'invoice' && !data.revoked ? `<button class="btn btn-warning btn-sm" onclick="convertToReceipt('${doc.id}')">To Receipt</button>` : ''}
+                                ${(data.type === 'proforma' || data.type === 'quote') && !data.revoked ? `<button class="btn btn-warning btn-sm" onclick="convertToInvoice('${doc.id}')">To Invoice</button>` : ''}
+                                ${data.type === 'quote' && !data.revoked ? `<button class="btn btn-warning btn-sm" onclick="convertToProforma('${doc.id}')">To Proforma</button>` : ''}
                                 ${!data.revoked ? `<button class="btn btn-danger btn-sm" onclick="revokeDocument('${doc.id}')">Revoke</button>` : ''}
                             </div>
                         </td>
@@ -2723,6 +2811,122 @@ const firebaseConfig = {
             }
         }
 
+        // NEW: Convert document to receipt
+        function convertToReceipt(documentId) {
+            const doc = documents.find(d => d.id === documentId);
+            if (!doc) return;
+            
+            // Use the existing document data but change type to receipt
+            createConvertedDocument(doc, 'receipt');
+        }
+
+        // NEW: Convert document to invoice
+        function convertToInvoice(documentId) {
+            const doc = documents.find(d => d.id === documentId);
+            if (!doc) return;
+            
+            // Use the existing document data but change type to invoice
+            createConvertedDocument(doc, 'invoice');
+        }
+
+        // NEW: Convert document to proforma invoice
+        function convertToProforma(documentId) {
+            const doc = documents.find(d => d.id === documentId);
+            if (!doc) return;
+            
+            // Use the existing document data but change type to proforma
+            createConvertedDocument(doc, 'proforma');
+        }
+
+        // NEW: Create converted document
+        async function createConvertedDocument(originalDoc, newType) {
+            try {
+                // Generate new serial number based on original but with new type
+                const originalSerial = originalDoc.serialNumber || '';
+                let newSerial = originalSerial;
+                
+                // Replace prefix based on new type
+                let newPrefix = 'DOC';
+                switch(newType) {
+                    case 'invoice': newPrefix = 'INV'; break;
+                    case 'quote': newPrefix = 'QUO'; break;
+                    case 'receipt': newPrefix = 'REC'; break;
+                    case 'proforma': newPrefix = 'PRO'; break;
+                }
+                
+                // If original serial has a prefix, replace it
+                if (originalSerial.includes('-')) {
+                    const parts = originalSerial.split('-');
+                    if (parts.length >= 1) {
+                        parts[0] = newPrefix;
+                        newSerial = parts.join('-');
+                    }
+                } else {
+                    // Generate new serial
+                    const date = new Date();
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const randomNum = Math.floor(Math.random() * 999) + 1;
+                    newSerial = `${newPrefix}-${year}${month}${day}-${String(randomNum).padStart(3, '0')}`;
+                }
+                
+                // Prepare new document data
+                const documentData = {
+                    type: newType,
+                    serialNumber: newSerial,
+                    currency: originalDoc.currency || 'USD',
+                    companyId: originalDoc.companyId,
+                    companyName: originalDoc.companyName,
+                    companyEmail: originalDoc.companyEmail,
+                    companyPhone: originalDoc.companyPhone,
+                    companyAddress: originalDoc.companyAddress,
+                    companyWebsite: originalDoc.companyWebsite,
+                    parentCompany: originalDoc.parentCompany || '',
+                    taxPin: originalDoc.taxPin || '',
+                    customerName: originalDoc.customerName,
+                    customerEmail: originalDoc.customerEmail || '',
+                    customerPhone: originalDoc.customerPhone || '',
+                    customerAddress: originalDoc.customerAddress || '',
+                    items: originalDoc.items || [],
+                    subtotal: originalDoc.subtotal || 0,
+                    discount: originalDoc.discount || 0,
+                    taxRate: originalDoc.taxRate || 0,
+                    taxAmount: originalDoc.taxAmount || 0,
+                    total: originalDoc.total || 0,
+                    paymentMethods: originalDoc.paymentMethods || [],
+                    selectedPaymentMethod: originalDoc.selectedPaymentMethod || '',
+                    paymentMethodDetails: originalDoc.paymentMethodDetails || {},
+                    hasSignature: signatureLoaded,
+                    terms: documentTerms[newType] || '',
+                    userId: currentUser.uid,
+                    createdAt: window.firebaseApp.Timestamp.now(),
+                    convertedFrom: originalDoc.id, // Track conversion source
+                    revoked: false
+                };
+                
+                // Save to Firebase
+                const docRef = await window.firebaseApp.addDoc(
+                    window.firebaseApp.collection(db, "documents"), 
+                    documentData
+                );
+                
+                console.log(`Document converted to ${newType} with ID:`, docRef.id);
+                showAlert('historyAlert', `Document converted to ${newType} successfully!`, 'success');
+                
+                // Reload history
+                await loadDocumentHistory();
+                
+                // Switch to create tab and populate form
+                switchTab('create');
+                viewDocument(docRef.id);
+                
+            } catch (error) {
+                console.error("Error converting document:", error);
+                showAlert('historyAlert', 'Error converting document: ' + error.message, 'danger');
+            }
+        }
+
         function viewDocument(documentId) {
             const doc = documents.find(d => d.id === documentId);
             if (!doc) return;
@@ -2730,6 +2934,11 @@ const firebaseConfig = {
             // Populate form
             document.getElementById('documentType').value = doc.type;
             document.getElementById('serialNumber').value = doc.serialNumber;
+            
+            // Set currency if available (NEW)
+            if (doc.currency) {
+                selectCurrency(doc.currency);
+            }
             
             if (doc.companyId) {
                 document.getElementById('companySelect').value = doc.companyId;
@@ -2757,7 +2966,7 @@ const firebaseConfig = {
                         <td><input type="text" class="form-control item-desc" value="${item.description || ''}"></td>
                         <td><input type="number" class="form-control item-qty" value="${item.quantity || 1}" min="1"></td>
                         <td><input type="number" class="form-control item-price" value="${item.unitPrice || 0}" min="0" step="0.01"></td>
-                        <td class="item-total">$${(item.total || 0).toFixed(2)}</td>
+                        <td class="item-total">${doc.currency === 'KSH' ? 'KSh' : '$'}${(item.total || 0).toFixed(2)}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
                     `;
                     tableBody.appendChild(newRow);
