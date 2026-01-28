@@ -1752,30 +1752,29 @@ const firebaseConfig = {
             }, 5000);
         }
 
-        function switchTab(tabId) {
-            // Update tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-                if (tab.getAttribute('data-tab') === tabId) {
-                    tab.classList.add('active');
-                }
-            });
-            
-            // Update content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-                if (content.id === tabId) {
-                    content.classList.add('active');
-                }
-            });
-            
-            // Special actions
-            if (tabId === 'preview') {
-                previewDocument();
-            } else if (tabId === 'clients') {
-                loadClients();
-            }
+       function switchTab(tabId) {
+    // Update tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-tab') === tabId) {
+            tab.classList.add('active');
         }
+    });
+    
+    // Update content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        if (content.id === tabId) {
+            content.classList.add('active');
+        }
+    });
+    
+    // REMOVE or COMMENT OUT this block to fix the recursive loop
+    // Special actions
+    // if (tabId === 'preview') {
+    //     previewDocument();
+    // }
+}
 
         function isValidColor(color) {
             const s = new Option().style;
@@ -2594,60 +2593,74 @@ const firebaseConfig = {
             document.getElementById('createAlert').style.display = 'none';
         }
 
-        function previewDocument() {
-            // Update customer details
-            const customerName = document.getElementById('customerName').value || 'John Doe';
-            const customerEmail = document.getElementById('customerEmail').value || 'john@example.com';
-            const customerPhone = document.getElementById('customerPhone').value || '+1234567890';
-            const customerAddress = document.getElementById('customerAddress').value || '123 Main St, City, Country';
-            
-            document.getElementById('previewCustomerDetails').innerHTML = `
-                <strong>${customerName}</strong><br>
-                ${customerEmail}<br>
-                ${customerPhone}<br>
-                ${customerAddress}
-            `;
-            
-            // Update document type
-            const docType = document.getElementById('documentType').value;
-            let docTitle = 'DOCUMENT';
-            switch(docType) {
-                case 'invoice': docTitle = 'INVOICE'; break;
-                case 'quote': docTitle = 'QUOTE'; break;
-                case 'receipt': docTitle = 'RECEIPT'; break;
-                case 'proforma': docTitle = 'PROFORMA INVOICE'; break;
-            }
-            
-            document.getElementById('previewDocumentTitle').textContent = docTitle;
-            document.getElementById('previewDocType').textContent = docTitle.charAt(0) + docTitle.slice(1).toLowerCase();
-            
-            // Update serial number and date
-            document.getElementById('previewSerialNumber').textContent = document.getElementById('serialNumber').value;
-            document.getElementById('previewDate').textContent = new Date().toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
-            
-            // Update payment methods in preview
-            const previewMethods = document.getElementById('previewPaymentMethods');
-            previewMethods.innerHTML = '';
-            
-            if (selectedPaymentMethod) {
-                const span = document.createElement('span');
-                span.className = 'payment-method-tag active';
-                span.textContent = selectedPaymentMethod;
-                previewMethods.appendChild(span);
-            } else {
-                previewMethods.innerHTML = '<span class="payment-method-tag">Select a payment method</span>';
-            }
-            
-            updatePaymentDetailsPreview();
-            
-            // Update terms in preview
-            updateTermsAndConditions();
-            
-            // Switch to preview tab
-            switchTab('preview');
+      function previewDocument() {
+    // Update customer details
+    const customerName = document.getElementById('customerName').value || 'John Doe';
+    const customerEmail = document.getElementById('customerEmail').value || 'john@example.com';
+    const customerPhone = document.getElementById('customerPhone').value || '+1234567890';
+    const customerAddress = document.getElementById('customerAddress').value || '123 Main St, City, Country';
+    
+    document.getElementById('previewCustomerDetails').innerHTML = `
+        <strong>${customerName}</strong><br>
+        ${customerEmail}<br>
+        ${customerPhone}<br>
+        ${customerAddress}
+    `;
+    
+    // Update document type
+    const docType = document.getElementById('documentType').value;
+    let docTitle = 'DOCUMENT';
+    switch(docType) {
+        case 'invoice': docTitle = 'INVOICE'; break;
+        case 'quote': docTitle = 'QUOTE'; break;
+        case 'receipt': docTitle = 'RECEIPT'; break;
+        case 'proforma': docTitle = 'PROFORMA INVOICE'; break;
+    }
+    
+    document.getElementById('previewDocumentTitle').textContent = docTitle;
+    document.getElementById('previewDocType').textContent = docTitle.charAt(0) + docTitle.slice(1).toLowerCase();
+    
+    // Update serial number and date
+    document.getElementById('previewSerialNumber').textContent = document.getElementById('serialNumber').value;
+    document.getElementById('previewDate').textContent = new Date().toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    // Update payment methods in preview
+    const previewMethods = document.getElementById('previewPaymentMethods');
+    previewMethods.innerHTML = '';
+    
+    if (selectedPaymentMethod) {
+        const span = document.createElement('span');
+        span.className = 'payment-method-tag active';
+        span.textContent = selectedPaymentMethod;
+        previewMethods.appendChild(span);
+    } else {
+        previewMethods.innerHTML = '<span class="payment-method-tag">Select a payment method</span>';
+    }
+    
+    updatePaymentDetailsPreview();
+    
+    // Update terms in preview
+    updateTermsAndConditions();
+    
+    // Switch to preview tab WITHOUT calling previewDocument again
+    // Update tabs directly instead of calling switchTab to avoid recursion
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-tab') === 'preview') {
+            tab.classList.add('active');
         }
+    });
+    
+    // Update content directly
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+        if (content.id === 'preview') {
+            content.classList.add('active');
+        }
+    });
+}
 
         function refreshPreview() {
             previewDocument();
