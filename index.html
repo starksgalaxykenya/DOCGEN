@@ -1149,9 +1149,9 @@ const firebaseConfig = {
                             <td id="subtotal"><span id="currencySymbol4">$</span>0.00</td>
                             <td></td>
                         </tr>
-                        <tr>
+                        <tr id="discountRow">
                             <td colspan="3" style="text-align: right;">
-                                <strong>Discount (<span id="currencySymbol5">$</span>):</strong>
+                                <strong id="discountLabel">Discount ($):</strong>
                                 <input type="number" id="discountAmount" class="form-control" style="width: 120px; display: inline-block; margin-left: 10px;" value="0" min="0" step="0.01">
                             </td>
                             <td id="discountDisplay">-<span id="currencySymbol6">$</span>0.00</td>
@@ -1847,11 +1847,11 @@ const firebaseConfig = {
             updateItemTotals();
         }
 
-        // Update currency display throughout the app (NEW)
+        // Update currency display throughout the app (NEW) - FIXED VERSION
         function updateCurrencyDisplay() {
             const symbol = selectedCurrency === 'USD' ? '$' : 'KSh';
             
-            // Update table headers
+            // Update table headers and symbols
             document.querySelectorAll('#currencySymbol, #currencySymbol2, #currencySymbol3, #currencySymbol4, #currencySymbol5, #currencySymbol6, #currencySymbol7, #currencySymbol8').forEach(el => {
                 el.textContent = symbol;
             });
@@ -1864,8 +1864,8 @@ const firebaseConfig = {
             // Update currency in preview
             document.getElementById('previewCurrency').textContent = selectedCurrency;
             
-            // Update discount label
-            const discountLabel = document.querySelector('strong:contains("Discount")');
+            // Update discount label directly
+            const discountLabel = document.getElementById('discountLabel');
             if (discountLabel) {
                 discountLabel.textContent = `Discount (${symbol}):`;
             }
