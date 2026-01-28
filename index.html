@@ -854,18 +854,6 @@ const firebaseConfig = {
             right: 0;
             width: 200px;
             height: 100px;
-            cursor: pointer;
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: var(--transition);
-        }
-
-        .signature-overlay-container:hover {
-            border-color: var(--primary-color);
-            background: rgba(67, 97, 238, 0.05);
         }
 
         .signature-overlay-text {
@@ -878,45 +866,6 @@ const firebaseConfig = {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            display: none;
-        }
-
-        /* Signature Modal */
-        .signature-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .signature-modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .signature-canvas-container {
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            margin: 20px 0;
-            background: white;
-        }
-
-        #signatureCanvas {
-            width: 100%;
-            height: 200px;
-            cursor: crosshair;
-            display: block;
         }
 
         /* Client List */
@@ -1044,6 +993,11 @@ const firebaseConfig = {
             .signature-image {
                 max-width: 150px;
             }
+            
+            .signature-overlay-container {
+                width: 150px;
+                height: 80px;
+            }
         }
 
         /* Revoked Stamp */
@@ -1120,28 +1074,6 @@ const firebaseConfig = {
             
             <div class="auth-footer">
                 <p>By continuing, you agree to our Terms of Service and Privacy Policy</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Signature Modal -->
-    <div class="signature-modal" id="signatureModal">
-        <div class="signature-modal-content">
-            <h2>Add Signature</h2>
-            <p>Draw your signature in the box below:</p>
-            
-            <div class="signature-canvas-container">
-                <canvas id="signatureCanvas"></canvas>
-            </div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="btn btn-secondary" onclick="clearSignature()">Clear</button>
-                <button class="btn btn-danger" onclick="undoSignature()">Undo</button>
-            </div>
-            
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="saveSignature()">Save Signature</button>
-                <button class="btn btn-secondary" onclick="closeSignatureModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1468,7 +1400,6 @@ const firebaseConfig = {
                 <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="generatePDF()">Download as PDF</button>
                     <button class="btn btn-secondary" onclick="refreshPreview()">Refresh Preview</button>
-                    <button class="btn btn-warning" onclick="openSignatureModal()">Add Signature</button>
                 </div>
                 <div class="document-preview" id="documentPreview">
                     <div class="revoked-stamp" id="revokedStamp">REVOKED</div>
@@ -1554,9 +1485,9 @@ const firebaseConfig = {
                         </div>
                         <div style="text-align: right; position: relative;">
                             <p><strong>Authorized Signature:</strong></p>
-                            <div class="signature-overlay-container" onclick="openSignatureModal()">
-                                <div class="signature-overlay-text" id="signatureOverlayText">Click to add signature</div>
-                                <img id="signatureOverlayImage" class="signature-overlay-image" src="" alt="Signature">
+                            <div class="signature-overlay-container">
+                                <img id="signatureOverlayImage" class="signature-overlay-image" src="/signature.png" alt="Signature" onerror="this.style.display='none'; document.getElementById('signatureOverlayText').style.display='block';">
+                                <div class="signature-overlay-text" id="signatureOverlayText" style="display: none;">Signature image not found</div>
                             </div>
                         </div>
                     </div>
@@ -1595,13 +1526,7 @@ const firebaseConfig = {
         let paymentMethodDetails = {};
         let availableLogos = [];
         let discountAmount = 0;
-        let signatureImage = null;
-        let signatureCanvas = null;
-        let signatureCtx = null;
-        let isDrawing = false;
-        let lastX = 0;
-        let lastY = 0;
-        let signatureHistory = [];
+        let signatureLoaded = false;
 
         // Terms and conditions for each document type
         const documentTerms = {
@@ -1646,181 +1571,7 @@ const firebaseConfig = {
             document.getElementById('registerConfirmPassword')?.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') register();
             });
-
-            // Initialize signature canvas
-            setTimeout(() => {
-                initializeSignatureCanvas();
-            }, 1000);
         });
-
-        // Signature Functions
-        function initializeSignatureCanvas() {
-            signatureCanvas = document.getElementById('signatureCanvas');
-            if (signatureCanvas) {
-                signatureCtx = signatureCanvas.getContext('2d');
-                signatureCanvas.width = signatureCanvas.offsetWidth;
-                signatureCanvas.height = signatureCanvas.offsetHeight;
-                
-                // Set up drawing
-                signatureCanvas.addEventListener('mousedown', startDrawing);
-                signatureCanvas.addEventListener('mousemove', draw);
-                signatureCanvas.addEventListener('mouseup', stopDrawing);
-                signatureCanvas.addEventListener('mouseout', stopDrawing);
-                
-                // Touch support
-                signatureCanvas.addEventListener('touchstart', startDrawingTouch);
-                signatureCanvas.addEventListener('touchmove', drawTouch);
-                signatureCanvas.addEventListener('touchend', stopDrawing);
-                
-                clearSignatureCanvas();
-            }
-        }
-
-        function clearSignatureCanvas() {
-            if (signatureCtx) {
-                signatureCtx.fillStyle = 'white';
-                signatureCtx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
-                signatureCtx.strokeStyle = '#000';
-                signatureCtx.lineWidth = 2;
-                signatureCtx.lineCap = 'round';
-                signatureCtx.lineJoin = 'round';
-                signatureHistory = [];
-            }
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            const rect = signatureCanvas.getBoundingClientRect();
-            lastX = e.clientX - rect.left;
-            lastY = e.clientY - rect.top;
-            e.preventDefault();
-        }
-
-        function startDrawingTouch(e) {
-            if (e.touches.length === 1) {
-                isDrawing = true;
-                const rect = signatureCanvas.getBoundingClientRect();
-                lastX = e.touches[0].clientX - rect.left;
-                lastY = e.touches[0].clientY - rect.top;
-                e.preventDefault();
-            }
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            
-            const rect = signatureCanvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            signatureCtx.beginPath();
-            signatureCtx.moveTo(lastX, lastY);
-            signatureCtx.lineTo(x, y);
-            signatureCtx.stroke();
-            
-            // Save to history
-            signatureHistory.push({
-                startX: lastX,
-                startY: lastY,
-                endX: x,
-                endY: y,
-                color: signatureCtx.strokeStyle,
-                width: signatureCtx.lineWidth
-            });
-            
-            lastX = x;
-            lastY = y;
-            e.preventDefault();
-        }
-
-        function drawTouch(e) {
-            if (!isDrawing || e.touches.length !== 1) return;
-            
-            const rect = signatureCanvas.getBoundingClientRect();
-            const x = e.touches[0].clientX - rect.left;
-            const y = e.touches[0].clientY - rect.top;
-            
-            signatureCtx.beginPath();
-            signatureCtx.moveTo(lastX, lastY);
-            signatureCtx.lineTo(x, y);
-            signatureCtx.stroke();
-            
-            // Save to history
-            signatureHistory.push({
-                startX: lastX,
-                startY: lastY,
-                endX: x,
-                endY: y,
-                color: signatureCtx.strokeStyle,
-                width: signatureCtx.lineWidth
-            });
-            
-            lastX = x;
-            lastY = y;
-            e.preventDefault();
-        }
-
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        function clearSignature() {
-            clearSignatureCanvas();
-        }
-
-        function undoSignature() {
-            if (signatureHistory.length > 0) {
-                // Clear canvas and redraw all except last stroke
-                clearSignatureCanvas();
-                signatureHistory.pop();
-                
-                // Redraw history
-                signatureHistory.forEach(stroke => {
-                    signatureCtx.strokeStyle = stroke.color;
-                    signatureCtx.lineWidth = stroke.width;
-                    signatureCtx.beginPath();
-                    signatureCtx.moveTo(stroke.startX, stroke.startY);
-                    signatureCtx.lineTo(stroke.endX, stroke.endY);
-                    signatureCtx.stroke();
-                });
-                
-                // Reset to default
-                signatureCtx.strokeStyle = '#000';
-                signatureCtx.lineWidth = 2;
-            }
-        }
-
-        function openSignatureModal() {
-            document.getElementById('signatureModal').style.display = 'flex';
-            clearSignatureCanvas();
-        }
-
-        function closeSignatureModal() {
-            document.getElementById('signatureModal').style.display = 'none';
-        }
-
-        function saveSignature() {
-            if (signatureHistory.length === 0) {
-                alert('Please draw a signature first');
-                return;
-            }
-            
-            // Convert canvas to data URL
-            const dataUrl = signatureCanvas.toDataURL('image/png');
-            signatureImage = dataUrl;
-            
-            // Update preview
-            const overlayContainer = document.querySelector('.signature-overlay-container');
-            const overlayText = document.getElementById('signatureOverlayText');
-            const overlayImage = document.getElementById('signatureOverlayImage');
-            
-            overlayText.style.display = 'none';
-            overlayImage.src = dataUrl;
-            overlayImage.style.display = 'block';
-            
-            closeSignatureModal();
-            showAlert('createAlert', 'Signature saved successfully!', 'success');
-        }
 
         // Auth functions
         function switchAuthTab(tab) {
@@ -2045,6 +1796,7 @@ const firebaseConfig = {
             updateTermsAndConditions();
             loadDefaultPaymentMethods();
             scanForLogos();
+            checkSignatureFile();
             loadCompanies();
             loadDocumentHistory();
             loadClients();
@@ -2056,6 +1808,29 @@ const firebaseConfig = {
             });
             
             console.log("Main app initialized successfully");
+        }
+
+        // Check if signature.png exists
+        async function checkSignatureFile() {
+            const signatureImg = document.getElementById('signatureOverlayImage');
+            const signatureText = document.getElementById('signatureOverlayText');
+            
+            // Test if signature.png exists
+            const img = new Image();
+            img.onload = function() {
+                console.log("Signature file found at /signature.png");
+                signatureLoaded = true;
+                signatureImg.style.display = 'block';
+                signatureText.style.display = 'none';
+            };
+            img.onerror = function() {
+                console.log("Signature file not found at /signature.png");
+                signatureLoaded = false;
+                signatureImg.style.display = 'none';
+                signatureText.style.display = 'block';
+                signatureText.textContent = 'Signature image (signature.png) not found in repository root';
+            };
+            img.src = '/signature.png';
         }
 
         function showAlert(alertId, message, type) {
@@ -2467,7 +2242,7 @@ const firebaseConfig = {
                     card.className = 'company-card';
                     card.innerHTML = `
                         <div class="company-card-header">
-                            ${company.logoFile || company.logoUrl ? `<img src="${company.logoFile || company.logoUrl}" class="company-card-logo" alt="${company.name}" onerror="this.style.display='none'">` : ''}
+                            ${company.logoUrl ? `<img src="${company.logoUrl}" class="company-card-logo" alt="${company.name}" onerror="this.style.display='none'">` : ''}
                             <div>
                                 <h4 style="margin-bottom: 5px;">${company.name}</h4>
                                 <p style="font-size: 0.9rem; color: var(--gray-color);">${company.email}</p>
@@ -2539,9 +2314,8 @@ const firebaseConfig = {
             
             // Update logo
             const logoImg = document.getElementById('previewLogo');
-            const logoUrl = company.logoFile || company.logoUrl;
-            if (logoUrl) {
-                logoImg.src = logoUrl;
+            if (company.logoUrl) {
+                logoImg.src = company.logoUrl;
                 logoImg.style.display = 'block';
                 logoImg.onerror = function() {
                     this.style.display = 'none';
@@ -2942,7 +2716,7 @@ const firebaseConfig = {
                 const docType = document.getElementById('documentType').value;
                 const terms = documentTerms[docType] || '';
                 
-                // Prepare document data with signature
+                // Prepare document data
                 const documentData = {
                     type: docType,
                     serialNumber: document.getElementById('serialNumber').value,
@@ -2968,7 +2742,7 @@ const firebaseConfig = {
                     paymentMethods: company.paymentMethods || [],
                     selectedPaymentMethod: selectedPaymentMethod,
                     paymentMethodDetails: paymentMethodDetails,
-                    signature: signatureImage, // Save signature image
+                    hasSignature: signatureLoaded, // Store if signature exists
                     terms: terms,
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
@@ -3031,14 +2805,6 @@ const firebaseConfig = {
             document.querySelectorAll('#paymentMethodsSelection .payment-method-tag').forEach(el => {
                 el.classList.remove('active');
             });
-            
-            // Clear signature
-            signatureImage = null;
-            const overlayText = document.getElementById('signatureOverlayText');
-            const overlayImage = document.getElementById('signatureOverlayImage');
-            overlayText.style.display = 'block';
-            overlayImage.style.display = 'none';
-            overlayImage.src = '';
             
             updateSerialNumber();
             updateTermsAndConditions();
@@ -3230,16 +2996,6 @@ const firebaseConfig = {
                     document.getElementById('paymentDetailsContainer').classList.add('active');
                     updatePaymentDetailsPreview();
                 }
-            }
-            
-            // Set signature if exists
-            if (doc.signature) {
-                signatureImage = doc.signature;
-                const overlayText = document.getElementById('signatureOverlayText');
-                const overlayImage = document.getElementById('signatureOverlayImage');
-                overlayText.style.display = 'none';
-                overlayImage.src = doc.signature;
-                overlayImage.style.display = 'block';
             }
             
             // Show revoked stamp if needed
