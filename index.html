@@ -634,6 +634,7 @@ const firebaseConfig = {
             border-top: 2px solid #eee;
             display: flex;
             justify-content: space-between;
+            position: relative;
         }
 
         .terms-preview {
@@ -846,6 +847,136 @@ const firebaseConfig = {
             margin-top: 10px;
         }
 
+        /* Signature Overlay */
+        .signature-overlay-container {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100px;
+            cursor: pointer;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .signature-overlay-container:hover {
+            border-color: var(--primary-color);
+            background: rgba(67, 97, 238, 0.05);
+        }
+
+        .signature-overlay-text {
+            color: var(--gray-color);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .signature-overlay-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        /* Signature Modal */
+        .signature-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .signature-modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .signature-canvas-container {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+            background: white;
+        }
+
+        #signatureCanvas {
+            width: 100%;
+            height: 200px;
+            cursor: crosshair;
+            display: block;
+        }
+
+        /* Client List */
+        .client-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .client-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #eaeaea;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .client-card:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .client-card h4 {
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .client-card p {
+            font-size: 0.9rem;
+            color: var(--gray-color);
+            margin-bottom: 3px;
+        }
+
+        /* Logo Upload */
+        .logo-upload-container {
+            margin-top: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #ddd;
+        }
+
+        .logo-url-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .logo-url-input input {
+            flex: 1;
+        }
+
+        .logo-example {
+            font-size: 0.85rem;
+            color: var(--gray-color);
+            margin-top: 10px;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 992px) {
             .form-grid {
@@ -993,6 +1124,28 @@ const firebaseConfig = {
         </div>
     </div>
 
+    <!-- Signature Modal -->
+    <div class="signature-modal" id="signatureModal">
+        <div class="signature-modal-content">
+            <h2>Add Signature</h2>
+            <p>Draw your signature in the box below:</p>
+            
+            <div class="signature-canvas-container">
+                <canvas id="signatureCanvas"></canvas>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn btn-secondary" onclick="clearSignature()">Clear</button>
+                <button class="btn btn-danger" onclick="undoSignature()">Undo</button>
+            </div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="saveSignature()">Save Signature</button>
+                <button class="btn btn-secondary" onclick="closeSignatureModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Application -->
     <div class="main-app" id="mainApp">
         <div class="container">
@@ -1012,6 +1165,7 @@ const firebaseConfig = {
                 <div class="nav-tab" data-tab="history">Document History</div>
                 <div class="nav-tab" data-tab="admin">Admin Dashboard</div>
                 <div class="nav-tab" data-tab="preview">Live Preview</div>
+                <div class="nav-tab" data-tab="clients">Client Database</div>
             </nav>
 
             <!-- Create Document Tab -->
@@ -1045,7 +1199,10 @@ const firebaseConfig = {
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="customerName" class="required">Customer Name</label>
-                        <input type="text" id="customerName" class="form-control" placeholder="John Doe">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="customerName" class="form-control" placeholder="John Doe" style="flex: 1;">
+                            <button type="button" class="btn btn-secondary" onclick="showClientList()" style="white-space: nowrap;">Select from Clients</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="customerEmail">Customer Email</label>
@@ -1059,6 +1216,10 @@ const firebaseConfig = {
                         <label for="customerAddress">Customer Address</label>
                         <textarea id="customerAddress" class="form-control" rows="2" placeholder="123 Main St, City, Country"></textarea>
                     </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn btn-success" onclick="saveCurrentClient()">Save Client Info</button>
+                    <button class="btn btn-secondary" onclick="clearClientForm()">Clear Client Info</button>
                 </div>
 
                 <h3>Items & Services</h3>
@@ -1258,18 +1419,24 @@ const firebaseConfig = {
                 </div>
                 
                 <div class="form-group mt-20">
-                    <label>Company Logo Selection</label>
+                    <label>Company Logo</label>
                     <div class="logo-selector">
                         <div class="logo-preview" id="logoPreviewContainer">
                             <span style="color: var(--gray-color);">No logo</span>
                         </div>
                         <div class="logo-options">
-                            <select id="logoSelect" class="form-control" onchange="updateLogoPreview()">
-                                <option value="">Select a logo</option>
-                            </select>
-                            <p style="margin-top: 5px; font-size: 0.9rem; color: var(--gray-color);">
-                                Upload logo files (xxxxx.png) to your hosting root folder
-                            </p>
+                            <div class="logo-upload-container">
+                                <div class="logo-url-input">
+                                    <input type="text" id="logoUrl" class="form-control" placeholder="Enter logo URL or select from files">
+                                    <button type="button" class="btn btn-secondary" onclick="scanForLogos()">Scan</button>
+                                </div>
+                                <select id="logoSelect" class="form-control" onchange="updateLogoFromSelect()">
+                                    <option value="">Select a logo</option>
+                                </select>
+                                <p class="logo-example">
+                                    Example: https://example.com/logo.png or /logos/company-logo.png
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1301,6 +1468,7 @@ const firebaseConfig = {
                 <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="generatePDF()">Download as PDF</button>
                     <button class="btn btn-secondary" onclick="refreshPreview()">Refresh Preview</button>
+                    <button class="btn btn-warning" onclick="openSignatureModal()">Add Signature</button>
                 </div>
                 <div class="document-preview" id="documentPreview">
                     <div class="revoked-stamp" id="revokedStamp">REVOKED</div>
@@ -1384,10 +1552,31 @@ const firebaseConfig = {
                             <h3>Thank You!</h3>
                             <p>We appreciate your business</p>
                         </div>
-                        <div style="text-align: right;">
+                        <div style="text-align: right; position: relative;">
                             <p><strong>Authorized Signature:</strong></p>
-                            <img src="/signature.png" alt="Signature" class="signature-image">
+                            <div class="signature-overlay-container" onclick="openSignatureModal()">
+                                <div class="signature-overlay-text" id="signatureOverlayText">Click to add signature</div>
+                                <img id="signatureOverlayImage" class="signature-overlay-image" src="" alt="Signature">
+                            </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Database Tab -->
+            <div class="tab-content" id="clients">
+                <h2>Client Database</h2>
+                <div class="alert" id="clientsAlert"></div>
+                
+                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="clientSearch" class="form-control" placeholder="Search clients..." style="flex: 1; max-width: 300px;">
+                    <button class="btn btn-primary" onclick="loadClients()">Refresh</button>
+                    <button class="btn btn-success" onclick="saveCurrentClient()">Save Current Client</button>
+                </div>
+                
+                <div class="client-list" id="clientList">
+                    <div class="text-center" style="padding: 40px; color: var(--gray-color);">
+                        Loading clients...
                     </div>
                 </div>
             </div>
@@ -1400,11 +1589,19 @@ const firebaseConfig = {
         let db = null;
         let companies = [];
         let documents = [];
+        let clients = [];
         let currentCompanyId = null;
         let selectedPaymentMethod = '';
         let paymentMethodDetails = {};
         let availableLogos = [];
         let discountAmount = 0;
+        let signatureImage = null;
+        let signatureCanvas = null;
+        let signatureCtx = null;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let signatureHistory = [];
 
         // Terms and conditions for each document type
         const documentTerms = {
@@ -1449,7 +1646,181 @@ const firebaseConfig = {
             document.getElementById('registerConfirmPassword')?.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') register();
             });
+
+            // Initialize signature canvas
+            setTimeout(() => {
+                initializeSignatureCanvas();
+            }, 1000);
         });
+
+        // Signature Functions
+        function initializeSignatureCanvas() {
+            signatureCanvas = document.getElementById('signatureCanvas');
+            if (signatureCanvas) {
+                signatureCtx = signatureCanvas.getContext('2d');
+                signatureCanvas.width = signatureCanvas.offsetWidth;
+                signatureCanvas.height = signatureCanvas.offsetHeight;
+                
+                // Set up drawing
+                signatureCanvas.addEventListener('mousedown', startDrawing);
+                signatureCanvas.addEventListener('mousemove', draw);
+                signatureCanvas.addEventListener('mouseup', stopDrawing);
+                signatureCanvas.addEventListener('mouseout', stopDrawing);
+                
+                // Touch support
+                signatureCanvas.addEventListener('touchstart', startDrawingTouch);
+                signatureCanvas.addEventListener('touchmove', drawTouch);
+                signatureCanvas.addEventListener('touchend', stopDrawing);
+                
+                clearSignatureCanvas();
+            }
+        }
+
+        function clearSignatureCanvas() {
+            if (signatureCtx) {
+                signatureCtx.fillStyle = 'white';
+                signatureCtx.fillRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                signatureCtx.strokeStyle = '#000';
+                signatureCtx.lineWidth = 2;
+                signatureCtx.lineCap = 'round';
+                signatureCtx.lineJoin = 'round';
+                signatureHistory = [];
+            }
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = signatureCanvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+            e.preventDefault();
+        }
+
+        function startDrawingTouch(e) {
+            if (e.touches.length === 1) {
+                isDrawing = true;
+                const rect = signatureCanvas.getBoundingClientRect();
+                lastX = e.touches[0].clientX - rect.left;
+                lastY = e.touches[0].clientY - rect.top;
+                e.preventDefault();
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            signatureCtx.beginPath();
+            signatureCtx.moveTo(lastX, lastY);
+            signatureCtx.lineTo(x, y);
+            signatureCtx.stroke();
+            
+            // Save to history
+            signatureHistory.push({
+                startX: lastX,
+                startY: lastY,
+                endX: x,
+                endY: y,
+                color: signatureCtx.strokeStyle,
+                width: signatureCtx.lineWidth
+            });
+            
+            lastX = x;
+            lastY = y;
+            e.preventDefault();
+        }
+
+        function drawTouch(e) {
+            if (!isDrawing || e.touches.length !== 1) return;
+            
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.touches[0].clientX - rect.left;
+            const y = e.touches[0].clientY - rect.top;
+            
+            signatureCtx.beginPath();
+            signatureCtx.moveTo(lastX, lastY);
+            signatureCtx.lineTo(x, y);
+            signatureCtx.stroke();
+            
+            // Save to history
+            signatureHistory.push({
+                startX: lastX,
+                startY: lastY,
+                endX: x,
+                endY: y,
+                color: signatureCtx.strokeStyle,
+                width: signatureCtx.lineWidth
+            });
+            
+            lastX = x;
+            lastY = y;
+            e.preventDefault();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function clearSignature() {
+            clearSignatureCanvas();
+        }
+
+        function undoSignature() {
+            if (signatureHistory.length > 0) {
+                // Clear canvas and redraw all except last stroke
+                clearSignatureCanvas();
+                signatureHistory.pop();
+                
+                // Redraw history
+                signatureHistory.forEach(stroke => {
+                    signatureCtx.strokeStyle = stroke.color;
+                    signatureCtx.lineWidth = stroke.width;
+                    signatureCtx.beginPath();
+                    signatureCtx.moveTo(stroke.startX, stroke.startY);
+                    signatureCtx.lineTo(stroke.endX, stroke.endY);
+                    signatureCtx.stroke();
+                });
+                
+                // Reset to default
+                signatureCtx.strokeStyle = '#000';
+                signatureCtx.lineWidth = 2;
+            }
+        }
+
+        function openSignatureModal() {
+            document.getElementById('signatureModal').style.display = 'flex';
+            clearSignatureCanvas();
+        }
+
+        function closeSignatureModal() {
+            document.getElementById('signatureModal').style.display = 'none';
+        }
+
+        function saveSignature() {
+            if (signatureHistory.length === 0) {
+                alert('Please draw a signature first');
+                return;
+            }
+            
+            // Convert canvas to data URL
+            const dataUrl = signatureCanvas.toDataURL('image/png');
+            signatureImage = dataUrl;
+            
+            // Update preview
+            const overlayContainer = document.querySelector('.signature-overlay-container');
+            const overlayText = document.getElementById('signatureOverlayText');
+            const overlayImage = document.getElementById('signatureOverlayImage');
+            
+            overlayText.style.display = 'none';
+            overlayImage.src = dataUrl;
+            overlayImage.style.display = 'block';
+            
+            closeSignatureModal();
+            showAlert('createAlert', 'Signature saved successfully!', 'success');
+        }
 
         // Auth functions
         function switchAuthTab(tab) {
@@ -1662,6 +2033,11 @@ const firebaseConfig = {
                     e.target.id === 'tillNumber') {
                     updatePaymentMethodDetails();
                 }
+
+                // Client search
+                if (e.target.id === 'clientSearch') {
+                    filterClients(e.target.value);
+                }
             });
             
             // Initialize
@@ -1671,6 +2047,7 @@ const firebaseConfig = {
             scanForLogos();
             loadCompanies();
             loadDocumentHistory();
+            loadClients();
             
             // Set current date
             const now = new Date();
@@ -1712,6 +2089,8 @@ const firebaseConfig = {
             // Special actions
             if (tabId === 'preview') {
                 previewDocument();
+            } else if (tabId === 'clients') {
+                loadClients();
             }
         }
 
@@ -1734,102 +2113,99 @@ const firebaseConfig = {
         }
 
         // Logo scanning and management
-       async function scanForLogos() {
-    try {
-        // GitHub Pages is static - we'll scan for image files by checking common patterns
-        availableLogos = [];
-        
-        // First, try to fetch a logos.json file if it exists
-        try {
-            const response = await fetch('/logos.json');
-            if (response.ok) {
-                const data = await response.json();
-                if (data.logos && Array.isArray(data.logos)) {
-                    availableLogos = data.logos;
-                    populateLogoSelect();
-                    console.log(`Found ${availableLogos.length} logos via logos.json`);
-                    return;
+        async function scanForLogos() {
+            try {
+                // Clear existing options
+                const select = document.getElementById('logoSelect');
+                select.innerHTML = '<option value="">Select a logo</option>';
+                
+                // Check for logos in common directories
+                const commonDirs = ['/', '/logos/', '/images/', '/assets/', '/img/'];
+                const extensions = ['.png', '.jpg', '.jpeg', '.svg', '.gif', '.webp'];
+                const commonNames = ['logo', 'brand', 'company', 'icon', 'business', 'organization'];
+                
+                availableLogos = [];
+                
+                // Create a list of possible logo URLs
+                const possibleLogos = [];
+                
+                for (const dir of commonDirs) {
+                    for (const name of commonNames) {
+                        for (const ext of extensions) {
+                            possibleLogos.push(`${dir}${name}${ext}`);
+                            possibleLogos.push(`${dir}${name}-${ext.substring(1)}${ext}`);
+                            possibleLogos.push(`${dir}${name}_${ext.substring(1)}${ext}`);
+                            possibleLogos.push(`${dir}${name.toUpperCase()}${ext}`);
+                        }
+                    }
                 }
+                
+                // Check each possible logo
+                console.log("Scanning for logo files...");
+                
+                const checkPromises = possibleLogos.map(logoPath => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = function() {
+                            console.log(`Found: ${logoPath}`);
+                            resolve({ path: logoPath, exists: true });
+                        };
+                        img.onerror = function() {
+                            resolve({ path: logoPath, exists: false });
+                        };
+                        img.src = logoPath;
+                    });
+                });
+                
+                // Wait for all checks
+                const results = await Promise.all(checkPromises);
+                availableLogos = results.filter(r => r.exists).map(r => r.path);
+                
+                // Populate select
+                availableLogos.forEach(logo => {
+                    const option = document.createElement('option');
+                    option.value = logo;
+                    option.textContent = logo;
+                    select.appendChild(option);
+                });
+                
+                // Also allow user to enter custom URL
+                const urlInput = document.getElementById('logoUrl');
+                if (urlInput.value && !availableLogos.includes(urlInput.value)) {
+                    const customOption = document.createElement('option');
+                    customOption.value = urlInput.value;
+                    customOption.textContent = `${urlInput.value} (custom)`;
+                    select.appendChild(customOption);
+                    select.value = urlInput.value;
+                }
+                
+                console.log(`Found ${availableLogos.length} logo files`);
+                
+            } catch (error) {
+                console.error("Error scanning for logos:", error);
             }
-        } catch (e) {
-            console.log("No logos.json file found, scanning directly...");
         }
-        
-        // Common logo file patterns for GitHub Pages
-        const logoPatterns = [
-            'logo.png', 'logo.jpg', 'logo.jpeg', 'logo.svg', 'logo.gif',
-            'company-logo.png', 'company-logo.jpg', 'company-logo.svg',
-            'brand-logo.png', 'brand-logo.jpg', 'brand-logo.svg',
-            'icon.png', 'icon.jpg', 'icon.svg',
-            'company.png', 'company.jpg', 'company.svg',
-            'business.png', 'business.jpg', 'business.svg',
-            'acme.png', 'acme.jpg', 'acme.svg',
-            'company1.png', 'company2.png', 'company3.png',
-            'organization.png', 'organization.jpg', 'organization.svg',
-            // Add more patterns as needed
-        ];
-        
-        console.log("Scanning for logo files on GitHub Pages...");
-        
-        // Check each logo pattern
-        const checkPromises = logoPatterns.map(logoFile => {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = function() {
-                    console.log(`Found: ${logoFile}`);
-                    resolve(logoFile);
-                };
-                img.onerror = function() {
-                    resolve(null); // Logo doesn't exist
-                };
-                // Set a timeout to prevent hanging
-                setTimeout(() => resolve(null), 2000);
-                img.src = `/${logoFile}`;
-            });
-        });
-        
-        // Wait for all checks to complete
-        const foundLogos = await Promise.all(checkPromises);
-        availableLogos = foundLogos.filter(logo => logo !== null);
-        
-        populateLogoSelect();
-        
-        console.log(`Found ${availableLogos.length} logo files on GitHub Pages`);
-        
-        if (availableLogos.length === 0) {
-            console.warn("No logo files found. To add logos:");
-            console.warn("1. Upload logo files (PNG, JPG, SVG) to your GitHub repository root");
-            console.warn("2. OR create a logos.json file with your logo filenames");
-        }
-        
-    } catch (error) {
-        console.error("Error scanning for logos:", error);
-        // Set default empty array
-        availableLogos = [];
-        populateLogoSelect();
-    }
-}
 
-// Helper function to populate the logo select dropdown
-function populateLogoSelect() {
-    const select = document.getElementById('logoSelect');
-    select.innerHTML = '<option value="">Select a logo</option>';
-    
-    availableLogos.forEach(logo => {
-        const option = document.createElement('option');
-        option.value = logo;
-        option.textContent = logo;
-        select.appendChild(option);
-    });
-}
-        function updateLogoPreview() {
+        function updateLogoFromSelect() {
             const select = document.getElementById('logoSelect');
-            const logoFile = select.value;
+            const logoUrl = select.value;
+            const urlInput = document.getElementById('logoUrl');
+            
+            if (logoUrl) {
+                urlInput.value = logoUrl;
+                updateLogoPreview(logoUrl);
+            }
+        }
+
+        function updateLogoPreview(logoUrl = null) {
             const previewContainer = document.getElementById('logoPreviewContainer');
             
-            if (logoFile) {
-                // Assuming logos are in root folder
-                const logoUrl = `/${logoFile}`;
+            if (!logoUrl) {
+                const select = document.getElementById('logoSelect');
+                logoUrl = select.value;
+            }
+            
+            if (logoUrl) {
                 previewContainer.innerHTML = `<img src="${logoUrl}" alt="Logo Preview" onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\\'color: var(--gray-color);\\'>Logo not found</span>'">`;
             } else {
                 previewContainer.innerHTML = '<span style="color: var(--gray-color);">No logo</span>';
@@ -2091,7 +2467,7 @@ function populateLogoSelect() {
                     card.className = 'company-card';
                     card.innerHTML = `
                         <div class="company-card-header">
-                            ${company.logoFile ? `<img src="/${company.logoFile}" class="company-card-logo" alt="${company.name}" onerror="this.style.display='none'">` : ''}
+                            ${company.logoFile || company.logoUrl ? `<img src="${company.logoFile || company.logoUrl}" class="company-card-logo" alt="${company.name}" onerror="this.style.display='none'">` : ''}
                             <div>
                                 <h4 style="margin-bottom: 5px;">${company.name}</h4>
                                 <p style="font-size: 0.9rem; color: var(--gray-color);">${company.email}</p>
@@ -2163,8 +2539,9 @@ function populateLogoSelect() {
             
             // Update logo
             const logoImg = document.getElementById('previewLogo');
-            if (company.logoFile) {
-                logoImg.src = `/${company.logoFile}`;
+            const logoUrl = company.logoFile || company.logoUrl;
+            if (logoUrl) {
+                logoImg.src = logoUrl;
                 logoImg.style.display = 'block';
                 logoImg.onerror = function() {
                     this.style.display = 'none';
@@ -2206,9 +2583,8 @@ function populateLogoSelect() {
                     paymentMethods.push(cb.value);
                 });
                 
-                // Get selected logo
-                const logoSelect = document.getElementById('logoSelect');
-                const logoFile = logoSelect.value || '';
+                // Get logo URL
+                const logoUrl = document.getElementById('logoUrl').value.trim();
                 
                 // Prepare company data
                 const companyData = {
@@ -2222,7 +2598,7 @@ function populateLogoSelect() {
                     primaryColor: document.getElementById('primaryColor').value,
                     secondaryColor: document.getElementById('secondaryColor').value,
                     paymentMethods: paymentMethods,
-                    logoFile: logoFile,
+                    logoUrl: logoUrl,
                     updatedAt: window.firebaseApp.Timestamp.now()
                 };
                 
@@ -2283,10 +2659,9 @@ function populateLogoSelect() {
             document.getElementById('colorPreview').style.backgroundColor = company.primaryColor || '#4361ee';
             document.getElementById('secondaryColorPreview').style.backgroundColor = company.secondaryColor || '#3a0ca3';
             
-            // Update logo selection
-            const logoSelect = document.getElementById('logoSelect');
-            logoSelect.value = company.logoFile || '';
-            updateLogoPreview();
+            // Update logo
+            document.getElementById('logoUrl').value = company.logoUrl || '';
+            updateLogoPreview(company.logoUrl);
             
             // Update payment methods
             document.querySelectorAll('.payment-method-checkbox').forEach(cb => {
@@ -2321,8 +2696,8 @@ function populateLogoSelect() {
                 cb.checked = cb.value === 'Credit Card' || cb.value === 'PayPal';
             });
             
-            document.getElementById('logoSelect').value = '';
-            updateLogoPreview();
+            document.getElementById('logoUrl').value = '';
+            updateLogoPreview('');
             
             document.getElementById('deleteCompanyBtn').style.display = 'none';
             document.getElementById('adminAlert').style.display = 'none';
@@ -2343,6 +2718,154 @@ function populateLogoSelect() {
             } catch (error) {
                 console.error("Error deleting company:", error);
                 showAlert('adminAlert', 'Error deleting company: ' + error.message, 'danger');
+            }
+        }
+
+        // Client Management
+        async function loadClients() {
+            try {
+                const querySnapshot = await window.firebaseApp.getDocs(
+                    window.firebaseApp.query(
+                        window.firebaseApp.collection(db, "clients"),
+                        window.firebaseApp.where("userId", "==", currentUser.uid),
+                        window.firebaseApp.orderBy("createdAt", "desc")
+                    )
+                );
+                
+                clients = [];
+                const clientList = document.getElementById('clientList');
+                clientList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    clientList.innerHTML = '<div class="text-center" style="padding: 40px; color: var(--gray-color);">No clients found. Add your first client!</div>';
+                    return;
+                }
+                
+                querySnapshot.forEach((doc) => {
+                    const client = { id: doc.id, ...doc.data() };
+                    clients.push(client);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'client-card';
+                    card.onclick = () => selectClient(client);
+                    card.innerHTML = `
+                        <h4>${client.name}</h4>
+                        ${client.email ? `<p>📧 ${client.email}</p>` : ''}
+                        ${client.phone ? `<p>📱 ${client.phone}</p>` : ''}
+                        ${client.address ? `<p>📍 ${client.address}</p>` : ''}
+                        <div style="margin-top: 10px; display: flex; gap: 5px;">
+                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); selectClient(${JSON.stringify(client).replace(/"/g, '&quot;')})">Select</button>
+                            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteClient('${doc.id}')">Delete</button>
+                        </div>
+                    `;
+                    clientList.appendChild(card);
+                });
+                
+                console.log(`Loaded ${clients.length} clients`);
+            } catch (error) {
+                console.error("Error loading clients:", error);
+                showAlert('clientsAlert', 'Error loading clients: ' + error.message, 'danger');
+            }
+        }
+
+        function filterClients(searchTerm) {
+            const clientList = document.getElementById('clientList');
+            const cards = clientList.querySelectorAll('.client-card');
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm.toLowerCase())) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function showClientList() {
+            switchTab('clients');
+        }
+
+        function selectClient(client) {
+            document.getElementById('customerName').value = client.name || '';
+            document.getElementById('customerEmail').value = client.email || '';
+            document.getElementById('customerPhone').value = client.phone || '';
+            document.getElementById('customerAddress').value = client.address || '';
+            
+            switchTab('create');
+            showAlert('createAlert', `Client "${client.name}" selected`, 'success');
+        }
+
+        function clearClientForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+        }
+
+        async function saveCurrentClient() {
+            const name = document.getElementById('customerName').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            
+            if (!name) {
+                showAlert('createAlert', 'Client name is required', 'danger');
+                return;
+            }
+            
+            try {
+                const clientData = {
+                    name: name,
+                    email: email,
+                    phone: document.getElementById('customerPhone').value.trim(),
+                    address: document.getElementById('customerAddress').value.trim(),
+                    userId: currentUser.uid,
+                    createdAt: window.firebaseApp.Timestamp.now(),
+                    updatedAt: window.firebaseApp.Timestamp.now()
+                };
+                
+                // Check if client already exists
+                const existingClient = clients.find(c => 
+                    c.email === email && email || 
+                    c.name.toLowerCase() === name.toLowerCase()
+                );
+                
+                if (existingClient) {
+                    // Update existing client
+                    const clientRef = window.firebaseApp.doc(db, "clients", existingClient.id);
+                    await window.firebaseApp.updateDoc(clientRef, clientData);
+                    showAlert('createAlert', 'Client updated successfully!', 'success');
+                } else {
+                    // Add new client
+                    await window.firebaseApp.addDoc(
+                        window.firebaseApp.collection(db, "clients"), 
+                        clientData
+                    );
+                    showAlert('createAlert', 'Client saved successfully!', 'success');
+                }
+                
+                // Reload clients
+                await loadClients();
+                
+            } catch (error) {
+                console.error("Error saving client:", error);
+                showAlert('createAlert', 'Error saving client: ' + error.message, 'danger');
+            }
+        }
+
+        async function deleteClient(clientId) {
+            if (!confirm('Are you sure you want to delete this client?')) {
+                return;
+            }
+            
+            try {
+                const clientRef = window.firebaseApp.doc(db, "clients", clientId);
+                await window.firebaseApp.deleteDoc(clientRef);
+                
+                showAlert('clientsAlert', 'Client deleted successfully!', 'success');
+                await loadClients();
+            } catch (error) {
+                console.error("Error deleting client:", error);
+                showAlert('clientsAlert', 'Error deleting client: ' + error.message, 'danger');
             }
         }
 
@@ -2419,7 +2942,7 @@ function populateLogoSelect() {
                 const docType = document.getElementById('documentType').value;
                 const terms = documentTerms[docType] || '';
                 
-                // Prepare document data
+                // Prepare document data with signature
                 const documentData = {
                     type: docType,
                     serialNumber: document.getElementById('serialNumber').value,
@@ -2429,7 +2952,7 @@ function populateLogoSelect() {
                     companyPhone: company.phone,
                     companyAddress: company.address,
                     companyWebsite: company.website,
-                    companyLogoFile: company.logoFile || '',
+                    companyLogoUrl: company.logoUrl || '',
                     parentCompany: company.parentCompany || '',
                     taxPin: company.taxPin || '',
                     customerName: customerName,
@@ -2445,6 +2968,7 @@ function populateLogoSelect() {
                     paymentMethods: company.paymentMethods || [],
                     selectedPaymentMethod: selectedPaymentMethod,
                     paymentMethodDetails: paymentMethodDetails,
+                    signature: signatureImage, // Save signature image
                     terms: terms,
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
@@ -2507,6 +3031,14 @@ function populateLogoSelect() {
             document.querySelectorAll('#paymentMethodsSelection .payment-method-tag').forEach(el => {
                 el.classList.remove('active');
             });
+            
+            // Clear signature
+            signatureImage = null;
+            const overlayText = document.getElementById('signatureOverlayText');
+            const overlayImage = document.getElementById('signatureOverlayImage');
+            overlayText.style.display = 'block';
+            overlayImage.style.display = 'none';
+            overlayImage.src = '';
             
             updateSerialNumber();
             updateTermsAndConditions();
@@ -2698,6 +3230,16 @@ function populateLogoSelect() {
                     document.getElementById('paymentDetailsContainer').classList.add('active');
                     updatePaymentDetailsPreview();
                 }
+            }
+            
+            // Set signature if exists
+            if (doc.signature) {
+                signatureImage = doc.signature;
+                const overlayText = document.getElementById('signatureOverlayText');
+                const overlayImage = document.getElementById('signatureOverlayImage');
+                overlayText.style.display = 'none';
+                overlayImage.src = doc.signature;
+                overlayImage.style.display = 'block';
             }
             
             // Show revoked stamp if needed
