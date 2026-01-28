@@ -564,12 +564,6 @@ const firebaseConfig = {
             border-bottom: 2px solid #eee;
         }
 
-        .company-logo {
-            max-width: 180px;
-            max-height: 100px;
-            object-fit: contain;
-        }
-
         .company-details {
             text-align: right;
         }
@@ -742,36 +736,6 @@ const firebaseConfig = {
             border: 1px solid #ddd;
         }
 
-        /* Logo Selector */
-        .logo-selector {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .logo-preview {
-            width: 120px;
-            height: 120px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background: #f8f9fa;
-        }
-
-        .logo-preview img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .logo-options {
-            flex: 1;
-        }
-
         /* Alerts */
         .alert {
             padding: 15px 20px;
@@ -901,31 +865,6 @@ const firebaseConfig = {
             margin-bottom: 3px;
         }
 
-        /* Logo Upload */
-        .logo-upload-container {
-            margin-top: 15px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px dashed #ddd;
-        }
-
-        .logo-url-input {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .logo-url-input input {
-            flex: 1;
-        }
-
-        .logo-example {
-            font-size: 0.85rem;
-            color: var(--gray-color);
-            margin-top: 10px;
-        }
-
         /* Mobile Responsive */
         @media (max-width: 992px) {
             .form-grid {
@@ -983,11 +922,6 @@ const firebaseConfig = {
             
             .company-list {
                 grid-template-columns: 1fr;
-            }
-            
-            .logo-selector {
-                flex-direction: column;
-                align-items: flex-start;
             }
             
             .signature-image {
@@ -1351,29 +1285,6 @@ const firebaseConfig = {
                 </div>
                 
                 <div class="form-group mt-20">
-                    <label>Company Logo</label>
-                    <div class="logo-selector">
-                        <div class="logo-preview" id="logoPreviewContainer">
-                            <span style="color: var(--gray-color);">No logo</span>
-                        </div>
-                        <div class="logo-options">
-                            <div class="logo-upload-container">
-                                <div class="logo-url-input">
-                                    <input type="text" id="logoUrl" class="form-control" placeholder="Enter logo URL or select from files">
-                                    <button type="button" class="btn btn-secondary" onclick="scanForLogos()">Scan</button>
-                                </div>
-                                <select id="logoSelect" class="form-control" onchange="updateLogoFromSelect()">
-                                    <option value="">Select a logo</option>
-                                </select>
-                                <p class="logo-example">
-                                    Example: https://example.com/logo.png or /logos/company-logo.png
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group mt-20">
                     <label>Payment Methods</label>
                     <div class="payment-methods" id="paymentMethodsContainer">
                         <!-- Payment methods will be populated here -->
@@ -1406,7 +1317,6 @@ const firebaseConfig = {
                     
                     <div class="document-header">
                         <div>
-                            <img id="previewLogo" class="company-logo" src="" alt="Company Logo" style="display: none;">
                             <h2 id="previewCompanyName">Company Name</h2>
                             <div id="previewParentCompany" class="parent-company"></div>
                             <div id="previewCompanyTax" class="company-tax"></div>
@@ -1524,7 +1434,6 @@ const firebaseConfig = {
         let currentCompanyId = null;
         let selectedPaymentMethod = '';
         let paymentMethodDetails = {};
-        let availableLogos = [];
         let discountAmount = 0;
         let signatureLoaded = false;
 
@@ -1795,7 +1704,6 @@ const firebaseConfig = {
             updateSerialNumber();
             updateTermsAndConditions();
             loadDefaultPaymentMethods();
-            scanForLogos();
             checkSignatureFile();
             loadCompanies();
             loadDocumentHistory();
@@ -1885,106 +1793,6 @@ const firebaseConfig = {
             const previewTerms = document.getElementById('previewTerms');
             const formattedTerms = terms.split('\n').map(line => `<p>${line}</p>`).join('');
             previewTerms.innerHTML = formattedTerms;
-        }
-
-        // Logo scanning and management
-        async function scanForLogos() {
-            try {
-                // Clear existing options
-                const select = document.getElementById('logoSelect');
-                select.innerHTML = '<option value="">Select a logo</option>';
-                
-                // Check for logos in common directories
-                const commonDirs = ['/', '/logos/', '/images/', '/assets/', '/img/'];
-                const extensions = ['.png', '.jpg', '.jpeg', '.svg', '.gif', '.webp'];
-                const commonNames = ['logo', 'brand', 'company', 'icon', 'business', 'organization'];
-                
-                availableLogos = [];
-                
-                // Create a list of possible logo URLs
-                const possibleLogos = [];
-                
-                for (const dir of commonDirs) {
-                    for (const name of commonNames) {
-                        for (const ext of extensions) {
-                            possibleLogos.push(`${dir}${name}${ext}`);
-                            possibleLogos.push(`${dir}${name}-${ext.substring(1)}${ext}`);
-                            possibleLogos.push(`${dir}${name}_${ext.substring(1)}${ext}`);
-                            possibleLogos.push(`${dir}${name.toUpperCase()}${ext}`);
-                        }
-                    }
-                }
-                
-                // Check each possible logo
-                console.log("Scanning for logo files...");
-                
-                const checkPromises = possibleLogos.map(logoPath => {
-                    return new Promise((resolve) => {
-                        const img = new Image();
-                        img.onload = function() {
-                            console.log(`Found: ${logoPath}`);
-                            resolve({ path: logoPath, exists: true });
-                        };
-                        img.onerror = function() {
-                            resolve({ path: logoPath, exists: false });
-                        };
-                        img.src = logoPath;
-                    });
-                });
-                
-                // Wait for all checks
-                const results = await Promise.all(checkPromises);
-                availableLogos = results.filter(r => r.exists).map(r => r.path);
-                
-                // Populate select
-                availableLogos.forEach(logo => {
-                    const option = document.createElement('option');
-                    option.value = logo;
-                    option.textContent = logo;
-                    select.appendChild(option);
-                });
-                
-                // Also allow user to enter custom URL
-                const urlInput = document.getElementById('logoUrl');
-                if (urlInput.value && !availableLogos.includes(urlInput.value)) {
-                    const customOption = document.createElement('option');
-                    customOption.value = urlInput.value;
-                    customOption.textContent = `${urlInput.value} (custom)`;
-                    select.appendChild(customOption);
-                    select.value = urlInput.value;
-                }
-                
-                console.log(`Found ${availableLogos.length} logo files`);
-                
-            } catch (error) {
-                console.error("Error scanning for logos:", error);
-            }
-        }
-
-        function updateLogoFromSelect() {
-            const select = document.getElementById('logoSelect');
-            const logoUrl = select.value;
-            const urlInput = document.getElementById('logoUrl');
-            
-            if (logoUrl) {
-                urlInput.value = logoUrl;
-                updateLogoPreview(logoUrl);
-            }
-        }
-
-        function updateLogoPreview(logoUrl = null) {
-            const previewContainer = document.getElementById('logoPreviewContainer');
-            
-            if (!logoUrl) {
-                const select = document.getElementById('logoSelect');
-                logoUrl = select.value;
-            }
-            
-            if (logoUrl) {
-                previewContainer.innerHTML = `<img src="${logoUrl}" alt="Logo Preview" onerror="this.onerror=null; this.parentElement.innerHTML='<span style=\\'color: var(--gray-color);\\'>Logo not found</span>'">`;
-            } else {
-                previewContainer.innerHTML = '<span style="color: var(--gray-color);">No logo</span>';
-            }
         }
 
         // Serial Number Generation
@@ -2242,7 +2050,6 @@ const firebaseConfig = {
                     card.className = 'company-card';
                     card.innerHTML = `
                         <div class="company-card-header">
-                            ${company.logoUrl ? `<img src="${company.logoUrl}" class="company-card-logo" alt="${company.name}" onerror="this.style.display='none'">` : ''}
                             <div>
                                 <h4 style="margin-bottom: 5px;">${company.name}</h4>
                                 <p style="font-size: 0.9rem; color: var(--gray-color);">${company.email}</p>
@@ -2312,18 +2119,6 @@ const firebaseConfig = {
                 companyTax.style.display = 'none';
             }
             
-            // Update logo
-            const logoImg = document.getElementById('previewLogo');
-            if (company.logoUrl) {
-                logoImg.src = company.logoUrl;
-                logoImg.style.display = 'block';
-                logoImg.onerror = function() {
-                    this.style.display = 'none';
-                };
-            } else {
-                logoImg.style.display = 'none';
-            }
-            
             // Update colors
             if (company.primaryColor) {
                 document.documentElement.style.setProperty('--primary-color', company.primaryColor);
@@ -2357,9 +2152,6 @@ const firebaseConfig = {
                     paymentMethods.push(cb.value);
                 });
                 
-                // Get logo URL
-                const logoUrl = document.getElementById('logoUrl').value.trim();
-                
                 // Prepare company data
                 const companyData = {
                     name: name,
@@ -2372,7 +2164,6 @@ const firebaseConfig = {
                     primaryColor: document.getElementById('primaryColor').value,
                     secondaryColor: document.getElementById('secondaryColor').value,
                     paymentMethods: paymentMethods,
-                    logoUrl: logoUrl,
                     updatedAt: window.firebaseApp.Timestamp.now()
                 };
                 
@@ -2433,10 +2224,6 @@ const firebaseConfig = {
             document.getElementById('colorPreview').style.backgroundColor = company.primaryColor || '#4361ee';
             document.getElementById('secondaryColorPreview').style.backgroundColor = company.secondaryColor || '#3a0ca3';
             
-            // Update logo
-            document.getElementById('logoUrl').value = company.logoUrl || '';
-            updateLogoPreview(company.logoUrl);
-            
             // Update payment methods
             document.querySelectorAll('.payment-method-checkbox').forEach(cb => {
                 cb.checked = company.paymentMethods && company.paymentMethods.includes(cb.value);
@@ -2469,9 +2256,6 @@ const firebaseConfig = {
             document.querySelectorAll('.payment-method-checkbox').forEach(cb => {
                 cb.checked = cb.value === 'Credit Card' || cb.value === 'PayPal';
             });
-            
-            document.getElementById('logoUrl').value = '';
-            updateLogoPreview('');
             
             document.getElementById('deleteCompanyBtn').style.display = 'none';
             document.getElementById('adminAlert').style.display = 'none';
@@ -2726,7 +2510,6 @@ const firebaseConfig = {
                     companyPhone: company.phone,
                     companyAddress: company.address,
                     companyWebsite: company.website,
-                    companyLogoUrl: company.logoUrl || '',
                     parentCompany: company.parentCompany || '',
                     taxPin: company.taxPin || '',
                     customerName: customerName,
@@ -2742,7 +2525,7 @@ const firebaseConfig = {
                     paymentMethods: company.paymentMethods || [],
                     selectedPaymentMethod: selectedPaymentMethod,
                     paymentMethodDetails: paymentMethodDetails,
-                    hasSignature: signatureLoaded, // Store if signature exists
+                    hasSignature: signatureLoaded,
                     terms: terms,
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
