@@ -551,8 +551,8 @@
             overflow-y: auto;
         }
 
-        /* Payment Methods */
-        .payment-methods-section {
+        /* Multiple Payment Accounts */
+        .multiple-payment-accounts {
             margin-top: 30px;
             padding: 20px;
             background: #f9fafc;
@@ -560,31 +560,24 @@
             border-left: 4px solid var(--primary-color);
         }
 
-        .payment-methods {
+        .payment-account-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+            margin-bottom: 15px;
+        }
+
+        .payment-account-header {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
-        .payment-method-tag {
-            background-color: #f1f5fd;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: var(--transition);
-            border: 2px solid transparent;
-        }
-
-        .payment-method-tag:hover {
-            background-color: #e1e9ff;
-        }
-
-        .payment-method-tag.active {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
+        .payment-account-header h5 {
+            margin: 0;
+            color: var(--primary-color);
         }
 
         .payment-methods-checkbox-list {
@@ -605,23 +598,6 @@
 
         .payment-method-checkbox-item input[type="checkbox"] {
             margin-right: 10px;
-        }
-
-        .payment-details-fields {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #eaeaea;
-            display: none;
-        }
-
-        .payment-details-fields.active {
-            display: grid;
-            animation: fadeIn 0.3s ease;
         }
 
         /* Document Preview */
@@ -1114,10 +1090,6 @@
                 grid-template-columns: 1fr;
             }
             
-            .payment-details-fields {
-                grid-template-columns: 1fr;
-            }
-            
             .receipt-info-grid {
                 grid-template-columns: 1fr;
             }
@@ -1168,16 +1140,6 @@
             .signature-overlay-container {
                 width: 150px;
                 height: 80px;
-            }
-            
-            .payment-methods {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .payment-method-tag {
-                width: 100%;
-                text-align: center;
             }
             
             .currency-selection {
@@ -1555,36 +1517,94 @@
                     </div>
                 </div>
 
-                <!-- Multiple Payment Methods Section -->
-                <div class="payment-methods-section mt-30">
-                    <h4>Payment Methods</h4>
+                <!-- Multiple Payment Accounts Section -->
+                <div class="multiple-payment-accounts mt-30">
+                    <h4>Payment Accounts & Methods</h4>
                     <div class="form-group">
                         <label>Select Payment Methods (Multiple selection allowed)</label>
                         <div class="payment-methods-checkbox-list" id="paymentMethodsCheckboxList">
                             <!-- Payment method checkboxes will be populated here -->
                         </div>
                     </div>
-                    <div class="payment-details-fields" id="paymentDetailsContainer">
-                        <div class="form-group">
-                            <label for="accountNumber">Account Number</label>
-                            <input type="text" id="accountNumber" class="form-control" placeholder="Optional">
+                    
+                    <div id="paymentAccountsContainer">
+                        <!-- Multiple payment accounts will be added here -->
+                        <div class="payment-account-item" id="paymentAccount1">
+                            <div class="payment-account-header">
+                                <h5>Payment Account #1</h5>
+                                <button class="btn btn-danger btn-sm" onclick="removePaymentAccount('paymentAccount1')">Remove</button>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Account Type</label>
+                                    <select class="form-control account-type" onchange="updateAccountFields(this)">
+                                        <option value="bank">Bank Account</option>
+                                        <option value="mobile">Mobile Money</option>
+                                        <option value="card">Card Payment</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Account Name</label>
+                                    <input type="text" class="form-control account-name" placeholder="e.g., Equity Bank USD Account">
+                                </div>
+                                <div class="form-group bank-fields">
+                                    <label>Bank Name</label>
+                                    <input type="text" class="form-control bank-name" placeholder="e.g., Equity Bank">
+                                </div>
+                                <div class="form-group bank-fields">
+                                    <label>Account Number</label>
+                                    <input type="text" class="form-control account-number" placeholder="Account number">
+                                </div>
+                                <div class="form-group bank-fields">
+                                    <label>Swift/BIC Code</label>
+                                    <input type="text" class="form-control swift-code" placeholder="SWIFT/BIC code">
+                                </div>
+                                <div class="form-group mobile-fields" style="display: none;">
+                                    <label>Mobile Network</label>
+                                    <select class="form-control mobile-network">
+                                        <option value="mpesa">M-Pesa</option>
+                                        <option value="airtel">Airtel Money</option>
+                                        <option value="tkash">T-Kash</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mobile-fields" style="display: none;">
+                                    <label>Phone Number</label>
+                                    <input type="text" class="form-control phone-number" placeholder="Phone number">
+                                </div>
+                                <div class="form-group mobile-fields" style="display: none;">
+                                    <label>Paybill/Till Number</label>
+                                    <input type="text" class="form-control paybill-number" placeholder="Paybill/Till number">
+                                </div>
+                                <div class="form-group card-fields" style="display: none;">
+                                    <label>Card Type</label>
+                                    <select class="form-control card-type">
+                                        <option value="visa">Visa</option>
+                                        <option value="mastercard">MasterCard</option>
+                                        <option value="amex">American Express</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group card-fields" style="display: none;">
+                                    <label>Card Last 4 Digits</label>
+                                    <input type="text" class="form-control card-last4" placeholder="Last 4 digits" maxlength="4">
+                                </div>
+                                <div class="form-group">
+                                    <label>Processing Institution</label>
+                                    <input type="text" class="form-control processing-institution" placeholder="Institution name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Additional Notes</label>
+                                    <textarea class="form-control account-notes" rows="2" placeholder="Additional account information"></textarea>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="accountName">Account Name</label>
-                            <input type="text" id="accountName" class="form-control" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="processingInstitution">Processing Institution</label>
-                            <input type="text" id="processingInstitution" class="form-control" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="paybillNumber">Paybill Number</label>
-                            <input type="text" id="paybillNumber" class="form-control" placeholder="Optional">
-                        </div>
-                        <div class="form-group">
-                            <label for="tillNumber">Till Number</label>
-                            <input type="text" id="tillNumber" class="form-control" placeholder="Optional">
-                        </div>
+                    </div>
+                    
+                    <div class="mt-20" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="addPaymentAccount()">+ Add Another Payment Account</button>
+                        <button class="btn btn-primary" onclick="updatePaymentAccountsPreview()">Update Payment Preview</button>
                     </div>
                 </div>
 
@@ -1854,13 +1874,16 @@
                         </table>
                     </div>
                     
-                    <div class="payment-methods-section">
-                        <h4>Payment Methods</h4>
+                    <div class="multiple-payment-accounts">
+                        <h4>Payment Accounts & Methods</h4>
                         <div id="previewPaymentMethodsList">
                             <!-- Selected payment methods will appear here -->
                             <p>No payment methods selected</p>
                         </div>
-                        <div id="previewPaymentDetails"></div>
+                        <div id="previewPaymentAccounts">
+                            <!-- Payment accounts will be populated here -->
+                            <p>No payment accounts added</p>
+                        </div>
                     </div>
                     
                     <div class="terms-preview" id="previewTerms">
@@ -1957,14 +1980,15 @@
         let clients = [];
         let terms = [];
         let currentCompanyId = null;
-        let selectedPaymentMethods = []; // Changed from single to array
-        let paymentMethodDetails = {};
+        let selectedPaymentMethods = [];
+        let paymentAccounts = []; // Array for multiple payment accounts
         let discountAmount = 0;
         let signatureLoaded = false;
         let selectedCurrency = 'USD';
         let currentTermId = null;
         let currentDocumentForPayment = null;
-        let selectedTermIds = []; // Array to hold multiple selected term IDs
+        let selectedTermIds = [];
+        let accountCounter = 1;
         
         // Store for monthly sequential numbers
         let monthlySequence = {};
@@ -2008,6 +2032,23 @@
             // Set receipt date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('receiptDate').value = today;
+            
+            // Initialize payment accounts array
+            paymentAccounts = [{
+                id: 'paymentAccount1',
+                accountType: 'bank',
+                accountName: '',
+                bankName: '',
+                accountNumber: '',
+                swiftCode: '',
+                mobileNetwork: 'mpesa',
+                phoneNumber: '',
+                paybillNumber: '',
+                cardType: 'visa',
+                cardLast4: '',
+                processingInstitution: '',
+                notes: ''
+            }];
         });
 
         // Auth functions
@@ -2218,11 +2259,19 @@
                     updateItemTotals();
                 }
                 
-                // Update payment details
-                if (e.target.id === 'accountNumber' || e.target.id === 'accountName' || 
-                    e.target.id === 'processingInstitution' || e.target.id === 'paybillNumber' || 
-                    e.target.id === 'tillNumber') {
-                    updatePaymentMethodDetails();
+                // Update payment accounts data
+                if (e.target.classList.contains('account-name') || 
+                    e.target.classList.contains('bank-name') ||
+                    e.target.classList.contains('account-number') ||
+                    e.target.classList.contains('swift-code') ||
+                    e.target.classList.contains('mobile-network') ||
+                    e.target.classList.contains('phone-number') ||
+                    e.target.classList.contains('paybill-number') ||
+                    e.target.classList.contains('card-type') ||
+                    e.target.classList.contains('card-last4') ||
+                    e.target.classList.contains('processing-institution') ||
+                    e.target.classList.contains('account-notes')) {
+                    updatePaymentAccountsData();
                 }
 
                 // Client search
@@ -2238,6 +2287,11 @@
                 // Payment method checkbox change
                 if (e.target.classList.contains('payment-method-checkbox')) {
                     updateSelectedPaymentMethods();
+                }
+                
+                // Account type change
+                if (e.target.classList.contains('account-type')) {
+                    updateAccountFields(e.target);
                 }
             });
             
@@ -2391,7 +2445,7 @@
                 selectedPaymentMethods.push(checkbox.value);
             });
             
-            updatePaymentDetailsPreview();
+            updatePaymentAccountsPreview();
         }
 
         // Currency selection function
@@ -2627,11 +2681,15 @@
 
         // Payment Methods Management
         function loadDefaultPaymentMethods() {
-            const defaultMethods = ['Credit Card', 'PayPal', 'Bank Transfer', 'Cash', 'M-Pesa', 'Check'];
+            const defaultMethods = ['Credit Card', 'PayPal', 'Bank Transfer', 'Cash', 'M-Pesa', 'Airtel Money', 'T-Kash', 'Check'];
             const container = document.getElementById('paymentMethodsContainer');
+            const checkboxList = document.getElementById('paymentMethodsCheckboxList');
             
             container.innerHTML = '';
+            checkboxList.innerHTML = '';
+            
             defaultMethods.forEach(method => {
+                // For admin panel
                 const item = document.createElement('div');
                 item.className = 'payment-method-checkbox-item';
                 item.innerHTML = `
@@ -2639,6 +2697,15 @@
                     <span>${method}</span>
                 `;
                 container.appendChild(item);
+                
+                // For document creation
+                const checkboxItem = document.createElement('div');
+                checkboxItem.className = 'payment-method-checkbox-item';
+                checkboxItem.innerHTML = `
+                    <input type="checkbox" class="payment-method-checkbox" value="${method}">
+                    <span>${method}</span>
+                `;
+                checkboxList.appendChild(checkboxItem);
             });
         }
 
@@ -2652,6 +2719,9 @@
             }
             
             const container = document.getElementById('paymentMethodsContainer');
+            const checkboxList = document.getElementById('paymentMethodsCheckboxList');
+            
+            // For admin panel
             const item = document.createElement('div');
             item.className = 'payment-method-checkbox-item';
             item.innerHTML = `
@@ -2659,6 +2729,15 @@
                 <span>${method}</span>
             `;
             container.appendChild(item);
+            
+            // For document creation
+            const checkboxItem = document.createElement('div');
+            checkboxItem.className = 'payment-method-checkbox-item';
+            checkboxItem.innerHTML = `
+                <input type="checkbox" class="payment-method-checkbox" value="${method}">
+                <span>${method}</span>
+            `;
+            checkboxList.appendChild(checkboxItem);
             
             input.value = '';
         }
@@ -2696,8 +2775,8 @@
         }
 
         function updatePaymentMethodsSelection(company) {
-            const container = document.getElementById('paymentMethodsCheckboxList');
-            container.innerHTML = '';
+            const checkboxList = document.getElementById('paymentMethodsCheckboxList');
+            checkboxList.innerHTML = '';
             
             if (company && company.paymentMethods && Array.isArray(company.paymentMethods)) {
                 company.paymentMethods.forEach(method => {
@@ -2707,51 +2786,256 @@
                         <input type="checkbox" class="payment-method-checkbox" value="${method}">
                         <span>${method}</span>
                     `;
-                    container.appendChild(item);
+                    checkboxList.appendChild(item);
                 });
             }
         }
 
-        function updatePaymentMethodDetails() {
-            paymentMethodDetails = {
-                accountNumber: document.getElementById('accountNumber').value || '',
-                accountName: document.getElementById('accountName').value || '',
-                processingInstitution: document.getElementById('processingInstitution').value || '',
-                paybillNumber: document.getElementById('paybillNumber').value || '',
-                tillNumber: document.getElementById('tillNumber').value || ''
-            };
+        // Multiple Payment Accounts Management
+        function updateAccountFields(selectElement) {
+            const accountItem = selectElement.closest('.payment-account-item');
+            const accountType = selectElement.value;
             
-            updatePaymentDetailsPreview();
-        }
-
-        function updatePaymentDetailsPreview() {
-            const container = document.getElementById('previewPaymentDetails');
-            let html = '';
+            // Hide all field groups
+            accountItem.querySelectorAll('.bank-fields, .mobile-fields, .card-fields').forEach(field => {
+                field.style.display = 'none';
+            });
             
-            if (Object.values(paymentMethodDetails).some(value => value.trim())) {
-                html = '<div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">';
-                html += '<h5 style="margin-bottom: 10px; color: var(--secondary-color);">Payment Details:</h5>';
-                
-                if (paymentMethodDetails.accountNumber) {
-                    html += `<p><strong>Account Number:</strong> ${paymentMethodDetails.accountNumber}</p>`;
-                }
-                if (paymentMethodDetails.accountName) {
-                    html += `<p><strong>Account Name:</strong> ${paymentMethodDetails.accountName}</p>`;
-                }
-                if (paymentMethodDetails.processingInstitution) {
-                    html += `<p><strong>Institution:</strong> ${paymentMethodDetails.processingInstitution}</p>`;
-                }
-                if (paymentMethodDetails.paybillNumber) {
-                    html += `<p><strong>Paybill:</strong> ${paymentMethodDetails.paybillNumber}</p>`;
-                }
-                if (paymentMethodDetails.tillNumber) {
-                    html += `<p><strong>Till Number:</strong> ${paymentMethodDetails.tillNumber}</p>`;
-                }
-                
-                html += '</div>';
+            // Show relevant fields based on account type
+            if (accountType === 'bank') {
+                accountItem.querySelectorAll('.bank-fields').forEach(field => {
+                    field.style.display = 'block';
+                });
+            } else if (accountType === 'mobile') {
+                accountItem.querySelectorAll('.mobile-fields').forEach(field => {
+                    field.style.display = 'block';
+                });
+            } else if (accountType === 'card') {
+                accountItem.querySelectorAll('.card-fields').forEach(field => {
+                    field.style.display = 'block';
+                });
             }
             
-            container.innerHTML = html;
+            updatePaymentAccountsData();
+        }
+
+        function addPaymentAccount() {
+            accountCounter++;
+            const newAccountId = `paymentAccount${accountCounter}`;
+            const container = document.getElementById('paymentAccountsContainer');
+            
+            const newAccount = document.createElement('div');
+            newAccount.className = 'payment-account-item';
+            newAccount.id = newAccountId;
+            newAccount.innerHTML = `
+                <div class="payment-account-header">
+                    <h5>Payment Account #${accountCounter}</h5>
+                    <button class="btn btn-danger btn-sm" onclick="removePaymentAccount('${newAccountId}')">Remove</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <select class="form-control account-type" onchange="updateAccountFields(this)">
+                            <option value="bank">Bank Account</option>
+                            <option value="mobile">Mobile Money</option>
+                            <option value="card">Card Payment</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input type="text" class="form-control account-name" placeholder="e.g., Equity Bank USD Account">
+                    </div>
+                    <div class="form-group bank-fields">
+                        <label>Bank Name</label>
+                        <input type="text" class="form-control bank-name" placeholder="e.g., Equity Bank">
+                    </div>
+                    <div class="form-group bank-fields">
+                        <label>Account Number</label>
+                        <input type="text" class="form-control account-number" placeholder="Account number">
+                    </div>
+                    <div class="form-group bank-fields">
+                        <label>Swift/BIC Code</label>
+                        <input type="text" class="form-control swift-code" placeholder="SWIFT/BIC code">
+                    </div>
+                    <div class="form-group mobile-fields" style="display: none;">
+                        <label>Mobile Network</label>
+                        <select class="form-control mobile-network">
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="airtel">Airtel Money</option>
+                            <option value="tkash">T-Kash</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group mobile-fields" style="display: none;">
+                        <label>Phone Number</label>
+                        <input type="text" class="form-control phone-number" placeholder="Phone number">
+                    </div>
+                    <div class="form-group mobile-fields" style="display: none;">
+                        <label>Paybill/Till Number</label>
+                        <input type="text" class="form-control paybill-number" placeholder="Paybill/Till number">
+                    </div>
+                    <div class="form-group card-fields" style="display: none;">
+                        <label>Card Type</label>
+                        <select class="form-control card-type">
+                            <option value="visa">Visa</option>
+                            <option value="mastercard">MasterCard</option>
+                            <option value="amex">American Express</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group card-fields" style="display: none;">
+                        <label>Card Last 4 Digits</label>
+                        <input type="text" class="form-control card-last4" placeholder="Last 4 digits" maxlength="4">
+                    </div>
+                    <div class="form-group">
+                        <label>Processing Institution</label>
+                        <input type="text" class="form-control processing-institution" placeholder="Institution name">
+                    </div>
+                    <div class="form-group">
+                        <label>Additional Notes</label>
+                        <textarea class="form-control account-notes" rows="2" placeholder="Additional account information"></textarea>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(newAccount);
+            
+            // Add to paymentAccounts array
+            paymentAccounts.push({
+                id: newAccountId,
+                accountType: 'bank',
+                accountName: '',
+                bankName: '',
+                accountNumber: '',
+                swiftCode: '',
+                mobileNetwork: 'mpesa',
+                phoneNumber: '',
+                paybillNumber: '',
+                cardType: 'visa',
+                cardLast4: '',
+                processingInstitution: '',
+                notes: ''
+            });
+        }
+
+        function removePaymentAccount(accountId) {
+            if (paymentAccounts.length <= 1) {
+                showAlert('createAlert', 'You must have at least one payment account', 'danger');
+                return;
+            }
+            
+            const accountElement = document.getElementById(accountId);
+            if (accountElement) {
+                accountElement.remove();
+            }
+            
+            // Remove from paymentAccounts array
+            const index = paymentAccounts.findIndex(acc => acc.id === accountId);
+            if (index !== -1) {
+                paymentAccounts.splice(index, 1);
+            }
+            
+            updatePaymentAccountsPreview();
+        }
+
+        function updatePaymentAccountsData() {
+            // Clear and rebuild paymentAccounts array
+            paymentAccounts = [];
+            
+            document.querySelectorAll('.payment-account-item').forEach(accountItem => {
+                const accountId = accountItem.id;
+                const accountType = accountItem.querySelector('.account-type').value;
+                
+                const accountData = {
+                    id: accountId,
+                    accountType: accountType,
+                    accountName: accountItem.querySelector('.account-name').value || '',
+                    bankName: accountItem.querySelector('.bank-name')?.value || '',
+                    accountNumber: accountItem.querySelector('.account-number')?.value || '',
+                    swiftCode: accountItem.querySelector('.swift-code')?.value || '',
+                    mobileNetwork: accountItem.querySelector('.mobile-network')?.value || 'mpesa',
+                    phoneNumber: accountItem.querySelector('.phone-number')?.value || '',
+                    paybillNumber: accountItem.querySelector('.paybill-number')?.value || '',
+                    cardType: accountItem.querySelector('.card-type')?.value || 'visa',
+                    cardLast4: accountItem.querySelector('.card-last4')?.value || '',
+                    processingInstitution: accountItem.querySelector('.processing-institution').value || '',
+                    notes: accountItem.querySelector('.account-notes').value || ''
+                };
+                
+                paymentAccounts.push(accountData);
+            });
+        }
+
+        function updatePaymentAccountsPreview() {
+            updatePaymentAccountsData();
+            
+            const previewMethods = document.getElementById('previewPaymentMethodsList');
+            const previewAccounts = document.getElementById('previewPaymentAccounts');
+            
+            // Update payment methods preview
+            if (selectedPaymentMethods.length > 0) {
+                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">';
+                selectedPaymentMethods.forEach(method => {
+                    html += `<span class="payment-method-tag active">${method}</span>`;
+                });
+                html += '</div>';
+                previewMethods.innerHTML = html;
+            } else {
+                previewMethods.innerHTML = '<p>No payment methods selected</p>';
+            }
+            
+            // Update payment accounts preview
+            if (paymentAccounts.length > 0) {
+                let accountsHtml = '<div class="receipt-info-grid">';
+                
+                paymentAccounts.forEach((account, index) => {
+                    accountsHtml += `
+                        <div class="receipt-info-box">
+                            <h4>Payment Account #${index + 1}</h4>
+                            <p><strong>Account Name:</strong> ${account.accountName || 'Not specified'}</p>
+                    `;
+                    
+                    if (account.accountType === 'bank') {
+                        accountsHtml += `
+                            <p><strong>Type:</strong> Bank Account</p>
+                            <p><strong>Bank:</strong> ${account.bankName || 'Not specified'}</p>
+                            <p><strong>Account No:</strong> ${account.accountNumber || 'Not specified'}</p>
+                            ${account.swiftCode ? `<p><strong>SWIFT/BIC:</strong> ${account.swiftCode}</p>` : ''}
+                        `;
+                    } else if (account.accountType === 'mobile') {
+                        accountsHtml += `
+                            <p><strong>Type:</strong> Mobile Money</p>
+                            <p><strong>Network:</strong> ${account.mobileNetwork === 'mpesa' ? 'M-Pesa' : 
+                                                            account.mobileNetwork === 'airtel' ? 'Airtel Money' : 
+                                                            account.mobileNetwork === 'tkash' ? 'T-Kash' : 'Other'}</p>
+                            <p><strong>Phone:</strong> ${account.phoneNumber || 'Not specified'}</p>
+                            ${account.paybillNumber ? `<p><strong>Paybill/Till:</strong> ${account.paybillNumber}</p>` : ''}
+                        `;
+                    } else if (account.accountType === 'card') {
+                        accountsHtml += `
+                            <p><strong>Type:</strong> Card Payment</p>
+                            <p><strong>Card Type:</strong> ${account.cardType === 'visa' ? 'Visa' : 
+                                                           account.cardType === 'mastercard' ? 'MasterCard' : 
+                                                           account.cardType === 'amex' ? 'American Express' : 'Other'}</p>
+                            ${account.cardLast4 ? `<p><strong>Last 4 Digits:</strong> ****${account.cardLast4}</p>` : ''}
+                        `;
+                    } else {
+                        accountsHtml += `<p><strong>Type:</strong> Other</p>`;
+                    }
+                    
+                    accountsHtml += `
+                            <p><strong>Institution:</strong> ${account.processingInstitution || 'Not specified'}</p>
+                            ${account.notes ? `<p><strong>Notes:</strong> ${account.notes}</p>` : ''}
+                        </div>
+                    `;
+                });
+                
+                accountsHtml += '</div>';
+                previewAccounts.innerHTML = accountsHtml;
+            } else {
+                previewAccounts.innerHTML = '<p>No payment accounts added</p>';
+            }
         }
 
         // Company Management
@@ -3382,7 +3666,7 @@
             }
         }
 
-        // Document Generation
+        // Document Generation - FIXED VERSION
         async function generateDocument() {
             const docType = document.getElementById('documentType').value;
             
@@ -3406,6 +3690,7 @@
         }
 
         async function generateStandardDocument() {
+            const docType = document.getElementById('documentType').value; // FIXED: Added this line
             const companyId = document.getElementById('companySelect').value;
             const customerName = document.getElementById('customerName').value.trim();
             
@@ -3507,15 +3792,15 @@
                     taxAmount: taxAmount,
                     total: totalAmount,
                     paymentMethods: company.paymentMethods || [],
-                    selectedPaymentMethods: selectedPaymentMethods, // Changed to array
-                    paymentMethodDetails: paymentMethodDetails,
+                    selectedPaymentMethods: selectedPaymentMethods,
+                    paymentAccounts: paymentAccounts, // Store multiple payment accounts
                     hasSignature: signatureLoaded,
                     terms: termsText,
-                    selectedTermIds: selectedTermIds, // Store selected term IDs
+                    selectedTermIds: selectedTermIds,
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
                     revoked: false,
-                    payments: [] // Initialize empty payments array
+                    payments: []
                 };
                 
                 // Save to Firebase
@@ -3541,6 +3826,7 @@
         }
 
         async function generateReceipt() {
+            const docType = 'receipt'; // Fixed: Define docType for receipts
             const companyId = document.getElementById('companySelect').value;
             const customerName = document.getElementById('customerName').value.trim();
             const receiptReason = document.getElementById('receiptReason').value.trim();
@@ -3652,15 +3938,15 @@
                     taxAmount: taxAmount,
                     totalAmount: totalAmount,
                     paymentMethods: company.paymentMethods || [],
-                    selectedPaymentMethods: selectedPaymentMethods, // Changed to array
-                    paymentMethodDetails: paymentMethodDetails,
+                    selectedPaymentMethods: selectedPaymentMethods,
+                    paymentAccounts: paymentAccounts, // Store multiple payment accounts
                     hasSignature: signatureLoaded,
                     terms: termsText,
-                    selectedTermIds: selectedTermIds, // Store selected term IDs
+                    selectedTermIds: selectedTermIds,
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
                     revoked: false,
-                    payments: [] // Initialize empty payments array
+                    payments: []
                 };
                 
                 // Save to Firebase
@@ -3729,20 +4015,56 @@
                 cb.checked = false;
             });
             
-            updateItemTotals();
+            // Clear payment accounts (keep only one)
+            const accountsContainer = document.getElementById('paymentAccountsContainer');
+            while (accountsContainer.children.length > 1) {
+                accountsContainer.removeChild(accountsContainer.lastChild);
+            }
             
-            // Clear payment details
-            paymentMethodDetails = {};
-            document.getElementById('accountNumber').value = '';
-            document.getElementById('accountName').value = '';
-            document.getElementById('processingInstitution').value = '';
-            document.getElementById('paybillNumber').value = '';
-            document.getElementById('tillNumber').value = '';
-            document.getElementById('paymentDetailsContainer').classList.remove('active');
+            // Reset the first account
+            const firstAccount = accountsContainer.querySelector('.payment-account-item');
+            if (firstAccount) {
+                firstAccount.querySelector('.account-type').value = 'bank';
+                firstAccount.querySelector('.account-name').value = '';
+                firstAccount.querySelector('.bank-name').value = '';
+                firstAccount.querySelector('.account-number').value = '';
+                firstAccount.querySelector('.swift-code').value = '';
+                firstAccount.querySelector('.mobile-network').value = 'mpesa';
+                firstAccount.querySelector('.phone-number').value = '';
+                firstAccount.querySelector('.paybill-number').value = '';
+                firstAccount.querySelector('.card-type').value = 'visa';
+                firstAccount.querySelector('.card-last4').value = '';
+                firstAccount.querySelector('.processing-institution').value = '';
+                firstAccount.querySelector('.account-notes').value = '';
+                
+                // Update fields display
+                updateAccountFields(firstAccount.querySelector('.account-type'));
+            }
+            
+            // Reset payment accounts array
+            paymentAccounts = [{
+                id: 'paymentAccount1',
+                accountType: 'bank',
+                accountName: '',
+                bankName: '',
+                accountNumber: '',
+                swiftCode: '',
+                mobileNetwork: 'mpesa',
+                phoneNumber: '',
+                paybillNumber: '',
+                cardType: 'visa',
+                cardLast4: '',
+                processingInstitution: '',
+                notes: ''
+            }];
+            
+            accountCounter = 1;
+            
+            updateItemTotals();
             
             // Reset terms and payment methods display
             updateTermsAndConditions();
-            updatePaymentDetailsPreview();
+            updatePaymentAccountsPreview();
             
             updateSerialNumber();
             document.getElementById('createAlert').style.display = 'none';
@@ -3795,20 +4117,8 @@
             document.getElementById('previewCurrency').textContent = selectedCurrency;
             document.getElementById('previewReceiptCurrency').textContent = selectedCurrency;
             
-            // Update payment methods in preview
-            const previewMethods = document.getElementById('previewPaymentMethodsList');
-            if (selectedPaymentMethods.length > 0) {
-                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
-                selectedPaymentMethods.forEach(method => {
-                    html += `<span class="payment-method-tag active">${method}</span>`;
-                });
-                html += '</div>';
-                previewMethods.innerHTML = html;
-            } else {
-                previewMethods.innerHTML = '<p>No payment methods selected</p>';
-            }
-            
-            updatePaymentDetailsPreview();
+            // Update payment preview
+            updatePaymentAccountsPreview();
             
             // Update terms in preview
             updateTermsAndConditions();
@@ -3824,9 +4134,6 @@
                 // Update receipt-specific preview
                 document.getElementById('previewReceiptReason').textContent = document.getElementById('receiptReason').value || 'Payment for services';
                 document.getElementById('previewReceiptDate').textContent = document.getElementById('receiptDate').value || dateStr;
-                
-                // Clear receipt payment info in preview
-                document.getElementById('receiptPaymentInfo').innerHTML = '<p>No payment information available</p>';
             } else {
                 document.getElementById('receiptPreview').classList.add('hidden');
                 document.getElementById('standardPreview').classList.remove('hidden');
@@ -3864,7 +4171,7 @@
             document.getElementById('paymentModalAlert').style.display = 'none';
         }
 
-        function loadPaymentForm(doc) { // Changed parameter name from 'document' to 'doc'
+        function loadPaymentForm(doc) {
             const container = document.getElementById('paymentFormContainer');
             const symbol = doc.currency === 'KSH' ? 'KSh' : '$';
             const remainingBalance = calculateRemainingBalance(doc);
@@ -4233,7 +4540,7 @@
                     total: originalDoc.total || 0,
                     paymentMethods: originalDoc.paymentMethods || [],
                     selectedPaymentMethods: originalDoc.selectedPaymentMethods || [],
-                    paymentMethodDetails: originalDoc.paymentMethodDetails || {},
+                    paymentAccounts: originalDoc.paymentAccounts || [],
                     hasSignature: signatureLoaded,
                     terms: originalDoc.terms || '',
                     selectedTermIds: originalDoc.selectedTermIds || [],
@@ -4319,7 +4626,7 @@
                     total: originalDoc.total || 0,
                     paymentMethods: originalDoc.paymentMethods || [],
                     selectedPaymentMethods: originalDoc.selectedPaymentMethods || [],
-                    paymentMethodDetails: originalDoc.paymentMethodDetails || {},
+                    paymentAccounts: originalDoc.paymentAccounts || [],
                     hasSignature: signatureLoaded,
                     terms: originalDoc.terms || '',
                     selectedTermIds: originalDoc.selectedTermIds || [],
@@ -4432,15 +4739,100 @@
                 cb.checked = selectedPaymentMethods.includes(cb.value);
             });
             
-            if (doc.paymentMethodDetails) {
-                paymentMethodDetails = doc.paymentMethodDetails;
-                document.getElementById('accountNumber').value = paymentMethodDetails.accountNumber || '';
-                document.getElementById('accountName').value = paymentMethodDetails.accountName || '';
-                document.getElementById('processingInstitution').value = paymentMethodDetails.processingInstitution || '';
-                document.getElementById('paybillNumber').value = paymentMethodDetails.paybillNumber || '';
-                document.getElementById('tillNumber').value = paymentMethodDetails.tillNumber || '';
-                document.getElementById('paymentDetailsContainer').classList.add('active');
-                updatePaymentDetailsPreview();
+            // Set payment accounts
+            if (doc.paymentAccounts && Array.isArray(doc.paymentAccounts) && doc.paymentAccounts.length > 0) {
+                // Clear existing accounts
+                const accountsContainer = document.getElementById('paymentAccountsContainer');
+                accountsContainer.innerHTML = '';
+                
+                // Add accounts from document
+                doc.paymentAccounts.forEach((account, index) => {
+                    const accountId = `paymentAccount${index + 1}`;
+                    const accountItem = document.createElement('div');
+                    accountItem.className = 'payment-account-item';
+                    accountItem.id = accountId;
+                    accountItem.innerHTML = `
+                        <div class="payment-account-header">
+                            <h5>Payment Account #${index + 1}</h5>
+                            ${index > 0 ? `<button class="btn btn-danger btn-sm" onclick="removePaymentAccount('${accountId}')">Remove</button>` : ''}
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Account Type</label>
+                                <select class="form-control account-type" onchange="updateAccountFields(this)">
+                                    <option value="bank" ${account.accountType === 'bank' ? 'selected' : ''}>Bank Account</option>
+                                    <option value="mobile" ${account.accountType === 'mobile' ? 'selected' : ''}>Mobile Money</option>
+                                    <option value="card" ${account.accountType === 'card' ? 'selected' : ''}>Card Payment</option>
+                                    <option value="other" ${account.accountType === 'other' ? 'selected' : ''}>Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Account Name</label>
+                                <input type="text" class="form-control account-name" value="${account.accountName || ''}" placeholder="e.g., Equity Bank USD Account">
+                            </div>
+                            <div class="form-group bank-fields" style="display: ${account.accountType === 'bank' ? 'block' : 'none'}">
+                                <label>Bank Name</label>
+                                <input type="text" class="form-control bank-name" value="${account.bankName || ''}" placeholder="e.g., Equity Bank">
+                            </div>
+                            <div class="form-group bank-fields" style="display: ${account.accountType === 'bank' ? 'block' : 'none'}">
+                                <label>Account Number</label>
+                                <input type="text" class="form-control account-number" value="${account.accountNumber || ''}" placeholder="Account number">
+                            </div>
+                            <div class="form-group bank-fields" style="display: ${account.accountType === 'bank' ? 'block' : 'none'}">
+                                <label>Swift/BIC Code</label>
+                                <input type="text" class="form-control swift-code" value="${account.swiftCode || ''}" placeholder="SWIFT/BIC code">
+                            </div>
+                            <div class="form-group mobile-fields" style="display: ${account.accountType === 'mobile' ? 'block' : 'none'}">
+                                <label>Mobile Network</label>
+                                <select class="form-control mobile-network">
+                                    <option value="mpesa" ${account.mobileNetwork === 'mpesa' ? 'selected' : ''}>M-Pesa</option>
+                                    <option value="airtel" ${account.mobileNetwork === 'airtel' ? 'selected' : ''}>Airtel Money</option>
+                                    <option value="tkash" ${account.mobileNetwork === 'tkash' ? 'selected' : ''}>T-Kash</option>
+                                    <option value="other" ${account.mobileNetwork === 'other' ? 'selected' : ''}>Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group mobile-fields" style="display: ${account.accountType === 'mobile' ? 'block' : 'none'}">
+                                <label>Phone Number</label>
+                                <input type="text" class="form-control phone-number" value="${account.phoneNumber || ''}" placeholder="Phone number">
+                            </div>
+                            <div class="form-group mobile-fields" style="display: ${account.accountType === 'mobile' ? 'block' : 'none'}">
+                                <label>Paybill/Till Number</label>
+                                <input type="text" class="form-control paybill-number" value="${account.paybillNumber || ''}" placeholder="Paybill/Till number">
+                            </div>
+                            <div class="form-group card-fields" style="display: ${account.accountType === 'card' ? 'block' : 'none'}">
+                                <label>Card Type</label>
+                                <select class="form-control card-type">
+                                    <option value="visa" ${account.cardType === 'visa' ? 'selected' : ''}>Visa</option>
+                                    <option value="mastercard" ${account.cardType === 'mastercard' ? 'selected' : ''}>MasterCard</option>
+                                    <option value="amex" ${account.cardType === 'amex' ? 'selected' : ''}>American Express</option>
+                                    <option value="other" ${account.cardType === 'other' ? 'selected' : ''}>Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group card-fields" style="display: ${account.accountType === 'card' ? 'block' : 'none'}">
+                                <label>Card Last 4 Digits</label>
+                                <input type="text" class="form-control card-last4" value="${account.cardLast4 || ''}" placeholder="Last 4 digits" maxlength="4">
+                            </div>
+                            <div class="form-group">
+                                <label>Processing Institution</label>
+                                <input type="text" class="form-control processing-institution" value="${account.processingInstitution || ''}" placeholder="Institution name">
+                            </div>
+                            <div class="form-group">
+                                <label>Additional Notes</label>
+                                <textarea class="form-control account-notes" rows="2" placeholder="Additional account information">${account.notes || ''}</textarea>
+                            </div>
+                        </div>
+                    `;
+                    accountsContainer.appendChild(accountItem);
+                    
+                    // Update fields display
+                    if (accountItem.querySelector('.account-type')) {
+                        updateAccountFields(accountItem.querySelector('.account-type'));
+                    }
+                });
+                
+                // Update paymentAccounts array
+                paymentAccounts = doc.paymentAccounts;
+                accountCounter = doc.paymentAccounts.length;
             }
             
             // Set selected terms
@@ -4450,6 +4842,7 @@
             });
             
             updateTermsAndConditions();
+            updatePaymentAccountsPreview();
             
             // Show revoked stamp if needed
             document.getElementById('revokedStamp').style.display = doc.revoked ? 'block' : 'none';
