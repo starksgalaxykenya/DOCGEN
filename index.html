@@ -504,6 +504,53 @@
             color: #666;
         }
 
+        .terms-checkbox-list {
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+        }
+
+        .term-checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #f0f0f0;
+            border-radius: 5px;
+            transition: var(--transition);
+        }
+
+        .term-checkbox-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .term-checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+
+        .term-checkbox-content {
+            flex: 1;
+        }
+
+        .term-checkbox-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .term-checkbox-text {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
         /* Payment Methods */
         .payment-methods-section {
             margin-top: 30px;
@@ -538,6 +585,26 @@
             background-color: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
+        }
+
+        .payment-methods-checkbox-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .payment-method-checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #eaeaea;
+        }
+
+        .payment-method-checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
         }
 
         .payment-details-fields {
@@ -1475,20 +1542,27 @@
                 <div class="terms-section">
                     <h4>Terms & Conditions</h4>
                     <div class="form-group">
-                        <label for="termsSelect" class="required">Select Terms</label>
-                        <select id="termsSelect" class="form-control" onchange="updateSelectedTerms()">
-                            <option value="">-- Select Terms --</option>
-                        </select>
+                        <label class="required">Select Terms (Multiple selection allowed)</label>
+                        <div class="terms-checkbox-list" id="termsCheckboxList">
+                            <!-- Terms checkboxes will be populated here -->
+                            <div class="text-center" style="padding: 20px; color: var(--gray-color);">
+                                Loading terms...
+                            </div>
+                        </div>
                     </div>
                     <div class="terms-content" id="termsContent">
-                        Please select terms from the dropdown above
+                        No terms selected
                     </div>
                 </div>
 
+                <!-- Multiple Payment Methods Section -->
                 <div class="payment-methods-section mt-30">
-                    <h4>Payment Method</h4>
-                    <div class="payment-methods" id="paymentMethodsSelection">
-                        <!-- Payment methods will be populated here -->
+                    <h4>Payment Methods</h4>
+                    <div class="form-group">
+                        <label>Select Payment Methods (Multiple selection allowed)</label>
+                        <div class="payment-methods-checkbox-list" id="paymentMethodsCheckboxList">
+                            <!-- Payment method checkboxes will be populated here -->
+                        </div>
                     </div>
                     <div class="payment-details-fields" id="paymentDetailsContainer">
                         <div class="form-group">
@@ -1624,7 +1698,7 @@
                 
                 <div class="form-group mt-20">
                     <label>Payment Methods</label>
-                    <div class="payment-methods" id="paymentMethodsContainer">
+                    <div class="payment-methods-checkbox-list" id="paymentMethodsContainer">
                         <!-- Payment methods will be populated here -->
                     </div>
                     <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -1781,15 +1855,17 @@
                     </div>
                     
                     <div class="payment-methods-section">
-                        <h4>Payment Method</h4>
-                        <div class="payment-methods" id="previewPaymentMethods">
-                            <span class="payment-method-tag">Select a payment method</span>
+                        <h4>Payment Methods</h4>
+                        <div id="previewPaymentMethodsList">
+                            <!-- Selected payment methods will appear here -->
+                            <p>No payment methods selected</p>
                         </div>
                         <div id="previewPaymentDetails"></div>
                     </div>
                     
                     <div class="terms-preview" id="previewTerms">
-                        <!-- Terms will be populated here -->
+                        <!-- Selected terms will be populated here -->
+                        <p>No terms selected</p>
                     </div>
                     
                     <div class="document-footer">
@@ -1881,24 +1957,17 @@
         let clients = [];
         let terms = [];
         let currentCompanyId = null;
-        let selectedPaymentMethod = '';
+        let selectedPaymentMethods = []; // Changed from single to array
         let paymentMethodDetails = {};
         let discountAmount = 0;
         let signatureLoaded = false;
         let selectedCurrency = 'USD';
         let currentTermId = null;
         let currentDocumentForPayment = null;
+        let selectedTermIds = []; // Array to hold multiple selected term IDs
         
         // Store for monthly sequential numbers
         let monthlySequence = {};
-
-        // Default terms and conditions - REMOVED as per request
-        const defaultDocumentTerms = {
-            receipt: "",
-            quote: "",
-            invoice: "",
-            proforma: ""
-        };
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -2160,6 +2229,16 @@
                 if (e.target.id === 'clientSearch') {
                     filterClients(e.target.value);
                 }
+                
+                // Terms checkbox change
+                if (e.target.classList.contains('term-checkbox')) {
+                    updateSelectedTerms();
+                }
+                
+                // Payment method checkbox change
+                if (e.target.classList.contains('payment-method-checkbox')) {
+                    updateSelectedPaymentMethods();
+                }
             });
             
             // Initialize
@@ -2264,19 +2343,35 @@
             updateTermsAndConditions();
         }
 
-        // Update terms and conditions based on document type
+        // Update terms and conditions based on selected checkboxes
+        function updateSelectedTerms() {
+            selectedTermIds = [];
+            const checkboxes = document.querySelectorAll('.term-checkbox:checked');
+            
+            checkboxes.forEach(checkbox => {
+                selectedTermIds.push(checkbox.value);
+            });
+            
+            updateTermsAndConditions();
+        }
+
+        // Update terms and conditions display
         function updateTermsAndConditions() {
             const docType = document.getElementById('documentType').value;
-            const selectedTermId = document.getElementById('termsSelect').value;
             
-            let termsText = defaultDocumentTerms[docType] || '';
+            // Get selected terms
+            let termsText = '';
             
-            // If a custom term is selected, use it
-            if (selectedTermId) {
-                const selectedTerm = terms.find(t => t.id === selectedTermId);
-                if (selectedTerm && (selectedTerm.documentType === docType || selectedTerm.documentType === 'all')) {
-                    termsText = selectedTerm.content;
+            selectedTermIds.forEach(termId => {
+                const term = terms.find(t => t.id === termId);
+                if (term && (term.documentType === docType || term.documentType === 'all')) {
+                    if (termsText) termsText += '\n\n';
+                    termsText += term.content;
                 }
+            });
+            
+            if (!termsText) {
+                termsText = 'No terms selected';
             }
             
             document.getElementById('termsContent').textContent = termsText;
@@ -2285,6 +2380,18 @@
             const previewTerms = document.getElementById('previewTerms');
             const formattedTerms = termsText.split('\n').map(line => `<p>${line}</p>`).join('');
             previewTerms.innerHTML = formattedTerms;
+        }
+
+        // Update selected payment methods
+        function updateSelectedPaymentMethods() {
+            selectedPaymentMethods = [];
+            const checkboxes = document.querySelectorAll('#paymentMethodsCheckboxList .payment-method-checkbox:checked');
+            
+            checkboxes.forEach(checkbox => {
+                selectedPaymentMethods.push(checkbox.value);
+            });
+            
+            updatePaymentDetailsPreview();
         }
 
         // Currency selection function
@@ -2525,17 +2632,13 @@
             
             container.innerHTML = '';
             defaultMethods.forEach(method => {
-                const label = document.createElement('label');
-                label.style.display = 'flex';
-                label.style.alignItems = 'center';
-                label.style.marginRight = '15px';
-                label.style.marginBottom = '10px';
-                label.style.flexWrap = 'wrap';
-                label.innerHTML = `
+                const item = document.createElement('div');
+                item.className = 'payment-method-checkbox-item';
+                item.innerHTML = `
                     <input type="checkbox" class="payment-method-checkbox" value="${method}" ${method === 'Credit Card' || method === 'PayPal' ? 'checked' : ''}>
-                    <span style="margin-left: 5px;">${method}</span>
+                    <span>${method}</span>
                 `;
-                container.appendChild(label);
+                container.appendChild(item);
             });
         }
 
@@ -2549,17 +2652,13 @@
             }
             
             const container = document.getElementById('paymentMethodsContainer');
-            const label = document.createElement('label');
-            label.style.display = 'flex';
-            label.style.alignItems = 'center';
-            label.style.marginRight = '15px';
-            label.style.marginBottom = '10px';
-            label.style.flexWrap = 'wrap';
-            label.innerHTML = `
+            const item = document.createElement('div');
+            item.className = 'payment-method-checkbox-item';
+            item.innerHTML = `
                 <input type="checkbox" class="payment-method-checkbox" value="${method}" checked>
-                <span style="margin-left: 5px;">${method}</span>
+                <span>${method}</span>
             `;
-            container.appendChild(label);
+            container.appendChild(item);
             
             input.value = '';
         }
@@ -2574,7 +2673,7 @@
             try {
                 // Get payment methods
                 const paymentMethods = [];
-                document.querySelectorAll('.payment-method-checkbox:checked').forEach(cb => {
+                document.querySelectorAll('#paymentMethodsContainer .payment-method-checkbox:checked').forEach(cb => {
                     paymentMethods.push(cb.value);
                 });
                 
@@ -2597,33 +2696,18 @@
         }
 
         function updatePaymentMethodsSelection(company) {
-            const container = document.getElementById('paymentMethodsSelection');
+            const container = document.getElementById('paymentMethodsCheckboxList');
             container.innerHTML = '';
             
             if (company && company.paymentMethods && Array.isArray(company.paymentMethods)) {
                 company.paymentMethods.forEach(method => {
-                    const span = document.createElement('span');
-                    span.className = 'payment-method-tag';
-                    span.textContent = method;
-                    span.dataset.method = method;
-                    
-                    if (method === selectedPaymentMethod) {
-                        span.classList.add('active');
-                    }
-                    
-                    span.addEventListener('click', function() {
-                        document.querySelectorAll('#paymentMethodsSelection .payment-method-tag').forEach(el => {
-                            el.classList.remove('active');
-                        });
-                        
-                        this.classList.add('active');
-                        selectedPaymentMethod = this.dataset.method;
-                        
-                        // Show payment details
-                        document.getElementById('paymentDetailsContainer').classList.add('active');
-                    });
-                    
-                    container.appendChild(span);
+                    const item = document.createElement('div');
+                    item.className = 'payment-method-checkbox-item';
+                    item.innerHTML = `
+                        <input type="checkbox" class="payment-method-checkbox" value="${method}">
+                        <span>${method}</span>
+                    `;
+                    container.appendChild(item);
                 });
             }
         }
@@ -2743,7 +2827,7 @@
             if (!company) return;
             
             // Populate payment methods
-            const checkboxes = document.querySelectorAll('.payment-method-checkbox');
+            const checkboxes = document.querySelectorAll('#paymentMethodsContainer .payment-method-checkbox');
             checkboxes.forEach(cb => {
                 cb.checked = company.paymentMethods && company.paymentMethods.includes(cb.value);
             });
@@ -2822,7 +2906,7 @@
             try {
                 // Get payment methods
                 const paymentMethods = [];
-                document.querySelectorAll('.payment-method-checkbox:checked').forEach(cb => {
+                document.querySelectorAll('#paymentMethodsContainer .payment-method-checkbox:checked').forEach(cb => {
                     paymentMethods.push(cb.value);
                 });
                 
@@ -2899,7 +2983,7 @@
             document.getElementById('secondaryColorPreview').style.backgroundColor = company.secondaryColor || '#3a0ca3';
             
             // Update payment methods
-            document.querySelectorAll('.payment-method-checkbox').forEach(cb => {
+            document.querySelectorAll('#paymentMethodsContainer .payment-method-checkbox').forEach(cb => {
                 cb.checked = company.paymentMethods && company.paymentMethods.includes(cb.value);
             });
             
@@ -2927,7 +3011,7 @@
             document.getElementById('colorPreview').style.backgroundColor = '#4361ee';
             document.getElementById('secondaryColorPreview').style.backgroundColor = '#3a0ca3';
             
-            document.querySelectorAll('.payment-method-checkbox').forEach(cb => {
+            document.querySelectorAll('#paymentMethodsContainer .payment-method-checkbox').forEach(cb => {
                 cb.checked = cb.value === 'Credit Card' || cb.value === 'PayPal';
             });
             
@@ -2966,16 +3050,13 @@
                 
                 terms = [];
                 const termsList = document.getElementById('termsList');
-                const termsSelect = document.getElementById('termsSelect');
+                const termsCheckboxList = document.getElementById('termsCheckboxList');
                 
-                // Clear terms select options except first
-                while (termsSelect.options.length > 1) {
-                    termsSelect.remove(1);
-                }
-                
+                termsCheckboxList.innerHTML = '';
                 termsList.innerHTML = '';
                 
                 if (querySnapshot.empty) {
+                    termsCheckboxList.innerHTML = '<div class="text-center" style="padding: 40px; color: var(--gray-color);">No terms found. Add your first term!</div>';
                     termsList.innerHTML = '<div class="text-center" style="padding: 40px; color: var(--gray-color);">No terms found. Add your first term!</div>';
                     return;
                 }
@@ -2984,11 +3065,17 @@
                     const term = { id: doc.id, ...doc.data() };
                     terms.push(term);
                     
-                    // Add to terms select
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${term.name} (${term.documentType === 'all' ? 'All' : term.documentType})`;
-                    termsSelect.appendChild(option);
+                    // Add to terms checkbox list
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'term-checkbox-item';
+                    checkboxItem.innerHTML = `
+                        <input type="checkbox" class="term-checkbox" value="${doc.id}">
+                        <div class="term-checkbox-content">
+                            <div class="term-checkbox-name">${term.name} (${term.documentType === 'all' ? 'All' : term.documentType})</div>
+                            <div class="term-checkbox-text">${term.content.length > 100 ? term.content.substring(0, 100) + '...' : term.content}</div>
+                        </div>
+                    `;
+                    termsCheckboxList.appendChild(checkboxItem);
                     
                     // Add to terms list
                     const termItem = document.createElement('div');
@@ -3018,26 +3105,36 @@
         }
 
         async function loadTermsForDocumentType(docType) {
-            const termsSelect = document.getElementById('termsSelect');
+            const termsCheckboxList = document.getElementById('termsCheckboxList');
+            termsCheckboxList.innerHTML = '';
             
-            // Clear existing options except first
-            while (termsSelect.options.length > 1) {
-                termsSelect.remove(1);
+            if (terms.length === 0) {
+                termsCheckboxList.innerHTML = '<div class="text-center" style="padding: 20px; color: var(--gray-color);">No terms found</div>';
+                return;
             }
             
             // Add matching terms
+            let hasMatchingTerms = false;
+            
             terms.forEach(term => {
                 if (term.documentType === docType || term.documentType === 'all') {
-                    const option = document.createElement('option');
-                    option.value = term.id;
-                    option.textContent = `${term.name} (${term.documentType === 'all' ? 'All' : term.documentType})`;
-                    termsSelect.appendChild(option);
+                    hasMatchingTerms = true;
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'term-checkbox-item';
+                    checkboxItem.innerHTML = `
+                        <input type="checkbox" class="term-checkbox" value="${term.id}">
+                        <div class="term-checkbox-content">
+                            <div class="term-checkbox-name">${term.name} (${term.documentType === 'all' ? 'All' : term.documentType})</div>
+                            <div class="term-checkbox-text">${term.content.length > 100 ? term.content.substring(0, 100) + '...' : term.content}</div>
+                        </div>
+                    `;
+                    termsCheckboxList.appendChild(checkboxItem);
                 }
             });
-        }
-
-        function updateSelectedTerms() {
-            updateTermsAndConditions();
+            
+            if (!hasMatchingTerms) {
+                termsCheckboxList.innerHTML = '<div class="text-center" style="padding: 20px; color: var(--gray-color);">No terms available for this document type</div>';
+            }
         }
 
         async function saveTerm() {
@@ -3289,10 +3386,15 @@
         async function generateDocument() {
             const docType = document.getElementById('documentType').value;
             
-            // Check if terms are selected (required for all documents)
-            const selectedTermId = document.getElementById('termsSelect').value;
-            if (!selectedTermId) {
-                showAlert('createAlert', 'Please select terms and conditions', 'danger');
+            // Check if at least one term is selected (required for all documents)
+            if (selectedTermIds.length === 0) {
+                showAlert('createAlert', 'Please select at least one term', 'danger');
+                return;
+            }
+            
+            // Check if at least one payment method is selected
+            if (selectedPaymentMethods.length === 0) {
+                showAlert('createAlert', 'Please select at least one payment method', 'danger');
                 return;
             }
             
@@ -3371,16 +3473,15 @@
                 const taxAmount = discountedSubtotal * (taxRate / 100);
                 const totalAmount = discountedSubtotal + taxAmount;
                 
-                // Get terms
-                const selectedTermId = document.getElementById('termsSelect').value;
+                // Get selected terms
                 let termsText = '';
-                
-                if (selectedTermId) {
-                    const selectedTerm = terms.find(t => t.id === selectedTermId);
-                    if (selectedTerm) {
-                        termsText = selectedTerm.content;
+                selectedTermIds.forEach(termId => {
+                    const term = terms.find(t => t.id === termId);
+                    if (term) {
+                        if (termsText) termsText += '\n\n';
+                        termsText += term.content;
                     }
-                }
+                });
                 
                 // Prepare document data
                 const documentData = {
@@ -3406,11 +3507,11 @@
                     taxAmount: taxAmount,
                     total: totalAmount,
                     paymentMethods: company.paymentMethods || [],
-                    selectedPaymentMethod: selectedPaymentMethod,
+                    selectedPaymentMethods: selectedPaymentMethods, // Changed to array
                     paymentMethodDetails: paymentMethodDetails,
                     hasSignature: signatureLoaded,
                     terms: termsText,
-                    termsId: selectedTermId || null,
+                    selectedTermIds: selectedTermIds, // Store selected term IDs
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
                     revoked: false,
@@ -3515,16 +3616,15 @@
                 
                 const receiptDate = document.getElementById('receiptDate').value;
                 
-                // Get terms
-                const selectedTermId = document.getElementById('termsSelect').value;
+                // Get selected terms
                 let termsText = '';
-                
-                if (selectedTermId) {
-                    const selectedTerm = terms.find(t => t.id === selectedTermId);
-                    if (selectedTerm) {
-                        termsText = selectedTerm.content;
+                selectedTermIds.forEach(termId => {
+                    const term = terms.find(t => t.id === termId);
+                    if (term) {
+                        if (termsText) termsText += '\n\n';
+                        termsText += term.content;
                     }
-                }
+                });
                 
                 // Prepare receipt data
                 const receiptData = {
@@ -3552,11 +3652,11 @@
                     taxAmount: taxAmount,
                     totalAmount: totalAmount,
                     paymentMethods: company.paymentMethods || [],
-                    selectedPaymentMethod: selectedPaymentMethod,
+                    selectedPaymentMethods: selectedPaymentMethods, // Changed to array
                     paymentMethodDetails: paymentMethodDetails,
                     hasSignature: signatureLoaded,
                     terms: termsText,
-                    termsId: selectedTermId || null,
+                    selectedTermIds: selectedTermIds, // Store selected term IDs
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
                     revoked: false,
@@ -3617,10 +3717,21 @@
             document.getElementById('discountAmount').value = '0';
             document.getElementById('taxRate').value = '10';
             
+            // Clear selected terms
+            selectedTermIds = [];
+            document.querySelectorAll('.term-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            
+            // Clear selected payment methods
+            selectedPaymentMethods = [];
+            document.querySelectorAll('#paymentMethodsCheckboxList .payment-method-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            
             updateItemTotals();
             
             // Clear payment details
-            selectedPaymentMethod = '';
             paymentMethodDetails = {};
             document.getElementById('accountNumber').value = '';
             document.getElementById('accountName').value = '';
@@ -3628,15 +3739,12 @@
             document.getElementById('paybillNumber').value = '';
             document.getElementById('tillNumber').value = '';
             document.getElementById('paymentDetailsContainer').classList.remove('active');
-            document.querySelectorAll('#paymentMethodsSelection .payment-method-tag').forEach(el => {
-                el.classList.remove('active');
-            });
             
-            // Reset terms selection
-            document.getElementById('termsSelect').value = '';
+            // Reset terms and payment methods display
+            updateTermsAndConditions();
+            updatePaymentDetailsPreview();
             
             updateSerialNumber();
-            updateTermsAndConditions();
             document.getElementById('createAlert').style.display = 'none';
         }
 
@@ -3688,16 +3796,16 @@
             document.getElementById('previewReceiptCurrency').textContent = selectedCurrency;
             
             // Update payment methods in preview
-            const previewMethods = document.getElementById('previewPaymentMethods');
-            previewMethods.innerHTML = '';
-            
-            if (selectedPaymentMethod) {
-                const span = document.createElement('span');
-                span.className = 'payment-method-tag active';
-                span.textContent = selectedPaymentMethod;
-                previewMethods.appendChild(span);
+            const previewMethods = document.getElementById('previewPaymentMethodsList');
+            if (selectedPaymentMethods.length > 0) {
+                let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+                selectedPaymentMethods.forEach(method => {
+                    html += `<span class="payment-method-tag active">${method}</span>`;
+                });
+                html += '</div>';
+                previewMethods.innerHTML = html;
             } else {
-                previewMethods.innerHTML = '<span class="payment-method-tag">Select a payment method</span>';
+                previewMethods.innerHTML = '<p>No payment methods selected</p>';
             }
             
             updatePaymentDetailsPreview();
@@ -3732,7 +3840,7 @@
             previewDocument();
         }
 
-        // Payment Tracking Modal Functions
+        // Payment Tracking Modal Functions - FIXED VERSION
         function openPaymentModal(documentId) {
             currentDocumentForPayment = documents.find(d => d.id === documentId);
             if (!currentDocumentForPayment) return;
@@ -3756,10 +3864,10 @@
             document.getElementById('paymentModalAlert').style.display = 'none';
         }
 
-        function loadPaymentForm(document) {
+        function loadPaymentForm(doc) { // Changed parameter name from 'document' to 'doc'
             const container = document.getElementById('paymentFormContainer');
-            const symbol = document.currency === 'KSH' ? 'KSh' : '$';
-            const remainingBalance = calculateRemainingBalance(document);
+            const symbol = doc.currency === 'KSH' ? 'KSh' : '$';
+            const remainingBalance = calculateRemainingBalance(doc);
             
             container.innerHTML = `
                 <div class="form-grid">
@@ -3775,14 +3883,14 @@
                         <label for="paymentMethod" class="required">Payment Method</label>
                         <select id="paymentMethod" class="form-control">
                             <option value="">Select payment method</option>
-                            ${document.paymentMethods && Array.isArray(document.paymentMethods) ? 
-                                document.paymentMethods.map(method => `<option value="${method}">${method}</option>`).join('') : ''}
+                            ${doc.paymentMethods && Array.isArray(doc.paymentMethods) ? 
+                                doc.paymentMethods.map(method => `<option value="${method}">${method}</option>`).join('') : ''}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="paymentCurrency">Currency</label>
                         <select id="paymentCurrency" class="form-control">
-                            <option value="${document.currency || 'USD'}">${document.currency || 'USD'}</option>
+                            <option value="${doc.currency || 'USD'}">${doc.currency || 'USD'}</option>
                             <option value="USD">USD</option>
                             <option value="KSH">KSH</option>
                         </select>
@@ -3793,8 +3901,8 @@
                     <textarea id="paymentNotes" class="form-control" rows="3" placeholder="Optional notes about this payment"></textarea>
                 </div>
                 <div class="mt-20">
-                    <p><strong>Document Total:</strong> ${symbol}${document.totalAmount?.toFixed(2) || document.total?.toFixed(2) || '0.00'}</p>
-                    <p><strong>Amount Paid:</strong> ${symbol}${calculateTotalPaid(document).toFixed(2)}</p>
+                    <p><strong>Document Total:</strong> ${symbol}${doc.totalAmount?.toFixed(2) || doc.total?.toFixed(2) || '0.00'}</p>
+                    <p><strong>Amount Paid:</strong> ${symbol}${calculateTotalPaid(doc).toFixed(2)}</p>
                     <p><strong>Remaining Balance:</strong> ${symbol}${remainingBalance.toFixed(2)}</p>
                 </div>
                 <div class="mt-20" style="display: flex; gap: 10px;">
@@ -3804,21 +3912,21 @@
             `;
         }
 
-        function calculateTotalPaid(document) {
-            if (!document.payments || !Array.isArray(document.payments)) return 0;
-            return document.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+        function calculateTotalPaid(doc) {
+            if (!doc.payments || !Array.isArray(doc.payments)) return 0;
+            return doc.payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
         }
 
-        function calculateRemainingBalance(document) {
-            const total = document.totalAmount || document.total || 0;
-            const paid = calculateTotalPaid(document);
+        function calculateRemainingBalance(doc) {
+            const total = doc.totalAmount || doc.total || 0;
+            const paid = calculateTotalPaid(doc);
             return Math.max(0, total - paid);
         }
 
-        function loadPaymentHistory(document) {
+        function loadPaymentHistory(doc) {
             const container = document.getElementById('paymentHistoryContent');
             
-            if (!document.payments || !Array.isArray(document.payments) || document.payments.length === 0) {
+            if (!doc.payments || !Array.isArray(doc.payments) || doc.payments.length === 0) {
                 container.innerHTML = '<p>No payments recorded yet.</p>';
                 return;
             }
@@ -3827,14 +3935,14 @@
             html += '<thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Currency</th><th>Notes</th><th>Actions</th></tr></thead>';
             html += '<tbody>';
             
-            document.payments.forEach((payment, index) => {
+            doc.payments.forEach((payment, index) => {
                 const date = payment.date ? new Date(payment.date.seconds * 1000).toLocaleDateString() : 'N/A';
                 const symbol = payment.currency === 'KSH' ? 'KSh' : '$';
                 html += `<tr>
                     <td>${date}</td>
                     <td>${symbol}${payment.amount?.toFixed(2) || '0.00'}</td>
                     <td>${payment.method || 'N/A'}</td>
-                    <td>${payment.currency || document.currency || 'USD'}</td>
+                    <td>${payment.currency || doc.currency || 'USD'}</td>
                     <td>${payment.notes || ''}</td>
                     <td><button class="btn btn-danger btn-sm" onclick="deletePayment(${index})">Delete</button></td>
                 </tr>`;
@@ -4124,11 +4232,11 @@
                     taxAmount: originalDoc.taxAmount || 0,
                     total: originalDoc.total || 0,
                     paymentMethods: originalDoc.paymentMethods || [],
-                    selectedPaymentMethod: originalDoc.selectedPaymentMethod || '',
+                    selectedPaymentMethods: originalDoc.selectedPaymentMethods || [],
                     paymentMethodDetails: originalDoc.paymentMethodDetails || {},
                     hasSignature: signatureLoaded,
                     terms: originalDoc.terms || '',
-                    termsId: originalDoc.termsId || null,
+                    selectedTermIds: originalDoc.selectedTermIds || [],
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
                     convertedFrom: originalDoc.id,
@@ -4210,11 +4318,11 @@
                     taxAmount: originalDoc.taxAmount || 0,
                     total: originalDoc.total || 0,
                     paymentMethods: originalDoc.paymentMethods || [],
-                    selectedPaymentMethod: originalDoc.selectedPaymentMethod || '',
+                    selectedPaymentMethods: originalDoc.selectedPaymentMethods || [],
                     paymentMethodDetails: originalDoc.paymentMethodDetails || {},
                     hasSignature: signatureLoaded,
                     terms: originalDoc.terms || '',
-                    termsId: originalDoc.termsId || null,
+                    selectedTermIds: originalDoc.selectedTermIds || [],
                     userId: currentUser.uid,
                     createdAt: window.firebaseApp.Timestamp.now(),
                     convertedFrom: originalDoc.id,
@@ -4318,31 +4426,28 @@
             
             updateItemTotals();
             
-            // Set payment method
-            if (doc.selectedPaymentMethod) {
-                selectedPaymentMethod = doc.selectedPaymentMethod;
-                document.querySelectorAll('#paymentMethodsSelection .payment-method-tag').forEach(el => {
-                    if (el.dataset.method === selectedPaymentMethod) {
-                        el.classList.add('active');
-                    }
-                });
-                
-                if (doc.paymentMethodDetails) {
-                    paymentMethodDetails = doc.paymentMethodDetails;
-                    document.getElementById('accountNumber').value = paymentMethodDetails.accountNumber || '';
-                    document.getElementById('accountName').value = paymentMethodDetails.accountName || '';
-                    document.getElementById('processingInstitution').value = paymentMethodDetails.processingInstitution || '';
-                    document.getElementById('paybillNumber').value = paymentMethodDetails.paybillNumber || '';
-                    document.getElementById('tillNumber').value = paymentMethodDetails.tillNumber || '';
-                    document.getElementById('paymentDetailsContainer').classList.add('active');
-                    updatePaymentDetailsPreview();
-                }
+            // Set selected payment methods
+            selectedPaymentMethods = doc.selectedPaymentMethods || [];
+            document.querySelectorAll('#paymentMethodsCheckboxList .payment-method-checkbox').forEach(cb => {
+                cb.checked = selectedPaymentMethods.includes(cb.value);
+            });
+            
+            if (doc.paymentMethodDetails) {
+                paymentMethodDetails = doc.paymentMethodDetails;
+                document.getElementById('accountNumber').value = paymentMethodDetails.accountNumber || '';
+                document.getElementById('accountName').value = paymentMethodDetails.accountName || '';
+                document.getElementById('processingInstitution').value = paymentMethodDetails.processingInstitution || '';
+                document.getElementById('paybillNumber').value = paymentMethodDetails.paybillNumber || '';
+                document.getElementById('tillNumber').value = paymentMethodDetails.tillNumber || '';
+                document.getElementById('paymentDetailsContainer').classList.add('active');
+                updatePaymentDetailsPreview();
             }
             
-            // Set terms
-            if (doc.termsId) {
-                document.getElementById('termsSelect').value = doc.termsId;
-            }
+            // Set selected terms
+            selectedTermIds = doc.selectedTermIds || [];
+            document.querySelectorAll('.term-checkbox').forEach(cb => {
+                cb.checked = selectedTermIds.includes(cb.value);
+            });
             
             updateTermsAndConditions();
             
