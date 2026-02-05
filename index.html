@@ -1236,35 +1236,65 @@
         }
         
         /* Print Styles */
-        @media print {
-            .main-app {
-                display: block !important;
-            }
-            
-            .auth-screen,
-            .nav-tabs,
-            .btn,
-            .tab-content:not(.active) {
-                display: none !important;
-            }
-            
-            .tab-content.active {
-                display: block !important;
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
-            }
-            
-            .document-preview {
-                box-shadow: none;
-                border: none;
-                padding: 0;
-            }
-            
-            .no-print {
-                display: none !important;
-            }
-        }
+@media print {
+    .main-app {
+        display: block !important;
+    }
+    
+    .auth-screen,
+    .nav-tabs,
+    .btn,
+    .tab-content:not(.active) {
+        display: none !important;
+    }
+    
+    .tab-content.active {
+        display: block !important;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .document-preview {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* PDF Generation Fix */
+@media all {
+    .document-preview {
+        width: 210mm !important; /* Standard A4 width */
+        min-height: 297mm !important; /* Standard A4 height */
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+    }
+    
+    /* Ensure all content fits within A4 width */
+    .document-preview > * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Fix table width for PDF */
+    .document-table, .receipt-items-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        table-layout: fixed !important;
+    }
+    
+    .document-table th,
+    .document-table td {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+}
     </style>
 </head>
 <body>
@@ -4887,95 +4917,156 @@
         }
 
         async function generatePDF() {
-            try {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'px',
-                    format: 'a4'
-                });
-                
-                const element = document.getElementById('documentPreview');
-                
-                // Set a timeout to ensure all content is rendered
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff',
-                    onclone: function(clonedDoc) {
-                        // Ensure all content is visible for capture
-                        const previewElement = clonedDoc.getElementById('documentPreview');
-                        if (previewElement) {
-                            previewElement.style.boxShadow = 'none';
-                            previewElement.style.border = '1px solid #ddd';
-                        }
-                    }
-                });
-                
-                // Check if canvas is valid
-                if (!canvas || canvas.width === 0 || canvas.height === 0) {
-                    throw new Error('Canvas rendering failed');
-                }
-                
-                const imgData = canvas.toDataURL('image/png');
-                
-                // Verify the image data
-                if (!imgData || imgData.length < 100) {
-                    throw new Error('Image data is invalid or too small');
-                }
-                
-                const imgWidth = 595.28; // A4 width in pixels at 72 DPI
-                const pageHeight = 841.89; // A4 height in pixels
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                let heightLeft = imgHeight;
-                let position = 0;
-                
-                // Add first page
-                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-                
-                // Add new pages if content is longer than one page
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight;
-                    doc.addPage();
-                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-                
-                const docType = document.getElementById('documentType').value;
-                const serialNumber = document.getElementById('serialNumber').value;
-                doc.save(`${serialNumber}-${docType}.pdf`);
-                
-            } catch (error) {
-                console.error("Error generating PDF:", error);
-                showAlert('historyAlert', 'Error generating PDF: ' + error.message, 'danger');
-                
-                // Fallback: Try with simpler approach
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        const element = document.getElementById('documentPreview');
+        
+        // Store original styles
+        const originalWidth = element.style.width;
+        const originalMargin = element.style.margin;
+        
+        // Set fixed A4 dimensions for PDF generation
+        element.style.width = '210mm';
+        element.style.margin = '0';
+        
+        // Hide elements not needed in PDF
+        const elementsToHide = element.querySelectorAll('.no-print, .btn, .nav-tabs');
+        elementsToHide.forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Ensure all content is visible
+        element.style.overflow = 'visible';
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            width: 794, // A4 width at 96 DPI
+            height: element.scrollHeight * 2,
+            windowWidth: 794,
+            windowHeight: element.scrollHeight * 2,
+            onclone: function(clonedDoc) {
+                const previewElement = clonedDoc.getElementById('documentPreview');
+                if (previewElement) {
+                    previewElement.style.boxShadow = 'none';
+                    previewElement.style.border = '1px solid #ddd';
+                    previewElement.style.width = '210mm';
+                    previewElement.style.margin = '0';
+                    previewElement.style.overflow = 'visible';
                     
-                    // Add text content as fallback
-                    doc.setFontSize(16);
-                    doc.text('Document Preview Unavailable', 20, 20);
-                    doc.setFontSize(12);
-                    doc.text('Please try downloading from the Document History tab.', 20, 40);
+                    // Fix table widths for PDF
+                    const tables = previewElement.querySelectorAll('table');
+                    tables.forEach(table => {
+                        table.style.width = '100%';
+                        table.style.tableLayout = 'fixed';
+                    });
                     
-                    const serialNumber = document.getElementById('serialNumber').value;
-                    const docType = document.getElementById('documentType').value;
-                    doc.save(`${serialNumber}-${docType}-fallback.pdf`);
-                    
-                    showAlert('historyAlert', 'Generated fallback PDF. Try refreshing the preview.', 'warning');
-                } catch (fallbackError) {
-                    console.error("Fallback PDF generation failed:", fallbackError);
-                    alert('PDF generation failed. Please try again or contact support.');
+                    // Hide UI elements in PDF
+                    const uiElements = previewElement.querySelectorAll('.no-print, .btn, .nav-tabs');
+                    uiElements.forEach(el => {
+                        el.style.display = 'none';
+                    });
                 }
             }
+        });
+        
+        // Restore original styles
+        element.style.width = originalWidth;
+        element.style.margin = originalMargin;
+        elementsToHide.forEach(el => {
+            el.style.display = '';
+        });
+        
+        if (!canvas || canvas.width === 0 || canvas.height === 0) {
+            throw new Error('Canvas rendering failed');
         }
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        if (!imgData || imgData.length < 100) {
+            throw new Error('Image data is invalid or too small');
+        }
+        
+        // Calculate dimensions for A4
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = doc.internal.pageSize.getHeight();
+        
+        const imgWidth = pdfWidth - 10; // 5mm margins on each side
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Center the image horizontally
+        const xOffset = (pdfWidth - imgWidth) / 2;
+        
+        // Add image to PDF
+        doc.addImage(imgData, 'PNG', xOffset, 5, imgWidth, imgHeight);
+        
+        // Add page numbers if content spans multiple pages
+        const pageHeight = pdfHeight - 10;
+        let heightLeft = imgHeight;
+        let position = 5;
+        let page = 1;
+        
+        while (heightLeft >= pageHeight) {
+            doc.addPage();
+            position = position - pageHeight;
+            doc.addImage(imgData, 'PNG', xOffset, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            page++;
+        }
+        
+        // Add page numbers
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(10);
+            doc.setTextColor(150);
+            doc.text(
+                `Page ${i} of ${totalPages}`,
+                pdfWidth / 2,
+                pdfHeight - 10,
+                { align: 'center' }
+            );
+        }
+        
+        const docType = document.getElementById('documentType').value;
+        const serialNumber = document.getElementById('serialNumber').value;
+        doc.save(`${serialNumber}-${docType}.pdf`);
+        
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        showAlert('historyAlert', 'Error generating PDF: ' + error.message, 'danger');
+        
+        // Fallback: Try with simpler approach
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.text('Document Preview Unavailable', 20, 20);
+            doc.setFontSize(12);
+            doc.text('Please try downloading from the Document History tab.', 20, 40);
+            
+            const serialNumber = document.getElementById('serialNumber').value;
+            const docType = document.getElementById('documentType').value;
+            doc.save(`${serialNumber}-${docType}-fallback.pdf`);
+            
+            showAlert('historyAlert', 'Generated fallback PDF. Try refreshing the preview.', 'warning');
+        } catch (fallbackError) {
+            console.error("Fallback PDF generation failed:", fallbackError);
+            alert('PDF generation failed. Please try again or contact support.');
+        }
+    }
+}
     </script>
 </body>
 </html>
