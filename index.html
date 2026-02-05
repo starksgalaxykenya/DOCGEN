@@ -1270,65 +1270,74 @@
 @media all {
     .document-preview {
         width: 210mm !important; /* Standard A4 width */
-        min-height: 297mm !important; /* Standard A4 height */
+        height: auto !important;
         margin: 0 auto !important;
         box-sizing: border-box !important;
-        overflow: visible !important;
-        padding: 10mm !important;
-        font-size: 12px !important;
+        padding: 15mm !important;
+        font-size: 14px !important; /* Base font size */
+        line-height: 1.4 !important;
+        background: white !important;
     }
     
-    /* Optimize header for PDF */
+    /* Ensure everything fits within the A4 width */
+    .document-preview > * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Header optimizations */
     .document-header {
         display: flex !important;
-        flex-wrap: wrap !important;
-        margin-bottom: 20px !important;
-        padding-bottom: 15px !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        margin-bottom: 15px !important;
+        padding-bottom: 10px !important;
         border-bottom: 2px solid #eee !important;
     }
     
-    .document-title {
-        font-size: 28px !important;
-        margin: 20px 0 !important;
-        text-align: center !important;
+    .company-details {
+        text-align: right !important;
+        font-size: 12px !important;
     }
     
-    /* Optimize document info layout */
-    .document-info {
+    /* Document title */
+    .document-title {
+        font-size: 28px !important;
+        margin: 25px 0 !important;
+        text-align: center !important;
+        color: var(--secondary-color) !important;
+    }
+    
+    /* Document info section */
+    .document-info, .receipt-info-grid {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 20px !important;
         margin-bottom: 25px !important;
+        font-size: 13px !important;
     }
     
-    /* Optimize receipt preview layout */
-    .receipt-info-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 15px !important;
-        margin-bottom: 20px !important;
-    }
-    
-    /* Optimize tables for PDF */
-    .document-table, .receipt-items-table {
+    /* Tables */
+    .document-table, #receiptItemsTable, #standardItemsTable {
         width: 100% !important;
-        max-width: 100% !important;
         table-layout: fixed !important;
-        font-size: 11px !important;
-        margin: 15px 0 !important;
+        font-size: 12px !important;
+        margin: 20px 0 !important;
+        border-collapse: collapse !important;
     }
     
     .document-table th,
     .document-table td {
-        padding: 8px 10px !important;
+        padding: 10px 8px !important;
+        border: 1px solid #ddd !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
     }
     
-    /* Optimize column widths for PDF */
+    /* Optimize column widths */
     .document-table th:nth-child(1),
     .document-table td:nth-child(1) {
-        width: 40% !important;
+        width: 45% !important;
     }
     
     .document-table th:nth-child(2),
@@ -1345,69 +1354,76 @@
     
     .document-table th:nth-child(4),
     .document-table td:nth-child(4) {
-        width: 25% !important;
+        width: 20% !important;
         text-align: right !important;
     }
     
-    /* Optimize payment accounts for PDF */
-    .receipt-info-box {
-        padding: 10px !important;
-        margin-bottom: 10px !important;
-        font-size: 11px !important;
-    }
-    
+    /* Payment accounts */
     .multiple-payment-accounts {
-        margin: 15px 0 !important;
+        margin: 20px 0 !important;
         padding: 15px !important;
-        font-size: 11px !important;
+        font-size: 12px !important;
     }
     
-    /* Optimize terms for PDF */
+    .receipt-info-box {
+        padding: 12px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Terms section */
     .terms-preview {
         margin-top: 20px !important;
         padding: 15px !important;
-        font-size: 10px !important;
-        line-height: 1.3 !important;
-        max-height: 80mm !important;
-        overflow: hidden !important;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+        background: #fff9e6 !important;
+        border-radius: 5px !important;
     }
     
-    /* Optimize footer for PDF */
+    /* Footer */
     .document-footer {
-        margin-top: 20px !important;
+        margin-top: 25px !important;
         padding-top: 15px !important;
+        border-top: 2px solid #eee !important;
         display: flex !important;
         justify-content: space-between !important;
-        align-items: flex-start !important;
-        font-size: 11px !important;
+        align-items: center !important;
+        font-size: 12px !important;
     }
     
     .signature-overlay-container {
-        width: 150px !important;
-        height: 60px !important;
+        width: 120px !important;
+        height: 50px !important;
     }
     
-    /* Hide elements not needed in PDF */
-    .pdf-hide {
-        display: none !important;
-    }
-    
-    /* Compact layout for PDF */
+    /* Headings */
     h2, h3, h4 {
-        margin: 10px 0 5px 0 !important;
+        margin: 15px 0 10px 0 !important;
     }
     
-    h2 { font-size: 18px !important; }
-    h3 { font-size: 16px !important; }
-    h4 { font-size: 14px !important; }
-    
-    /* Reduce spacing */
-    .mt-20, .mt-30 {
-        margin-top: 10px !important;
+    h2 { 
+        font-size: 20px !important;
+        color: var(--secondary-color) !important;
     }
     
-    .mb-20 {
-        margin-bottom: 10px !important;
+    h3 { 
+        font-size: 16px !important;
+        color: var(--primary-color) !important;
+    }
+    
+    h4 { 
+        font-size: 14px !important;
+        color: #333 !important;
+    }
+    
+    /* Compact spacing */
+    .mt-20 { margin-top: 10px !important; }
+    .mt-30 { margin-top: 15px !important; }
+    .mb-20 { margin-bottom: 10px !important; }
+    
+    /* Hide UI elements */
+    .no-print, .btn, .action-buttons, .currency-selection, .auth-tabs, .nav-tabs {
+        display: none !important;
     }
 }
     </style>
@@ -5041,167 +5057,137 @@
         });
         
         const element = document.getElementById('documentPreview');
-        const elementClone = element.cloneNode(true);
         
-        // Apply PDF-optimized styles to clone
-        elementClone.style.cssText = `
-            width: 190mm !important;
-            padding: 10mm !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-            font-size: 11px !important;
-            background: white !important;
-        `;
-        
-        // Apply compact styles to all children
-        const applyCompactStyles = (el) => {
-            // Header optimizations
-            if (el.classList && el.classList.contains('document-header')) {
-                el.style.paddingBottom = '8px';
-                el.style.marginBottom = '12px';
-            }
-            
-            // Title optimizations
-            if (el.classList && el.classList.contains('document-title')) {
-                el.style.fontSize = '24px';
-                el.style.margin = '12px 0';
-            }
-            
-            // Table optimizations
-            if (el.tagName === 'TABLE') {
-                el.style.fontSize = '10px';
-                el.style.margin = '8px 0';
-                el.style.width = '100%';
-                el.style.tableLayout = 'fixed';
-                
-                // Set column widths
-                const ths = el.querySelectorAll('th');
-                const tds = el.querySelectorAll('td');
-                if (ths.length >= 4) {
-                    ths[0].style.width = '40%';
-                    ths[1].style.width = '15%';
-                    ths[2].style.width = '20%';
-                    ths[3].style.width = '25%';
-                }
-                if (tds.length >= 4) {
-                    tds[0].style.width = '40%';
-                    tds[1].style.width = '15%';
-                    tds[2].style.width = '20%';
-                    tds[3].style.width = '25%';
-                }
-            }
-            
-            // Section optimizations
-            if (el.classList && (
-                el.classList.contains('multiple-payment-accounts') ||
-                el.classList.contains('terms-preview') ||
-                el.classList.contains('receipt-info-grid')
-            )) {
-                el.style.margin = '10px 0';
-                el.style.padding = '10px';
-                el.style.fontSize = '10px';
-            }
-            
-            // Footer optimizations
-            if (el.classList && el.classList.contains('document-footer')) {
-                el.style.marginTop = '15px';
-                el.style.paddingTop = '10px';
-                el.style.fontSize = '10px';
-            }
-            
-            // Process children
-            if (el.children) {
-                Array.from(el.children).forEach(child => {
-                    applyCompactStyles(child);
-                });
-            }
+        // Store original styles
+        const originalStyles = {
+            width: element.style.width,
+            margin: element.style.margin,
+            padding: element.style.padding,
+            fontSize: element.style.fontSize
         };
         
-        applyCompactStyles(elementClone);
+        // Apply A4-optimized styles directly to the element
+        element.style.width = '210mm';
+        element.style.margin = '0 auto';
+        element.style.padding = '15mm';
+        element.style.fontSize = '14px';
+        element.style.boxSizing = 'border-box';
+        element.style.background = 'white';
         
-        // Hide unnecessary elements in clone
-        const elementsToHide = elementClone.querySelectorAll('.no-print, .btn, .nav-tabs');
-        elementsToHide.forEach(el => {
+        // Hide UI elements
+        const noPrintElements = element.querySelectorAll('.no-print, .btn');
+        noPrintElements.forEach(el => {
             el.style.display = 'none';
         });
         
-        // Add clone to body temporarily
-        elementClone.style.position = 'absolute';
-        elementClone.style.left = '-9999px';
-        elementClone.style.top = '0';
-        document.body.appendChild(elementClone);
+        // Optimize tables for better fit
+        const tables = element.querySelectorAll('table');
+        tables.forEach(table => {
+            table.style.width = '100%';
+            table.style.tableLayout = 'fixed';
+            table.style.fontSize = '12px';
+            
+            // Set consistent column widths
+            const headers = table.querySelectorAll('th');
+            const cells = table.querySelectorAll('td');
+            
+            if (headers.length >= 4) {
+                headers[0].style.width = '45%';
+                headers[1].style.width = '15%';
+                headers[2].style.width = '20%';
+                headers[3].style.width = '20%';
+            }
+            
+            if (cells.length >= 4) {
+                cells.forEach((cell, index) => {
+                    if (index % 4 === 1) { // Quantity column
+                        cell.style.textAlign = 'center';
+                    } else if (index % 4 === 2 || index % 4 === 3) { // Price and Total columns
+                        cell.style.textAlign = 'right';
+                    }
+                });
+            }
+        });
         
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // Wait for styles to apply
+        await new Promise(resolve => setTimeout(resolve, 500));
         
-        const canvas = await html2canvas(elementClone, {
-            scale: 2,
+        // Calculate optimal scale for A4
+        const a4Width = 210; // mm
+        const a4Height = 297; // mm
+        const contentWidth = element.offsetWidth;
+        const contentHeight = element.scrollHeight;
+        
+        // Calculate scale to fit A4
+        const widthScale = (a4Width - 30) / (contentWidth / 3.78); // Convert pixels to mm (96 DPI)
+        const heightScale = (a4Height - 30) / (contentHeight / 3.78);
+        const scale = Math.min(widthScale, heightScale, 1); // Don't scale up beyond 100%
+        
+        const canvas = await html2canvas(element, {
+            scale: 3, // High resolution
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
-            width: 794, // A4 width at 96 DPI
-            height: elementClone.scrollHeight * 2,
-            windowWidth: 794,
-            windowHeight: 1123, // A4 height at 96 DPI
+            width: element.offsetWidth,
+            height: element.scrollHeight,
+            windowWidth: element.offsetWidth,
+            windowHeight: element.scrollHeight,
             onclone: function(clonedDoc) {
                 const previewElement = clonedDoc.getElementById('documentPreview');
                 if (previewElement) {
-                    // Apply final PDF optimizations
-                    previewElement.style.boxShadow = 'none';
-                    previewElement.style.border = '1px solid #ddd';
-                    previewElement.style.width = '190mm';
-                    previewElement.style.padding = '10mm';
+                    // Ensure A4 dimensions
+                    previewElement.style.width = '210mm';
+                    previewElement.style.padding = '15mm';
+                    previewElement.style.margin = '0';
+                    previewElement.style.boxSizing = 'border-box';
+                    previewElement.style.background = 'white';
+                    previewElement.style.fontSize = '14px';
                     
-                    // Compact all text
-                    const allElements = previewElement.querySelectorAll('*');
-                    allElements.forEach(el => {
-                        const computedFontSize = parseInt(window.getComputedStyle(el).fontSize);
-                        if (computedFontSize > 12) {
-                            el.style.fontSize = Math.max(10, computedFontSize * 0.8) + 'px';
-                        }
+                    // Hide UI elements in clone
+                    const cloneNoPrint = previewElement.querySelectorAll('.no-print, .btn');
+                    cloneNoPrint.forEach(el => {
+                        el.style.display = 'none';
                     });
                     
-                    // Reduce line heights
-                    const textElements = previewElement.querySelectorAll('p, span, div, td, th');
-                    textElements.forEach(el => {
-                        el.style.lineHeight = '1.2';
-                        el.style.margin = '0';
-                        el.style.padding = '2px';
-                    });
-                    
-                    // Compact tables
-                    const tables = previewElement.querySelectorAll('table');
-                    tables.forEach(table => {
+                    // Optimize all tables in clone
+                    const cloneTables = previewElement.querySelectorAll('table');
+                    cloneTables.forEach(table => {
                         table.style.width = '100%';
                         table.style.tableLayout = 'fixed';
-                        table.style.margin = '5px 0';
-                        
-                        const cells = table.querySelectorAll('th, td');
-                        cells.forEach(cell => {
-                            cell.style.padding = '4px 6px';
-                            cell.style.fontSize = '10px';
-                        });
+                        table.style.fontSize = '12px';
                     });
                     
-                    // Compact sections
-                    const sections = previewElement.querySelectorAll('.document-info, .receipt-info-grid, .multiple-payment-accounts');
-                    sections.forEach(section => {
-                        section.style.margin = '8px 0';
-                        section.style.padding = '8px';
+                    // Ensure text is readable
+                    const allText = previewElement.querySelectorAll('p, span, div, td, th, h1, h2, h3, h4');
+                    allText.forEach(textEl => {
+                        const currentSize = parseInt(window.getComputedStyle(textEl).fontSize);
+                        if (currentSize < 10) {
+                            textEl.style.fontSize = '10px';
+                        }
                     });
-                    
-                    // Compact terms section
-                    const termsSection = previewElement.querySelector('.terms-preview');
-                    if (termsSection) {
-                        termsSection.style.maxHeight = '60mm';
-                        termsSection.style.overflow = 'hidden';
-                        termsSection.style.fontSize = '9px';
-                    }
                 }
             }
         });
         
-        // Remove clone from body
-        document.body.removeChild(elementClone);
+        // Restore original styles
+        element.style.width = originalStyles.width;
+        element.style.margin = originalStyles.margin;
+        element.style.padding = originalStyles.padding;
+        element.style.fontSize = originalStyles.fontSize;
+        element.style.background = '';
+        element.style.boxSizing = '';
+        
+        // Show hidden elements
+        noPrintElements.forEach(el => {
+            el.style.display = '';
+        });
+        
+        // Restore table styles
+        tables.forEach(table => {
+            table.style.width = '';
+            table.style.tableLayout = '';
+            table.style.fontSize = '';
+        });
         
         if (!canvas || canvas.width === 0 || canvas.height === 0) {
             throw new Error('Canvas rendering failed');
@@ -5213,30 +5199,35 @@
             throw new Error('Image data is invalid or too small');
         }
         
-        // Calculate dimensions for A4 with margins
+        // Calculate dimensions for PDF
         const pdfWidth = doc.internal.pageSize.getWidth();
         const pdfHeight = doc.internal.pageSize.getHeight();
         
-        const margin = 5; // 5mm margin on all sides
-        const imgWidth = pdfWidth - (margin * 2);
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        // Margins (5mm each side)
+        const margin = 5;
+        const contentAreaWidth = pdfWidth - (margin * 2);
+        const contentAreaHeight = pdfHeight - (margin * 2);
         
-        // Check if it fits on one page
-        if (imgHeight <= (pdfHeight - (margin * 2))) {
-            // Fits on one page
-            doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        // Calculate image dimensions to fit content area
+        const canvasRatio = canvas.width / canvas.height;
+        let imgWidth, imgHeight;
+        
+        if (canvasRatio > (contentAreaWidth / contentAreaHeight)) {
+            // Width is the limiting factor
+            imgWidth = contentAreaWidth;
+            imgHeight = imgWidth / canvasRatio;
         } else {
-            // Scale down to fit on one page
-            const scaleFactor = (pdfHeight - (margin * 2)) / imgHeight;
-            const scaledWidth = imgWidth * scaleFactor * 0.95; // 95% to ensure fit
-            const scaledHeight = imgHeight * scaleFactor * 0.95;
-            
-            // Center on page
-            const xPos = (pdfWidth - scaledWidth) / 2;
-            const yPos = (pdfHeight - scaledHeight) / 2;
-            
-            doc.addImage(imgData, 'PNG', xPos, yPos, scaledWidth, scaledHeight);
+            // Height is the limiting factor
+            imgHeight = contentAreaHeight;
+            imgWidth = imgHeight * canvasRatio;
         }
+        
+        // Center the image
+        const xPos = margin + (contentAreaWidth - imgWidth) / 2;
+        const yPos = margin + (contentAreaHeight - imgHeight) / 2;
+        
+        // Add image to PDF
+        doc.addImage(imgData, 'PNG', xPos, yPos, imgWidth, imgHeight);
         
         // Add document info in footer
         const docType = document.getElementById('documentType').value;
@@ -5246,24 +5237,32 @@
         doc.setFontSize(8);
         doc.setTextColor(100);
         doc.text(
-            `Generated: ${date} | ${serialNumber} | Page 1 of 1`,
+            `Document: ${serialNumber} | Generated: ${date}`,
             pdfWidth / 2,
-            pdfHeight - 5,
+            pdfHeight - 3,
             { align: 'center' }
         );
         
-        doc.save(`${serialNumber}-${docType}.pdf`);
+        const fileName = `${serialNumber}-${docType}.pdf`;
+        doc.save(fileName);
         
         showAlert('historyAlert', 'PDF generated successfully!', 'success');
         
     } catch (error) {
         console.error("Error generating PDF:", error);
-        showAlert('historyAlert', 'Error generating PDF: ' + error.message, 'danger');
         
-        // Fallback: Create a simple text-based PDF
+        // Fallback: Create a properly scaled text-based PDF
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            
+            // Page dimensions
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            
+            // Margins
+            const margin = 15;
+            let yPos = margin;
             
             // Get document data
             const docType = document.getElementById('documentType').value;
@@ -5271,62 +5270,100 @@
             const companyName = document.getElementById('previewCompanyName').textContent;
             const customerName = document.getElementById('customerName').value || 'Customer';
             const total = document.getElementById('totalAmount').textContent;
+            const date = new Date().toLocaleDateString();
             
-            // Create compact one-page PDF
+            // Company header
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text(companyName, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 10;
+            
+            // Document title
             doc.setFontSize(16);
-            doc.text(companyName, 20, 20);
+            doc.setTextColor(67, 97, 238); // Primary color
+            doc.text(`${docType.toUpperCase()}`, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 8;
             
-            doc.setFontSize(14);
-            doc.text(`${docType.toUpperCase()} - ${serialNumber}`, 20, 30);
+            // Document info
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Serial No: ${serialNumber}`, pageWidth - margin, yPos, { align: 'right' });
+            doc.text(`Date: ${date}`, margin, yPos);
+            yPos += 6;
+            doc.text(`Currency: ${selectedCurrency}`, pageWidth - margin, yPos, { align: 'right' });
+            yPos += 10;
             
+            // Customer info
             doc.setFontSize(12);
-            doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 40);
-            doc.text(`Customer: ${customerName}`, 20, 48);
+            doc.setFont(undefined, 'bold');
+            doc.text('Bill To:', margin, yPos);
+            doc.setFont(undefined, 'normal');
+            yPos += 6;
+            doc.setFontSize(11);
+            doc.text(customerName, margin, yPos);
+            yPos += 15;
             
-            // Add items table
+            // Items table header
             doc.setFontSize(10);
-            let yPos = 60;
-            
-            // Table header
-            doc.text('Description', 20, yPos);
-            doc.text('Qty', 120, yPos);
-            doc.text('Price', 140, yPos);
-            doc.text('Total', 170, yPos);
+            doc.setFont(undefined, 'bold');
+            doc.text('Description', margin, yPos);
+            doc.text('Qty', pageWidth - 60, yPos, { align: 'right' });
+            doc.text('Price', pageWidth - 40, yPos, { align: 'right' });
+            doc.text('Total', pageWidth - margin, yPos, { align: 'right' });
             yPos += 6;
             
-            // Add items
+            // Horizontal line
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPos - 2, pageWidth - margin, yPos - 2);
+            
+            // Items
+            doc.setFont(undefined, 'normal');
             const items = document.querySelectorAll('#itemsTableBody tr');
+            
             items.forEach((row, index) => {
-                if (yPos > 250) return; // Prevent overflow
+                if (yPos > pageHeight - 40) {
+                    doc.addPage();
+                    yPos = margin;
+                }
                 
-                const desc = row.querySelector('.item-desc').value;
-                const qty = row.querySelector('.item-qty').value;
-                const price = row.querySelector('.item-price').value;
-                const total = (parseFloat(qty) * parseFloat(price)).toFixed(2);
+                const desc = row.querySelector('.item-desc')?.value;
+                const qty = row.querySelector('.item-qty')?.value || '1';
+                const price = row.querySelector('.item-price')?.value || '0';
+                const itemTotal = (parseFloat(qty) * parseFloat(price)).toFixed(2);
                 
-                if (desc) {
-                    doc.text(desc.substring(0, 40), 20, yPos);
-                    doc.text(qty, 120, yPos);
-                    doc.text(price, 140, yPos);
-                    doc.text(total, 170, yPos);
+                if (desc && desc.trim()) {
+                    doc.text(desc.substring(0, 50), margin, yPos);
+                    doc.text(qty, pageWidth - 60, yPos, { align: 'right' });
+                    doc.text(price, pageWidth - 40, yPos, { align: 'right' });
+                    doc.text(itemTotal, pageWidth - margin, yPos, { align: 'right' });
                     yPos += 6;
                 }
             });
             
-            // Add totals
-            yPos = Math.max(yPos, 260);
-            doc.text(`Total: ${total}`, 140, yPos);
+            // Totals
+            yPos = Math.max(yPos, pageHeight - 40);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total: ${total}`, pageWidth - margin, yPos, { align: 'right' });
             
-            // Add footer
+            // Footer
             doc.setFontSize(8);
-            doc.text('Generated by STARKS GALAXY LIMITED Document Generator', 105, 285, { align: 'center' });
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(100);
+            doc.text(
+                'Generated by STARKS GALAXY LIMITED Document Generator',
+                pageWidth / 2,
+                pageHeight - 10,
+                { align: 'center' }
+            );
             
-            doc.save(`${serialNumber}-${docType}-compact.pdf`);
+            const fileName = `${serialNumber}-${docType}.pdf`;
+            doc.save(fileName);
             
-            showAlert('historyAlert', 'Generated compact PDF as fallback.', 'warning');
+            showAlert('historyAlert', 'Generated optimized PDF as fallback.', 'warning');
+            
         } catch (fallbackError) {
             console.error("Fallback PDF generation failed:", fallbackError);
-            alert('PDF generation failed. Please try refreshing the preview and try again.');
+            alert('PDF generation failed. Please try refreshing the page and try again.');
         }
     }
 }
