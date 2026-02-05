@@ -1270,160 +1270,175 @@
 @media all {
     .document-preview {
         width: 210mm !important; /* Standard A4 width */
-        height: auto !important;
-        margin: 0 auto !important;
-        box-sizing: border-box !important;
-        padding: 15mm !important;
-        font-size: 14px !important; /* Base font size */
-        line-height: 1.4 !important;
-        background: white !important;
-    }
-    
-    /* Ensure everything fits within the A4 width */
-    .document-preview > * {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    
-    /* Header optimizations */
-    .document-header {
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: flex-start !important;
-        margin-bottom: 15px !important;
-        padding-bottom: 10px !important;
-        border-bottom: 2px solid #eee !important;
-    }
-    
-    .company-details {
-        text-align: right !important;
-        font-size: 12px !important;
-    }
-    
-    /* Document title */
-    .document-title {
-        font-size: 28px !important;
-        margin: 25px 0 !important;
-        text-align: center !important;
-        color: var(--secondary-color) !important;
-    }
-    
-    /* Document info section */
-    .document-info, .receipt-info-grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 20px !important;
-        margin-bottom: 25px !important;
-        font-size: 13px !important;
-    }
-    
-    /* Tables */
-    .document-table, #receiptItemsTable, #standardItemsTable {
-        width: 100% !important;
-        table-layout: fixed !important;
-        font-size: 12px !important;
-        margin: 20px 0 !important;
-        border-collapse: collapse !important;
-    }
-    
-    .document-table th,
-    .document-table td {
-        padding: 10px 8px !important;
-        border: 1px solid #ddd !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-    }
-    
-    /* Optimize column widths */
-    .document-table th:nth-child(1),
-    .document-table td:nth-child(1) {
-        width: 45% !important;
-    }
-    
-    .document-table th:nth-child(2),
-    .document-table td:nth-child(2) {
-        width: 15% !important;
-        text-align: center !important;
-    }
-    
-    .document-table th:nth-child(3),
-    .document-table td:nth-child(3) {
-        width: 20% !important;
-        text-align: right !important;
-    }
-    
-    .document-table th:nth-child(4),
-    .document-table td:nth-child(4) {
-        width: 20% !important;
-        text-align: right !important;
-    }
-    
-    /* Payment accounts */
-    .multiple-payment-accounts {
-        margin: 20px 0 !important;
-        padding: 15px !important;
-        font-size: 12px !important;
-    }
-    
-    .receipt-info-box {
-        padding: 12px !important;
-        font-size: 12px !important;
-    }
-    
-    /* Terms section */
-    .terms-preview {
-        margin-top: 20px !important;
-        padding: 15px !important;
-        font-size: 11px !important;
-        line-height: 1.4 !important;
-        background: #fff9e6 !important;
-        border-radius: 5px !important;
-    }
-    
-    /* Footer */
-    .document-footer {
-        margin-top: 25px !important;
-        padding-top: 15px !important;
-        border-top: 2px solid #eee !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        font-size: 12px !important;
-    }
-    
-    .signature-overlay-container {
-        width: 120px !important;
-        height: 50px !important;
-    }
-    
-    /* Headings */
-    h2, h3, h4 {
-        margin: 15px 0 10px 0 !important;
-    }
-    
-    h2 { 
-        font-size: 20px !important;
-        color: var(--secondary-color) !important;
-    }
-    
-    h3 { 
-        font-size: 16px !important;
-        color: var(--primary-color) !important;
-    }
-    
-    h4 { 
-        font-size: 14px !important;
-        color: #333 !important;
-    }
-    
-    /* Compact spacing */
-    .mt-20 { margin-top: 10px !important; }
-    .mt-30 { margin-top: 15px !important; }
-    .mb-20 { margin-bottom: 10px !important; }
-    
-    /* Hide UI elements */
-    .no-print, .btn, .action-buttons, .currency-selection, .auth-tabs, .nav-tabs {
-        display: none !important;
+        height: auto !/* PDF Generation Fix - Optimized for Single Page */
+/* These styles only apply when .pdf-mode class is added */
+
+.document-preview.pdf-mode {
+    width: 210mm !important; /* Standard A4 width */
+    height: auto !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    padding: 15mm !important;
+    font-size: 14px !important; /* Base font size */
+    line-height: 1.4 !important;
+    background: white !important;
+}
+
+/* Ensure everything fits within the A4 width */
+.document-preview.pdf-mode > * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Header optimizations */
+.document-preview.pdf-mode .document-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 15px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 2px solid #eee !important;
+}
+
+.document-preview.pdf-mode .company-details {
+    text-align: right !important;
+    font-size: 12px !important;
+}
+
+/* Document title */
+.document-preview.pdf-mode .document-title {
+    font-size: 28px !important;
+    margin: 25px 0 !important;
+    text-align: center !important;
+    color: var(--secondary-color) !important;
+}
+
+/* Document info section */
+.document-preview.pdf-mode .document-info,
+.document-preview.pdf-mode .receipt-info-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+    margin-bottom: 25px !important;
+    font-size: 13px !important;
+}
+
+/* Tables */
+.document-preview.pdf-mode .document-table,
+.document-preview.pdf-mode #receiptItemsTable,
+.document-preview.pdf-mode #standardItemsTable {
+    width: 100% !important;
+    table-layout: fixed !important;
+    font-size: 12px !important;
+    margin: 20px 0 !important;
+    border-collapse: collapse !important;
+}
+
+.document-preview.pdf-mode .document-table th,
+.document-preview.pdf-mode .document-table td {
+    padding: 10px 8px !important;
+    border: 1px solid #ddd !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Optimize column widths */
+.document-preview.pdf-mode .document-table th:nth-child(1),
+.document-preview.pdf-mode .document-table td:nth-child(1) {
+    width: 45% !important;
+}
+
+.document-preview.pdf-mode .document-table th:nth-child(2),
+.document-preview.pdf-mode .document-table td:nth-child(2) {
+    width: 15% !important;
+    text-align: center !important;
+}
+
+.document-preview.pdf-mode .document-table th:nth-child(3),
+.document-preview.pdf-mode .document-table td:nth-child(3) {
+    width: 20% !important;
+    text-align: right !important;
+}
+
+.document-preview.pdf-mode .document-table th:nth-child(4),
+.document-preview.pdf-mode .document-table td:nth-child(4) {
+    width: 20% !important;
+    text-align: right !important;
+}
+
+/* Payment accounts */
+.document-preview.pdf-mode .multiple-payment-accounts {
+    margin: 20px 0 !important;
+    padding: 15px !important;
+    font-size: 12px !important;
+}
+
+.document-preview.pdf-mode .receipt-info-box {
+    padding: 12px !important;
+    font-size: 12px !important;
+}
+
+/* Terms section */
+.document-preview.pdf-mode .terms-preview {
+    margin-top: 20px !important;
+    padding: 15px !important;
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    background: #fff9e6 !important;
+    border-radius: 5px !important;
+}
+
+/* Footer */
+.document-preview.pdf-mode .document-footer {
+    margin-top: 25px !important;
+    padding-top: 15px !important;
+    border-top: 2px solid #eee !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 12px !important;
+}
+
+.document-preview.pdf-mode .signature-overlay-container {
+    width: 120px !important;
+    height: 50px !important;
+}
+
+/* Headings */
+.document-preview.pdf-mode h2,
+.document-preview.pdf-mode h3,
+.document-preview.pdf-mode h4 {
+    margin: 15px 0 10px 0 !important;
+}
+
+.document-preview.pdf-mode h2 { 
+    font-size: 20px !important;
+    color: var(--secondary-color) !important;
+}
+
+.document-preview.pdf-mode h3 { 
+    font-size: 16px !important;
+    color: var(--primary-color) !important;
+}
+
+.document-preview.pdf-mode h4 { 
+    font-size: 14px !important;
+    color: #333 !important;
+}
+
+/* Compact spacing */
+.document-preview.pdf-mode .mt-20 { margin-top: 10px !important; }
+.document-preview.pdf-mode .mt-30 { margin-top: 15px !important; }
+.document-preview.pdf-mode .mb-20 { margin-bottom: 10px !important; }
+
+/* Hide UI elements during PDF generation */
+.document-preview.pdf-mode .no-print,
+.document-preview.pdf-mode .btn,
+.document-preview.pdf-mode .action-buttons,
+.document-preview.pdf-mode .currency-selection,
+.document-preview.pdf-mode .auth-tabs,
+.document-preview.pdf-mode .nav-tabs {
+    display: none !important;
     }
 }
     </style>
@@ -5058,6 +5073,9 @@
         
         const element = document.getElementById('documentPreview');
         
+        // Add pdf-mode class to trigger PDF-specific styles
+        element.classList.add('pdf-mode');
+        
         // Store original styles
         const originalStyles = {
             width: element.style.width,
@@ -5074,11 +5092,8 @@
         element.style.boxSizing = 'border-box';
         element.style.background = 'white';
         
-        // Hide UI elements
-        const noPrintElements = element.querySelectorAll('.no-print, .btn');
-        noPrintElements.forEach(el => {
-            el.style.display = 'none';
-        });
+        // Wait for styles to apply
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Optimize tables for better fit
         const tables = element.querySelectorAll('table');
@@ -5132,9 +5147,12 @@
             height: element.scrollHeight,
             windowWidth: element.offsetWidth,
             windowHeight: element.scrollHeight,
-            onclone: function(clonedDoc) {
+                       onclone: function(clonedDoc) {
                 const previewElement = clonedDoc.getElementById('documentPreview');
                 if (previewElement) {
+                    // Add pdf-mode class to clone
+                    previewElement.classList.add('pdf-mode');
+                    
                     // Ensure A4 dimensions
                     previewElement.style.width = '210mm';
                     previewElement.style.padding = '15mm';
@@ -5143,11 +5161,7 @@
                     previewElement.style.background = 'white';
                     previewElement.style.fontSize = '14px';
                     
-                    // Hide UI elements in clone
-                    const cloneNoPrint = previewElement.querySelectorAll('.no-print, .btn');
-                    cloneNoPrint.forEach(el => {
-                        el.style.display = 'none';
-                    });
+                    // The CSS will handle hiding UI elements via .pdf-mode class
                     
                     // Optimize all tables in clone
                     const cloneTables = previewElement.querySelectorAll('table');
@@ -5169,13 +5183,14 @@
             }
         });
         
-        // Restore original styles
+                // Restore original styles and remove pdf-mode class
         element.style.width = originalStyles.width;
         element.style.margin = originalStyles.margin;
         element.style.padding = originalStyles.padding;
         element.style.fontSize = originalStyles.fontSize;
         element.style.background = '';
         element.style.boxSizing = '';
+        element.classList.remove('pdf-mode');;
         
         // Show hidden elements
         noPrintElements.forEach(el => {
