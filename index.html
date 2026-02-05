@@ -2165,6 +2165,50 @@
         let currentDocumentForPayment = null;
         let selectedTermIds = [];
         let accountCounter = 1;
+
+        // Auth functions
+         async function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showAuthAlert('loginAlert', 'Please enter both email and password', 'danger');
+                return;
+            }
+            
+            const btn = document.getElementById('loginBtn');
+            const text = document.getElementById('loginText');
+            const spinner = document.getElementById('loginSpinner');
+            
+            text.textContent = 'Logging in...';
+            spinner.classList.remove('hidden');
+            btn.disabled = true;
+            
+            try {
+                await window.firebaseApp.signInWithEmailAndPassword(window.firebaseApp.auth, email, password);
+            } catch (error) {
+                console.error("Login error:", error);
+                let message = 'Login failed. ';
+                switch(error.code) {
+                    case 'auth/user-not-found':
+                        message += 'No account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        message += 'Incorrect password.';
+                        break;
+                    case 'auth/invalid-email':
+                        message += 'Invalid email address.';
+                        break;
+                    default:
+                        message += error.message;
+                }
+                showAuthAlert('loginAlert', message, 'danger');
+                
+                text.textContent = 'Login';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
         
         // Store for monthly sequential numbers
         let monthlySequence = {};
@@ -2252,48 +2296,7 @@
             }, 5000);
         }
 
-        async function login() {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            
-            if (!email || !password) {
-                showAuthAlert('loginAlert', 'Please enter both email and password', 'danger');
-                return;
-            }
-            
-            const btn = document.getElementById('loginBtn');
-            const text = document.getElementById('loginText');
-            const spinner = document.getElementById('loginSpinner');
-            
-            text.textContent = 'Logging in...';
-            spinner.classList.remove('hidden');
-            btn.disabled = true;
-            
-            try {
-                await window.firebaseApp.signInWithEmailAndPassword(window.firebaseApp.auth, email, password);
-            } catch (error) {
-                console.error("Login error:", error);
-                let message = 'Login failed. ';
-                switch(error.code) {
-                    case 'auth/user-not-found':
-                        message += 'No account found with this email.';
-                        break;
-                    case 'auth/wrong-password':
-                        message += 'Incorrect password.';
-                        break;
-                    case 'auth/invalid-email':
-                        message += 'Invalid email address.';
-                        break;
-                    default:
-                        message += error.message;
-                }
-                showAuthAlert('loginAlert', message, 'danger');
-                
-                text.textContent = 'Login';
-                spinner.classList.add('hidden');
-                btn.disabled = false;
-            }
-        }
+       
 
         async function register() {
             const email = document.getElementById('registerEmail').value.trim();
