@@ -1266,7 +1266,7 @@
     }
 }
 
-/* PDF Generation Fix */
+/* PDF Generation Fix - Optimized for Single Page */
 @media all {
     .document-preview {
         width: 210mm !important; /* Standard A4 width */
@@ -1274,25 +1274,140 @@
         margin: 0 auto !important;
         box-sizing: border-box !important;
         overflow: visible !important;
+        padding: 10mm !important;
+        font-size: 12px !important;
     }
     
-    /* Ensure all content fits within A4 width */
-    .document-preview > * {
-        max-width: 100% !important;
-        box-sizing: border-box !important;
+    /* Optimize header for PDF */
+    .document-header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 20px !important;
+        padding-bottom: 15px !important;
+        border-bottom: 2px solid #eee !important;
     }
     
-    /* Fix table width for PDF */
+    .document-title {
+        font-size: 28px !important;
+        margin: 20px 0 !important;
+        text-align: center !important;
+    }
+    
+    /* Optimize document info layout */
+    .document-info {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 20px !important;
+        margin-bottom: 25px !important;
+    }
+    
+    /* Optimize receipt preview layout */
+    .receipt-info-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 15px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    /* Optimize tables for PDF */
     .document-table, .receipt-items-table {
         width: 100% !important;
         max-width: 100% !important;
         table-layout: fixed !important;
+        font-size: 11px !important;
+        margin: 15px 0 !important;
     }
     
     .document-table th,
     .document-table td {
+        padding: 8px 10px !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
+    }
+    
+    /* Optimize column widths for PDF */
+    .document-table th:nth-child(1),
+    .document-table td:nth-child(1) {
+        width: 40% !important;
+    }
+    
+    .document-table th:nth-child(2),
+    .document-table td:nth-child(2) {
+        width: 15% !important;
+        text-align: center !important;
+    }
+    
+    .document-table th:nth-child(3),
+    .document-table td:nth-child(3) {
+        width: 20% !important;
+        text-align: right !important;
+    }
+    
+    .document-table th:nth-child(4),
+    .document-table td:nth-child(4) {
+        width: 25% !important;
+        text-align: right !important;
+    }
+    
+    /* Optimize payment accounts for PDF */
+    .receipt-info-box {
+        padding: 10px !important;
+        margin-bottom: 10px !important;
+        font-size: 11px !important;
+    }
+    
+    .multiple-payment-accounts {
+        margin: 15px 0 !important;
+        padding: 15px !important;
+        font-size: 11px !important;
+    }
+    
+    /* Optimize terms for PDF */
+    .terms-preview {
+        margin-top: 20px !important;
+        padding: 15px !important;
+        font-size: 10px !important;
+        line-height: 1.3 !important;
+        max-height: 80mm !important;
+        overflow: hidden !important;
+    }
+    
+    /* Optimize footer for PDF */
+    .document-footer {
+        margin-top: 20px !important;
+        padding-top: 15px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        font-size: 11px !important;
+    }
+    
+    .signature-overlay-container {
+        width: 150px !important;
+        height: 60px !important;
+    }
+    
+    /* Hide elements not needed in PDF */
+    .pdf-hide {
+        display: none !important;
+    }
+    
+    /* Compact layout for PDF */
+    h2, h3, h4 {
+        margin: 10px 0 5px 0 !important;
+    }
+    
+    h2 { font-size: 18px !important; }
+    h3 { font-size: 16px !important; }
+    h4 { font-size: 14px !important; }
+    
+    /* Reduce spacing */
+    .mt-20, .mt-30 {
+        margin-top: 10px !important;
+    }
+    
+    .mb-20 {
+        margin-bottom: 10px !important;
     }
 }
     </style>
@@ -1768,13 +1883,13 @@
                 </div>
             </div>
 
-            <!-- Preview Tab -->
-            <div class="tab-content" id="preview">
-                <h2>Document Preview</h2>
-                <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="generatePDF()">Download as PDF</button>
-                    <button class="btn btn-secondary" onclick="refreshPreview()">Refresh Preview</button>
-                </div>
+           <!-- Preview Tab -->
+<div class="tab-content" id="preview">
+    <h2>Document Preview</h2>
+    <div style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;" class="no-print">
+        <button class="btn btn-primary" onclick="generatePDF()">Download as PDF</button>
+        <button class="btn btn-secondary" onclick="refreshPreview()">Refresh Preview</button>
+    </div>
                 <div class="document-preview" id="documentPreview">
                     <div class="revoked-stamp" id="revokedStamp">REVOKED</div>
                     
@@ -4916,7 +5031,7 @@
             generatePDF();
         }
 
-        async function generatePDF() {
+       async function generatePDF() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
@@ -4926,66 +5041,167 @@
         });
         
         const element = document.getElementById('documentPreview');
+        const elementClone = element.cloneNode(true);
         
-        // Store original styles
-        const originalWidth = element.style.width;
-        const originalMargin = element.style.margin;
+        // Apply PDF-optimized styles to clone
+        elementClone.style.cssText = `
+            width: 190mm !important;
+            padding: 10mm !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            font-size: 11px !important;
+            background: white !important;
+        `;
         
-        // Set fixed A4 dimensions for PDF generation
-        element.style.width = '210mm';
-        element.style.margin = '0';
+        // Apply compact styles to all children
+        const applyCompactStyles = (el) => {
+            // Header optimizations
+            if (el.classList && el.classList.contains('document-header')) {
+                el.style.paddingBottom = '8px';
+                el.style.marginBottom = '12px';
+            }
+            
+            // Title optimizations
+            if (el.classList && el.classList.contains('document-title')) {
+                el.style.fontSize = '24px';
+                el.style.margin = '12px 0';
+            }
+            
+            // Table optimizations
+            if (el.tagName === 'TABLE') {
+                el.style.fontSize = '10px';
+                el.style.margin = '8px 0';
+                el.style.width = '100%';
+                el.style.tableLayout = 'fixed';
+                
+                // Set column widths
+                const ths = el.querySelectorAll('th');
+                const tds = el.querySelectorAll('td');
+                if (ths.length >= 4) {
+                    ths[0].style.width = '40%';
+                    ths[1].style.width = '15%';
+                    ths[2].style.width = '20%';
+                    ths[3].style.width = '25%';
+                }
+                if (tds.length >= 4) {
+                    tds[0].style.width = '40%';
+                    tds[1].style.width = '15%';
+                    tds[2].style.width = '20%';
+                    tds[3].style.width = '25%';
+                }
+            }
+            
+            // Section optimizations
+            if (el.classList && (
+                el.classList.contains('multiple-payment-accounts') ||
+                el.classList.contains('terms-preview') ||
+                el.classList.contains('receipt-info-grid')
+            )) {
+                el.style.margin = '10px 0';
+                el.style.padding = '10px';
+                el.style.fontSize = '10px';
+            }
+            
+            // Footer optimizations
+            if (el.classList && el.classList.contains('document-footer')) {
+                el.style.marginTop = '15px';
+                el.style.paddingTop = '10px';
+                el.style.fontSize = '10px';
+            }
+            
+            // Process children
+            if (el.children) {
+                Array.from(el.children).forEach(child => {
+                    applyCompactStyles(child);
+                });
+            }
+        };
         
-        // Hide elements not needed in PDF
-        const elementsToHide = element.querySelectorAll('.no-print, .btn, .nav-tabs');
+        applyCompactStyles(elementClone);
+        
+        // Hide unnecessary elements in clone
+        const elementsToHide = elementClone.querySelectorAll('.no-print, .btn, .nav-tabs');
         elementsToHide.forEach(el => {
             el.style.display = 'none';
         });
         
-        // Ensure all content is visible
-        element.style.overflow = 'visible';
+        // Add clone to body temporarily
+        elementClone.style.position = 'absolute';
+        elementClone.style.left = '-9999px';
+        elementClone.style.top = '0';
+        document.body.appendChild(elementClone);
         
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        const canvas = await html2canvas(element, {
+        const canvas = await html2canvas(elementClone, {
             scale: 2,
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff',
             width: 794, // A4 width at 96 DPI
-            height: element.scrollHeight * 2,
+            height: elementClone.scrollHeight * 2,
             windowWidth: 794,
-            windowHeight: element.scrollHeight * 2,
+            windowHeight: 1123, // A4 height at 96 DPI
             onclone: function(clonedDoc) {
                 const previewElement = clonedDoc.getElementById('documentPreview');
                 if (previewElement) {
+                    // Apply final PDF optimizations
                     previewElement.style.boxShadow = 'none';
                     previewElement.style.border = '1px solid #ddd';
-                    previewElement.style.width = '210mm';
-                    previewElement.style.margin = '0';
-                    previewElement.style.overflow = 'visible';
+                    previewElement.style.width = '190mm';
+                    previewElement.style.padding = '10mm';
                     
-                    // Fix table widths for PDF
+                    // Compact all text
+                    const allElements = previewElement.querySelectorAll('*');
+                    allElements.forEach(el => {
+                        const computedFontSize = parseInt(window.getComputedStyle(el).fontSize);
+                        if (computedFontSize > 12) {
+                            el.style.fontSize = Math.max(10, computedFontSize * 0.8) + 'px';
+                        }
+                    });
+                    
+                    // Reduce line heights
+                    const textElements = previewElement.querySelectorAll('p, span, div, td, th');
+                    textElements.forEach(el => {
+                        el.style.lineHeight = '1.2';
+                        el.style.margin = '0';
+                        el.style.padding = '2px';
+                    });
+                    
+                    // Compact tables
                     const tables = previewElement.querySelectorAll('table');
                     tables.forEach(table => {
                         table.style.width = '100%';
                         table.style.tableLayout = 'fixed';
+                        table.style.margin = '5px 0';
+                        
+                        const cells = table.querySelectorAll('th, td');
+                        cells.forEach(cell => {
+                            cell.style.padding = '4px 6px';
+                            cell.style.fontSize = '10px';
+                        });
                     });
                     
-                    // Hide UI elements in PDF
-                    const uiElements = previewElement.querySelectorAll('.no-print, .btn, .nav-tabs');
-                    uiElements.forEach(el => {
-                        el.style.display = 'none';
+                    // Compact sections
+                    const sections = previewElement.querySelectorAll('.document-info, .receipt-info-grid, .multiple-payment-accounts');
+                    sections.forEach(section => {
+                        section.style.margin = '8px 0';
+                        section.style.padding = '8px';
                     });
+                    
+                    // Compact terms section
+                    const termsSection = previewElement.querySelector('.terms-preview');
+                    if (termsSection) {
+                        termsSection.style.maxHeight = '60mm';
+                        termsSection.style.overflow = 'hidden';
+                        termsSection.style.fontSize = '9px';
+                    }
                 }
             }
         });
         
-        // Restore original styles
-        element.style.width = originalWidth;
-        element.style.margin = originalMargin;
-        elementsToHide.forEach(el => {
-            el.style.display = '';
-        });
+        // Remove clone from body
+        document.body.removeChild(elementClone);
         
         if (!canvas || canvas.width === 0 || canvas.height === 0) {
             throw new Error('Canvas rendering failed');
@@ -4997,73 +5213,120 @@
             throw new Error('Image data is invalid or too small');
         }
         
-        // Calculate dimensions for A4
+        // Calculate dimensions for A4 with margins
         const pdfWidth = doc.internal.pageSize.getWidth();
         const pdfHeight = doc.internal.pageSize.getHeight();
         
-        const imgWidth = pdfWidth - 10; // 5mm margins on each side
+        const margin = 5; // 5mm margin on all sides
+        const imgWidth = pdfWidth - (margin * 2);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        // Center the image horizontally
-        const xOffset = (pdfWidth - imgWidth) / 2;
-        
-        // Add image to PDF
-        doc.addImage(imgData, 'PNG', xOffset, 5, imgWidth, imgHeight);
-        
-        // Add page numbers if content spans multiple pages
-        const pageHeight = pdfHeight - 10;
-        let heightLeft = imgHeight;
-        let position = 5;
-        let page = 1;
-        
-        while (heightLeft >= pageHeight) {
-            doc.addPage();
-            position = position - pageHeight;
-            doc.addImage(imgData, 'PNG', xOffset, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-            page++;
+        // Check if it fits on one page
+        if (imgHeight <= (pdfHeight - (margin * 2))) {
+            // Fits on one page
+            doc.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        } else {
+            // Scale down to fit on one page
+            const scaleFactor = (pdfHeight - (margin * 2)) / imgHeight;
+            const scaledWidth = imgWidth * scaleFactor * 0.95; // 95% to ensure fit
+            const scaledHeight = imgHeight * scaleFactor * 0.95;
+            
+            // Center on page
+            const xPos = (pdfWidth - scaledWidth) / 2;
+            const yPos = (pdfHeight - scaledHeight) / 2;
+            
+            doc.addImage(imgData, 'PNG', xPos, yPos, scaledWidth, scaledHeight);
         }
         
-        // Add page numbers
-        const totalPages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
-            doc.setPage(i);
-            doc.setFontSize(10);
-            doc.setTextColor(150);
-            doc.text(
-                `Page ${i} of ${totalPages}`,
-                pdfWidth / 2,
-                pdfHeight - 10,
-                { align: 'center' }
-            );
-        }
-        
+        // Add document info in footer
         const docType = document.getElementById('documentType').value;
         const serialNumber = document.getElementById('serialNumber').value;
+        const date = new Date().toLocaleDateString();
+        
+        doc.setFontSize(8);
+        doc.setTextColor(100);
+        doc.text(
+            `Generated: ${date} | ${serialNumber} | Page 1 of 1`,
+            pdfWidth / 2,
+            pdfHeight - 5,
+            { align: 'center' }
+        );
+        
         doc.save(`${serialNumber}-${docType}.pdf`);
+        
+        showAlert('historyAlert', 'PDF generated successfully!', 'success');
         
     } catch (error) {
         console.error("Error generating PDF:", error);
         showAlert('historyAlert', 'Error generating PDF: ' + error.message, 'danger');
         
-        // Fallback: Try with simpler approach
+        // Fallback: Create a simple text-based PDF
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            doc.setFontSize(16);
-            doc.text('Document Preview Unavailable', 20, 20);
-            doc.setFontSize(12);
-            doc.text('Please try downloading from the Document History tab.', 20, 40);
-            
-            const serialNumber = document.getElementById('serialNumber').value;
+            // Get document data
             const docType = document.getElementById('documentType').value;
-            doc.save(`${serialNumber}-${docType}-fallback.pdf`);
+            const serialNumber = document.getElementById('serialNumber').value;
+            const companyName = document.getElementById('previewCompanyName').textContent;
+            const customerName = document.getElementById('customerName').value || 'Customer';
+            const total = document.getElementById('totalAmount').textContent;
             
-            showAlert('historyAlert', 'Generated fallback PDF. Try refreshing the preview.', 'warning');
+            // Create compact one-page PDF
+            doc.setFontSize(16);
+            doc.text(companyName, 20, 20);
+            
+            doc.setFontSize(14);
+            doc.text(`${docType.toUpperCase()} - ${serialNumber}`, 20, 30);
+            
+            doc.setFontSize(12);
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 40);
+            doc.text(`Customer: ${customerName}`, 20, 48);
+            
+            // Add items table
+            doc.setFontSize(10);
+            let yPos = 60;
+            
+            // Table header
+            doc.text('Description', 20, yPos);
+            doc.text('Qty', 120, yPos);
+            doc.text('Price', 140, yPos);
+            doc.text('Total', 170, yPos);
+            yPos += 6;
+            
+            // Add items
+            const items = document.querySelectorAll('#itemsTableBody tr');
+            items.forEach((row, index) => {
+                if (yPos > 250) return; // Prevent overflow
+                
+                const desc = row.querySelector('.item-desc').value;
+                const qty = row.querySelector('.item-qty').value;
+                const price = row.querySelector('.item-price').value;
+                const total = (parseFloat(qty) * parseFloat(price)).toFixed(2);
+                
+                if (desc) {
+                    doc.text(desc.substring(0, 40), 20, yPos);
+                    doc.text(qty, 120, yPos);
+                    doc.text(price, 140, yPos);
+                    doc.text(total, 170, yPos);
+                    yPos += 6;
+                }
+            });
+            
+            // Add totals
+            yPos = Math.max(yPos, 260);
+            doc.text(`Total: ${total}`, 140, yPos);
+            
+            // Add footer
+            doc.setFontSize(8);
+            doc.text('Generated by STARKS GALAXY LIMITED Document Generator', 105, 285, { align: 'center' });
+            
+            doc.save(`${serialNumber}-${docType}-compact.pdf`);
+            
+            showAlert('historyAlert', 'Generated compact PDF as fallback.', 'warning');
         } catch (fallbackError) {
             console.error("Fallback PDF generation failed:", fallbackError);
-            alert('PDF generation failed. Please try again or contact support.');
+            alert('PDF generation failed. Please try refreshing the preview and try again.');
         }
     }
 }
