@@ -40,7 +40,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        /* ----- GLOBAL STYLES (condensed) ----- */
+        /* ----- GLOBAL STYLES (condensed but complete) ----- */
         :root {
             --primary-color: #4361ee;
             --secondary-color: #3a0ca3;
@@ -49,51 +49,97 @@
             --warning-color: #ff9e00;
             --light-color: #f8f9fa;
             --dark-color: #212529;
+            --gray-color: #6c757d;
             --border-radius: 10px;
             --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             --transition: all 0.3s ease;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f5f7fb; color: var(--dark-color); line-height: 1.6; }
+        body { background: #f5f7fb; color: var(--dark-color); line-height: 1.6; min-height: 100vh; }
         
         /* Auth screen */
         .auth-screen { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #4361ee, #3a0ca3); padding: 20px; }
-        .auth-container { background: white; border-radius: 20px; max-width: 450px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .auth-container { background: white; border-radius: 20px; max-width: 450px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); overflow: hidden; }
         .auth-header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 40px 30px; text-align: center; }
         .auth-header h1 { font-size: 2.5rem; margin-bottom: 10px; }
         .auth-tabs { display: flex; border-bottom: 2px solid #e0e0e0; }
-        .auth-tab { flex:1; padding:18px; text-align:center; cursor:pointer; font-weight:600; color:#666; border-bottom:3px solid transparent; }
-        .auth-tab.active { color:var(--primary-color); border-bottom-color:var(--primary-color); }
+        .auth-tab { flex:1; padding:18px; text-align:center; cursor:pointer; font-weight:600; color:#666; border-bottom:3px solid transparent; transition: var(--transition); }
+        .auth-tab:hover { color: var(--primary-color); }
+        .auth-tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
         .auth-form { padding:40px 30px; }
         .auth-form-group { margin-bottom:25px; }
-        .auth-form-control { width:100%; padding:15px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; }
-        .auth-btn { width:100%; padding:16px; background: linear-gradient(135deg,var(--primary-color),var(--secondary-color)); color:white; border:none; border-radius:10px; font-weight:600; }
+        .auth-form-group label { display:block; margin-bottom:8px; font-weight:600; color:#333; }
+        .auth-form-control { width:100%; padding:15px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; transition: var(--transition); }
+        .auth-form-control:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(67,97,238,0.2); }
+        .auth-btn { width:100%; padding:16px; background: linear-gradient(135deg,var(--primary-color),var(--secondary-color)); color:white; border:none; border-radius:10px; font-weight:600; cursor:pointer; transition: var(--transition); }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow:0 10px 20px rgba(67,97,238,0.3); }
+        .hidden { display:none !important; }
+        .alert { padding:15px 20px; border-radius:8px; margin-bottom:20px; display:none; border-left:4px solid transparent; }
+        .alert-success { background:rgba(76,201,240,0.1); border-left-color:var(--success-color); color:#0a8ea8; }
+        .alert-danger { background:rgba(247,37,133,0.1); border-left-color:var(--danger-color); color:#c2185b; }
         
         /* Main app */
         .main-app { display: none; }
         .container { max-width: 1400px; margin:0 auto; padding:20px; }
-        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color:white; padding:20px; border-radius:var(--border-radius); display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
-        .nav-tabs { display:flex; background:white; border-radius:var(--border-radius); margin-bottom:30px; box-shadow:var(--box-shadow); }
-        .nav-tab { flex:1; padding:18px; text-align:center; cursor:pointer; font-weight:600; border-bottom:3px solid transparent; }
+        header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color:white; padding:20px; border-radius:var(--border-radius); display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; flex-wrap:wrap; box-shadow:var(--box-shadow); }
+        .header-left h1 { font-size:2.2rem; margin-bottom:5px; }
+        .user-info { display:flex; align-items:center; gap:15px; }
+        .user-email { background:rgba(255,255,255,0.2); padding:8px 15px; border-radius:20px; font-size:0.9rem; }
+        .btn-logout { background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.3); padding:8px 20px; border-radius:20px; cursor:pointer; font-weight:600; transition:var(--transition); }
+        .btn-logout:hover { background:rgba(255,255,255,0.3); }
+        
+        .nav-tabs { display:flex; background:white; border-radius:var(--border-radius); margin-bottom:30px; box-shadow:var(--box-shadow); flex-wrap:wrap; }
+        .nav-tab { flex:1; min-width:120px; padding:18px; text-align:center; cursor:pointer; font-weight:600; border-bottom:3px solid transparent; transition:var(--transition); }
+        .nav-tab:hover { background:rgba(67,97,238,0.05); }
         .nav-tab.active { color:var(--primary-color); border-bottom-color:var(--primary-color); background:rgba(67,97,238,0.05); }
+        
         .tab-content { display:none; background:white; border-radius:var(--border-radius); padding:30px; box-shadow:var(--box-shadow); animation:fadeIn 0.5s; }
         .tab-content.active { display:block; }
-        h2 { color:var(--secondary-color); border-bottom:2px solid #eee; padding-bottom:15px; margin-bottom:25px; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        
+        h2 { color:var(--secondary-color); border-bottom:2px solid #eee; padding-bottom:15px; margin-bottom:25px; font-size:1.8rem; }
+        h3 { color:var(--primary-color); margin:25px 0 15px; }
+        
         .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; margin-bottom:25px; }
-        .form-control { padding:12px 15px; border:1px solid #ddd; border-radius:8px; }
+        .form-group { display:flex; flex-direction:column; }
+        .form-group label { font-weight:600; margin-bottom:8px; color:var(--dark-color); }
+        .form-control { padding:12px 15px; border:1px solid #ddd; border-radius:8px; font-size:1rem; transition:var(--transition); }
+        .form-control:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(67,97,238,0.2); }
+        textarea.form-control { resize:vertical; min-height:80px; }
+        
         .btn { padding:12px 25px; border:none; border-radius:8px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:var(--transition); }
         .btn-primary { background:var(--primary-color); color:white; }
-        .btn-secondary { background:var(--gray-color, #6c757d); color:white; }
-        .btn-danger { background:var(--danger-color); color:white; }
+        .btn-primary:hover { background:var(--secondary-color); transform:translateY(-2px); box-shadow:0 6px 12px rgba(0,0,0,0.15); }
+        .btn-secondary { background:var(--gray-color); color:white; }
         .btn-success { background:var(--success-color); color:white; }
+        .btn-danger { background:var(--danger-color); color:white; }
         .btn-warning { background:var(--warning-color); color:white; }
-        .items-table, .history-table { width:100%; border-collapse:collapse; margin:25px 0; border-radius:var(--border-radius); overflow:hidden; box-shadow:0 0 0 1px #ddd; }
-        .items-table th, .history-table th { background:#f1f5fd; padding:15px; text-align:left; color:var(--secondary-color); }
-        .items-table td { padding:15px; border-top:1px solid #eee; }
+        .btn-sm { padding:8px 15px; font-size:0.9rem; }
+        
+        /* Tables */
+        .items-table, .history-table, .document-table { width:100%; border-collapse:collapse; margin:25px 0; border-radius:var(--border-radius); overflow:hidden; box-shadow:0 0 0 1px #ddd; }
+        .items-table th, .history-table th, .document-table th { background:#f1f5fd; padding:15px; text-align:left; color:var(--secondary-color); font-weight:600; }
+        .items-table td, .history-table td, .document-table td { padding:15px; border-top:1px solid #eee; }
+        
+        /* Currency selection */
+        .currency-selection { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .currency-btn { padding:10px 20px; border:2px solid #ddd; background:white; border-radius:8px; cursor:pointer; font-weight:600; transition:var(--transition); }
+        .currency-btn:hover { border-color:var(--primary-color); background:rgba(67,97,238,0.05); }
+        .currency-btn.active { border-color:var(--primary-color); background:var(--primary-color); color:white; }
+        
+        /* Receipt fields */
+        .receipt-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; margin-bottom:25px; padding:20px; background:#f9fafc; border-radius:8px; border-left:4px solid var(--success-color); }
+        
+        /* Payment & Terms */
+        .multiple-payment-accounts, .terms-section { margin-top:30px; padding:20px; background:#f9fafc; border-radius:8px; border-left:4px solid var(--primary-color); }
+        .payment-methods-checkbox-list, .terms-checkbox-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin:15px 0; max-height:200px; overflow-y:auto; padding:10px; background:white; border-radius:8px; border:1px solid #eaeaea; }
+        .payment-method-checkbox-item, .term-checkbox-item { display:flex; align-items:flex-start; padding:10px; background:white; border-radius:8px; border:1px solid #eaeaea; transition:var(--transition); }
+        .payment-account-item { background:white; padding:15px; border-radius:8px; border:1px solid #eaeaea; margin-bottom:15px; }
+        
+        /* Preview */
         .document-preview { background:white; border-radius:var(--border-radius); padding:40px; box-shadow:var(--box-shadow); border:1px solid #eaeaea; position:relative; }
-        .hidden { display:none !important; }
-        .loading { display:inline-block; width:20px; height:20px; border:3px solid rgba(255,255,255,0.3); border-radius:50%; border-top-color:white; animation:spin 1s infinite; vertical-align:middle; }
-        @keyframes spin { to { transform:rotate(360deg); } }
+        .document-title { text-align:center; font-size:2.5rem; margin:40px 0; font-weight:700; color:var(--secondary-color); }
+        .revoked-stamp { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-45deg); font-size:80px; color:var(--danger-color); font-weight:bold; opacity:0.3; border:8px solid var(--danger-color); padding:40px; border-radius:15px; display:none; }
         
         /* PDF MODE — CRITICAL FOR CLEAN SINGLE-PAGE PDF */
         .document-preview.pdf-mode {
@@ -114,145 +160,274 @@
         .pdf-mode th, .pdf-mode td { padding:6px 4px !important; border:1px solid #ddd; }
         .pdf-mode .document-title { font-size:22px !important; margin:12px 0 !important; }
         .pdf-mode .no-print, .pdf-mode .btn, .pdf-mode .nav-tabs, .pdf-mode .action-buttons { display:none !important; }
-        .pdf-mode .payment-account-item, .pdf-mode .terms-preview { break-inside:avoid; }
         
-        /* modal */
+        /* Loading spinner */
+        .loading { display:inline-block; width:20px; height:20px; border:3px solid rgba(255,255,255,0.3); border-radius:50%; border-top-color:white; animation:spin 1s infinite; vertical-align:middle; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        
+        /* Client cards */
+        .client-list, .company-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; margin-top:20px; }
+        .client-card, .company-card { background:white; border-radius:var(--border-radius); padding:20px; box-shadow:var(--box-shadow); border:1px solid #eaeaea; transition:var(--transition); cursor:pointer; }
+        .client-card:hover, .company-card:hover { transform:translateY(-5px); box-shadow:0 10px 20px rgba(0,0,0,0.1); }
+        
+        /* Modal */
         .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
         .modal-content { background:white; border-radius:var(--border-radius); padding:30px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
         
-        /* responsive */
+        /* Responsive */
         @media print { .auth-screen, .nav-tabs, .btn, .tab-content:not(.active) { display:none !important; } .tab-content.active { display:block !important; } }
-        @media (max-width:768px) { .container { padding:10px; } }
+        @media (max-width:768px) { .container { padding:10px; } header { flex-direction:column; } .nav-tabs { flex-direction:column; } }
     </style>
 </head>
 <body>
     <!-- AUTH SCREEN -->
     <div class="auth-screen" id="authScreen">
         <div class="auth-container">
-            <div class="auth-header"><h1>STARKS GALAXY LIMITED</h1><p>Document Generator Engine</p></div>
+            <div class="auth-header">
+                <h1>STARKS GALAXY LIMITED</h1>
+                <p>Company Document Generator Engine</p>
+            </div>
             <div class="auth-tabs">
                 <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
                 <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
             </div>
-            <!-- Login -->
+            <!-- Login Form -->
             <div class="auth-form" id="loginForm">
                 <div class="alert" id="loginAlert"></div>
-                <div class="auth-form-group"><label>Email</label><input type="email" id="loginEmail" class="auth-form-control"></div>
-                <div class="auth-form-group"><label>Password</label><input type="password" id="loginPassword" class="auth-form-control"></div>
-                <button class="auth-btn" onclick="login()" id="loginBtn"><span id="loginText">Login</span><span id="loginSpinner" class="loading hidden"></span></button>
+                <div class="auth-form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" class="auth-form-control" placeholder="Enter your email">
+                </div>
+                <div class="auth-form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="auth-form-control" placeholder="Enter your password">
+                </div>
+                <button class="auth-btn" onclick="login()" id="loginBtn">
+                    <span id="loginText">Login</span>
+                    <span id="loginSpinner" class="loading hidden"></span>
+                </button>
             </div>
-            <!-- Register -->
+            <!-- Register Form -->
             <div class="auth-form hidden" id="registerForm">
                 <div class="alert" id="registerAlert"></div>
-                <div class="auth-form-group"><label>Email</label><input type="email" id="registerEmail" class="auth-form-control"></div>
-                <div class="auth-form-group"><label>Password</label><input type="password" id="registerPassword" class="auth-form-control"></div>
-                <div class="auth-form-group"><label>Confirm</label><input type="password" id="registerConfirmPassword" class="auth-form-control"></div>
-                <button class="auth-btn" onclick="register()" id="registerBtn"><span id="registerText">Create Account</span><span id="registerSpinner" class="loading hidden"></span></button>
+                <div class="auth-form-group">
+                    <label for="registerEmail">Email Address</label>
+                    <input type="email" id="registerEmail" class="auth-form-control" placeholder="Enter your email">
+                </div>
+                <div class="auth-form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" class="auth-form-control" placeholder="Create a password (min. 6 characters)">
+                </div>
+                <div class="auth-form-group">
+                    <label for="registerConfirmPassword">Confirm Password</label>
+                    <input type="password" id="registerConfirmPassword" class="auth-form-control" placeholder="Confirm your password">
+                </div>
+                <button class="auth-btn" onclick="register()" id="registerBtn">
+                    <span id="registerText">Create Account</span>
+                    <span id="registerSpinner" class="loading hidden"></span>
+                </button>
             </div>
-            <div class="auth-footer"><p>Terms & Privacy</p></div>
+            <div class="auth-footer">
+                <p style="padding:20px; text-align:center; color:#666;">By continuing, you agree to our Terms of Service</p>
+            </div>
         </div>
     </div>
 
     <!-- PAYMENT MODAL -->
-    <div class="modal-overlay" id="paymentModal"><div class="modal-content" id="paymentModalContent"></div></div>
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content" id="paymentModalContent">
+            <div class="modal-header">
+                <h3 id="paymentModalTitle">Record Payment</h3>
+                <button class="modal-close" onclick="closePaymentModal()">×</button>
+            </div>
+            <div id="paymentFormContainer"></div>
+        </div>
+    </div>
 
     <!-- MAIN APP -->
     <div class="main-app" id="mainApp">
         <div class="container">
             <header>
-                <div><h1>STARKS GALAXY LIMITED</h1><p>Receipts, Invoices, Quotes, Proforma</p></div>
-                <div class="user-info"><span id="userEmail"></span><button class="btn-logout" onclick="logout()">Logout</button></div>
+                <div class="header-left">
+                    <h1>STARKS GALAXY LIMITED</h1>
+                    <p>Receipts, Invoices, Quotes, and Proforma Invoices Generator</p>
+                </div>
+                <div class="user-info">
+                    <div class="user-email" id="userEmail"></div>
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </div>
             </header>
-            <nav class="nav-tabs">
-                <div class="nav-tab active" data-tab="create">Create</div>
-                <div class="nav-tab" data-tab="history">History</div>
-                <div class="nav-tab" data-tab="admin">Admin</div>
-                <div class="nav-tab" data-tab="preview">Preview</div>
-                <div class="nav-tab" data-tab="clients">Clients</div>
-                <div class="nav-tab" data-tab="terms">Terms</div>
+
+            <nav class="nav-tabs" id="navTabs">
+                <div class="nav-tab active" data-tab="create">Create Document</div>
+                <div class="nav-tab" data-tab="history">Document History</div>
+                <div class="nav-tab" data-tab="admin">Admin Dashboard</div>
+                <div class="nav-tab" data-tab="preview">Live Preview</div>
+                <div class="nav-tab" data-tab="clients">Client Database</div>
+                <div class="nav-tab" data-tab="terms">Terms Management</div>
             </nav>
 
-            <!-- CREATE TAB (simplified but functional) -->
+            <!-- CREATE TAB -->
             <div class="tab-content active" id="create">
-                <h2>Create Document</h2>
+                <h2>Create New Document</h2>
                 <div class="alert" id="createAlert"></div>
+                
                 <div class="currency-selection">
-                    <button class="currency-btn active" onclick="selectCurrency('USD')">USD</button>
-                    <button class="currency-btn" onclick="selectCurrency('KSH')">KSH</button>
+                    <button class="currency-btn active" id="usdCurrency" onclick="selectCurrency('USD')">US Dollars (USD)</button>
+                    <button class="currency-btn" id="kshCurrency" onclick="selectCurrency('KSH')">Kenya Shillings (KSH)</button>
                 </div>
+                
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Type</label>
+                        <label>Document Type</label>
                         <select id="documentType" class="form-control" onchange="updateFormLayout(); updateSerialNumber(); loadTermsForDocumentType(this.value);">
-                            <option value="invoice">Invoice</option><option value="quote">Quote</option><option value="receipt">Receipt</option><option value="proforma">Proforma</option>
+                            <option value="invoice">Invoice</option>
+                            <option value="quote">Quote</option>
+                            <option value="receipt">Receipt</option>
+                            <option value="proforma">Proforma Invoice</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Company</label>
-                        <select id="companySelect" class="form-control" onchange="onCompanySelect()"></select>
+                        <select id="companySelect" class="form-control" onchange="onCompanySelect()">
+                            <option value="">Select a company</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label>Serial</label>
+                        <label>Serial Number</label>
                         <input type="text" id="serialNumber" class="form-control" readonly>
                     </div>
                 </div>
-                <!-- Customer -->
-                <h3>Customer</h3>
+
+                <h3>Customer Details</h3>
                 <div class="form-grid">
-                    <div class="form-group"><label>Name</label><input type="text" id="customerName" class="form-control"></div>
-                    <div class="form-group"><label>Email</label><input type="email" id="customerEmail" class="form-control"></div>
-                    <div class="form-group"><label>Phone</label><input type="text" id="customerPhone" class="form-control"></div>
-                    <div class="form-group"><label>Address</label><textarea id="customerAddress" class="form-control" rows="2"></textarea></div>
+                    <div class="form-group">
+                        <label>Customer Name</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="customerName" class="form-control" placeholder="John Doe" style="flex:1;">
+                            <button type="button" class="btn btn-secondary" onclick="showClientList()">Select</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Email</label>
+                        <input type="email" id="customerEmail" class="form-control" placeholder="john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Phone</label>
+                        <input type="tel" id="customerPhone" class="form-control" placeholder="+1234567890">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Address</label>
+                        <textarea id="customerAddress" class="form-control" rows="2" placeholder="123 Main St, City, Country"></textarea>
+                    </div>
                 </div>
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
-                    <button class="btn btn-success" onclick="saveCurrentClient()">Save Client</button>
-                    <button class="btn btn-secondary" onclick="clearClientForm()">Clear</button>
+                    <button class="btn btn-success" onclick="saveCurrentClient()">Save Client Info</button>
+                    <button class="btn btn-secondary" onclick="clearClientForm()">Clear Client Info</button>
                 </div>
-                <!-- Receipt fields -->
+
+                <!-- Receipt Specific Fields -->
                 <div id="receiptFields" class="hidden">
                     <h3>Receipt Details</h3>
                     <div class="receipt-fields">
-                        <div class="form-group"><label>Reason</label><input type="text" id="receiptReason" class="form-control"></div>
-                        <div class="form-group"><label>Date</label><input type="date" id="receiptDate" class="form-control"></div>
+                        <div class="form-group">
+                            <label>Reason for Receipt</label>
+                            <input type="text" id="receiptReason" class="form-control" placeholder="Payment for services rendered">
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Receipt</label>
+                            <input type="date" id="receiptDate" class="form-control">
+                        </div>
                     </div>
                 </div>
-                <!-- Items table -->
+
+                <!-- Items Section -->
                 <div id="itemsSection">
-                    <h3>Items</h3>
+                    <h3>Items & Services</h3>
                     <table class="items-table">
-                        <thead><tr><th>Description</th><th>Qty</th><th>Unit Price (<span id="currencySymbol">$</span>)</th><th>Total</th><th></th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th width="120">Quantity</th>
+                                <th width="150">Unit Price (<span id="currencySymbol">$</span>)</th>
+                                <th width="150">Total (<span id="currencySymbol2">$</span>)</th>
+                                <th width="50">Actions</th>
+                            </tr>
+                        </thead>
                         <tbody id="itemsTableBody">
-                            <tr><td><input class="form-control item-desc"></td><td><input type="number" class="form-control item-qty" value="1" min="1"></td><td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td><td class="item-total">$0.00</td><td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td></tr>
+                            <tr>
+                                <td><input type="text" class="form-control item-desc" placeholder="Item description"></td>
+                                <td><input type="number" class="form-control item-qty" value="1" min="1"></td>
+                                <td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td>
+                                <td class="item-total">$0.00</td>
+                                <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
+                            </tr>
                         </tbody>
                         <tfoot>
-                            <tr><td colspan="3" style="text-align:right;"><strong>Subtotal</strong></td><td id="subtotal">$0.00</td><td></td></tr>
-                            <tr><td colspan="3" style="text-align:right;"><strong>Discount (<span id="discountCurrencySymbol">$</span>)</strong> <input type="number" id="discountAmount" class="form-control" style="width:100px; display:inline-block;" value="0" min="0" step="0.01"></td><td id="discountDisplay">-$0.00</td><td></td></tr>
-                            <tr><td colspan="3" style="text-align:right;"><strong>Tax %</strong> <input type="number" id="taxRate" class="form-control" style="width:70px;" value="0" min="0" step="0.1"></td><td id="taxAmount">$0.00</td><td></td></tr>
-                            <tr><td colspan="3" style="text-align:right;"><strong>Total</strong></td><td id="totalAmount">$0.00</td><td></td></tr>
+                            <tr>
+                                <td colspan="3" style="text-align:right;"><strong>Subtotal:</strong></td>
+                                <td id="subtotal">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align:right;">
+                                    <strong>Discount (<span id="discountCurrencySymbol">$</span>):</strong>
+                                    <input type="number" id="discountAmount" class="form-control" style="width:120px; display:inline-block; margin-left:10px;" value="0" min="0" step="0.01">
+                                </td>
+                                <td id="discountDisplay">-$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align:right;">
+                                    <strong>Tax Rate (%):</strong>
+                                    <input type="number" id="taxRate" class="form-control" style="width:80px; display:inline-block; margin-left:10px;" value="0" min="0" max="50">
+                                </td>
+                                <td id="taxAmount">$0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align:right;"><strong>Total:</strong></td>
+                                <td id="totalAmount">$0.00</td>
+                                <td></td>
+                            </tr>
                         </tfoot>
                     </table>
                     <button class="btn btn-secondary" onclick="addItem()">+ Add Item</button>
                 </div>
 
-                <!-- Terms checkboxes (populated) -->
+                <!-- Terms and Conditions Section -->
                 <div class="terms-section">
-                    <h4>Terms</h4>
-                    <div id="termsCheckboxList" class="terms-checkbox-list"></div>
-                    <div id="termsContent" class="terms-content mt-20"></div>
+                    <h4>Terms & Conditions</h4>
+                    <div class="form-group">
+                        <label>Select Terms (Multiple selection allowed)</label>
+                        <div class="terms-checkbox-list" id="termsCheckboxList">
+                            <div class="text-center" style="padding:20px; color:var(--gray-color);">Loading terms...</div>
+                        </div>
+                    </div>
+                    <div class="terms-content" id="termsContent">No terms selected</div>
                 </div>
 
-                <!-- Payment methods + accounts -->
+                <!-- Payment Accounts Section -->
                 <div class="multiple-payment-accounts">
                     <h4>Payment Methods</h4>
-                    <div id="paymentMethodsCheckboxList" class="payment-methods-checkbox-list"></div>
+                    <div class="payment-methods-checkbox-list" id="paymentMethodsCheckboxList"></div>
+                    
                     <h4 class="mt-20">Payment Accounts</h4>
-                    <div id="paymentAccountsContainer"></div>
-                    <div class="mt-20"><button class="btn btn-success" onclick="addPaymentAccount()">+ Add Account</button></div>
+                    <div id="paymentAccountsContainer">
+                        <!-- Initial account will be added by JS -->
+                    </div>
+                    <div class="mt-20">
+                        <button class="btn btn-success" onclick="addPaymentAccount()">+ Add Another Payment Account</button>
+                    </div>
                 </div>
-                <div class="mt-30" style="display:flex; gap:15px;">
-                    <button class="btn btn-primary" onclick="generateDocument()" id="generateBtn"><span id="generateText">Generate</span><span id="generateSpinner" class="loading hidden"></span></button>
-                    <button class="btn btn-success" onclick="previewDocument()">Preview</button>
-                    <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+
+                <div class="mt-30" style="display:flex; gap:15px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="generateDocument()" id="generateBtn">
+                        <span id="generateText">Generate Document</span>
+                        <span id="generateSpinner" class="loading hidden"></span>
+                    </button>
+                    <button class="btn btn-success" onclick="previewDocument()">Preview Document</button>
+                    <button class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
                 </div>
             </div>
 
@@ -260,94 +435,220 @@
             <div class="tab-content" id="history">
                 <h2>Document History</h2>
                 <div class="alert" id="historyAlert"></div>
-                <select id="historyFilter" style="width:auto; display:inline-block; margin-bottom:20px;" class="form-control" onchange="loadDocumentHistory()">
-                    <option value="all">All</option><option value="invoice">Invoice</option><option value="quote">Quote</option><option value="receipt">Receipt</option><option value="proforma">Proforma</option>
-                </select>
-                <button class="btn btn-primary" onclick="loadDocumentHistory()">Refresh</button>
-                <table class="history-table"><thead><tr><th>Serial</th><th>Type</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead><tbody id="historyTableBody"></tbody></table>
+                <div style="margin-bottom:20px; display:flex; gap:10px;">
+                    <select id="historyFilter" class="form-control" style="width:auto;">
+                        <option value="all">All Documents</option>
+                        <option value="invoice">Invoices</option>
+                        <option value="quote">Quotes</option>
+                        <option value="receipt">Receipts</option>
+                        <option value="proforma">Proforma Invoices</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="loadDocumentHistory()">Refresh</button>
+                </div>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Serial No.</th>
+                            <th>Type</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr><td colspan="7" class="text-center" style="padding:40px;">Loading document history...</td></tr>
+                    </tbody>
+                </table>
             </div>
 
-            <!-- ADMIN TAB (abbreviated but fully functional) -->
+            <!-- ADMIN TAB (abbreviated but functional) -->
             <div class="tab-content" id="admin">
-                <h2>Admin</h2>
-                <div id="adminAlert"></div>
-                <h3>Companies</h3>
-                <div id="companyList" class="company-list"></div>
+                <h2>Admin Dashboard</h2>
+                <div class="alert" id="adminAlert"></div>
+                
+                <h3>Manage Companies</h3>
+                <div id="companyList" class="company-list">
+                    <div class="text-center" style="padding:40px; color:var(--gray-color);">Loading companies...</div>
+                </div>
+                
                 <h3 class="mt-30">Add/Edit Company</h3>
                 <div class="form-grid">
-                    <input type="text" id="companyName" class="form-control" placeholder="Name">
-                    <input type="email" id="companyEmail" class="form-control" placeholder="Email">
-                    <input type="text" id="companyPhone" class="form-control" placeholder="Phone">
-                    <input type="text" id="companyAddress" class="form-control" placeholder="Address">
-                    <input type="text" id="companyTaxPin" class="form-control" placeholder="Tax PIN">
-                    <input type="color" id="primaryColor" value="#4361ee">
-                    <input type="color" id="secondaryColor" value="#3a0ca3">
+                    <div class="form-group">
+                        <label>Company Name</label>
+                        <input type="text" id="companyName" class="form-control" placeholder="Acme Inc.">
+                    </div>
+                    <div class="form-group">
+                        <label>Company Email</label>
+                        <input type="email" id="companyEmail" class="form-control" placeholder="contact@acme.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Company Phone</label>
+                        <input type="tel" id="companyPhone" class="form-control" placeholder="+1234567890">
+                    </div>
+                    <div class="form-group">
+                        <label>Company Address</label>
+                        <textarea id="companyAddress" class="form-control" rows="2" placeholder="123 Business Ave, City, Country"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Tax PIN (Optional)</label>
+                        <input type="text" id="companyTaxPin" class="form-control" placeholder="Tax Identification Number">
+                    </div>
+                    <div class="form-group">
+                        <label>Primary Color</label>
+                        <input type="color" id="primaryColor" class="form-control" value="#4361ee">
+                    </div>
+                    <div class="form-group">
+                        <label>Secondary Color</label>
+                        <input type="color" id="secondaryColor" class="form-control" value="#3a0ca3">
+                    </div>
                 </div>
-                <button class="btn btn-primary" onclick="saveCompany()" id="saveCompanyBtn">Save Company</button>
-                <button class="btn btn-danger" onclick="deleteCompany()" id="deleteCompanyBtn" style="display:none;">Delete</button>
+                <div class="mt-30" style="display:flex; gap:15px;">
+                    <button class="btn btn-primary" onclick="saveCompany()" id="saveCompanyBtn">Save Company</button>
+                    <button class="btn btn-secondary" onclick="clearCompanyForm()">Clear Form</button>
+                    <button class="btn btn-danger" onclick="deleteCompany()" id="deleteCompanyBtn" style="display:none;">Delete Company</button>
+                </div>
             </div>
 
             <!-- PREVIEW TAB (PDF generation target) -->
             <div class="tab-content" id="preview">
-                <h2>Preview</h2>
+                <h2>Document Preview</h2>
                 <div style="margin-bottom:20px;" class="no-print">
-                    <button class="btn btn-primary" onclick="generatePDF()">Download PDF</button>
-                    <button class="btn btn-secondary" onclick="refreshPreview()">Refresh</button>
+                    <button class="btn btn-primary" onclick="generatePDF()">Download as PDF</button>
+                    <button class="btn btn-secondary" onclick="refreshPreview()">Refresh Preview</button>
                 </div>
                 <!-- DOCUMENT PREVIEW - this element is captured for PDF -->
                 <div class="document-preview" id="documentPreview">
-                    <div class="revoked-stamp" id="revokedStamp" style="display:none;">REVOKED</div>
+                    <div class="revoked-stamp" id="revokedStamp">REVOKED</div>
+                    
                     <div class="document-header">
-                        <div><h2 id="previewCompanyName">Company</h2><div id="previewParentCompany" class="parent-company"></div><div id="previewCompanyTax" class="company-tax"></div></div>
-                        <div class="company-details" id="previewCompanyContact"></div>
+                        <div>
+                            <h2 id="previewCompanyName">Company Name</h2>
+                            <div id="previewParentCompany" class="parent-company"></div>
+                            <div id="previewCompanyTax" class="company-tax"></div>
+                        </div>
+                        <div class="company-details" id="previewCompanyContact">Contact information</div>
                     </div>
+                    
                     <div class="document-title" id="previewDocumentTitle">INVOICE</div>
-                    <!-- Receipt preview hidden by default -->
+                    
+                    <!-- Receipt Preview Layout -->
                     <div id="receiptPreview" class="hidden">
                         <div class="receipt-info-grid">
-                            <div><h4>Customer</h4><p id="previewCustomerDetails"></p></div>
-                            <div><h4>Receipt</h4><p id="previewReceiptSerial"></p><p id="previewReceiptDate"></p><p id="previewReceiptReason"></p><p id="previewReceiptCurrency"></p></div>
+                            <div class="receipt-info-box">
+                                <h4>Customer Details</h4>
+                                <p id="previewCustomerDetails"></p>
+                            </div>
+                            <div class="receipt-info-box">
+                                <h4>Receipt Details</h4>
+                                <p><strong>Serial No:</strong> <span id="previewReceiptSerial"></span></p>
+                                <p><strong>Date:</strong> <span id="previewReceiptDate"></span></p>
+                                <p><strong>Reason:</strong> <span id="previewReceiptReason"></span></p>
+                                <p><strong>Currency:</strong> <span id="previewReceiptCurrency"></span></p>
+                            </div>
                         </div>
-                        <table class="document-table" id="receiptItemsTable"><thead><tr><th>Desc</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="receiptPreviewItems"></tbody></table>
+                        <table class="document-table" id="receiptItemsTable">
+                            <thead><tr><th>Description</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+                            <tbody id="receiptPreviewItems"></tbody>
+                        </table>
                     </div>
-                    <!-- Standard preview -->
+                    
+                    <!-- Standard Document Preview Layout -->
                     <div id="standardPreview">
                         <div class="document-info">
-                            <div><h3>Bill To:</h3><p id="previewCustomerDetailsStandard"></p></div>
-                            <div style="text-align:right;"><h3>Details</h3><p id="previewSerialNumber"></p><p id="previewDate"></p><p id="previewDocType"></p><p id="previewCurrency"></p></div>
+                            <div class="document-info-column">
+                                <h3>Bill To:</h3>
+                                <p id="previewCustomerDetailsStandard"></p>
+                            </div>
+                            <div class="document-info-column" style="text-align:right;">
+                                <h3>Document Details:</h3>
+                                <p><strong>Serial No:</strong> <span id="previewSerialNumber"></span></p>
+                                <p><strong>Date:</strong> <span id="previewDate"></span></p>
+                                <p><strong>Document Type:</strong> <span id="previewDocType"></span></p>
+                                <p><strong>Currency:</strong> <span id="previewCurrency"></span></p>
+                            </div>
                         </div>
-                        <table class="document-table" id="standardItemsTable"><thead><tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody id="previewItems"></tbody></table>
+                        <table class="document-table" id="standardItemsTable">
+                            <thead><tr><th>Description</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+                            <tbody id="previewItems"></tbody>
+                        </table>
                     </div>
-                    <div class="multiple-payment-accounts" id="previewPaymentAccounts"></div>
+                    
+                    <div class="multiple-payment-accounts">
+                        <h4>Payment Accounts & Methods</h4>
+                        <div id="previewPaymentMethodsList"></div>
+                        <div id="previewPaymentAccounts"></div>
+                    </div>
+                    
                     <div class="terms-preview" id="previewTerms"></div>
+                    
                     <div class="document-footer">
-                        <div><h3>Thank You</h3></div>
-                        <div style="text-align:right;"><p>Authorized Signature</p><div class="signature-overlay-container"></div></div>
+                        <div>
+                            <h3>Thank You!</h3>
+                            <p>We appreciate your business</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p><strong>Authorized Signature:</strong></p>
+                            <div class="signature-overlay-container"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- CLIENTS TAB -->
             <div class="tab-content" id="clients">
-                <h2>Clients</h2>
-                <div id="clientsAlert"></div>
-                <input type="text" id="clientSearch" placeholder="Search..." class="form-control" style="max-width:300px;">
-                <button class="btn btn-primary" onclick="loadClients()">Refresh</button>
-                <div id="clientList" class="client-list"></div>
+                <h2>Client Database</h2>
+                <div class="alert" id="clientsAlert"></div>
+                <div style="margin-bottom:20px; display:flex; gap:10px;">
+                    <input type="text" id="clientSearch" class="form-control" placeholder="Search clients..." style="max-width:300px;">
+                    <button class="btn btn-primary" onclick="loadClients()">Refresh</button>
+                </div>
+                <div id="clientList" class="client-list">
+                    <div class="text-center" style="padding:40px; color:var(--gray-color);">Loading clients...</div>
+                </div>
             </div>
 
-            <!-- TERMS TAB -->
+            <!-- TERMS MANAGEMENT TAB -->
             <div class="tab-content" id="terms">
-                <h2>Terms Management</h2>
-                <div id="termsAlert"></div>
-                <div class="form-grid">
-                    <input type="text" id="termName" class="form-control" placeholder="Term name">
-                    <select id="termDocumentType" class="form-control"><option value="all">All</option><option value="invoice">Invoice</option><option value="quote">Quote</option><option value="receipt">Receipt</option><option value="proforma">Proforma</option></select>
+                <h2>Terms & Conditions Management</h2>
+                <div class="alert" id="termsAlert"></div>
+                
+                <div class="terms-management">
+                    <h3>Manage Document Terms</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Term Name</label>
+                            <input type="text" id="termName" class="form-control" placeholder="e.g., Standard Invoice Terms">
+                        </div>
+                        <div class="form-group">
+                            <label>Document Type</label>
+                            <select id="termDocumentType" class="form-control">
+                                <option value="all">All Documents</option>
+                                <option value="invoice">Invoice</option>
+                                <option value="quote">Quote</option>
+                                <option value="receipt">Receipt</option>
+                                <option value="proforma">Proforma Invoice</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Term Content</label>
+                        <textarea id="termContent" class="form-control" rows="6" placeholder="Enter terms and conditions here..."></textarea>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button class="btn btn-primary" onclick="saveTerm()">Save Term</button>
+                        <button class="btn btn-secondary" onclick="clearTermForm()">Clear Form</button>
+                        <button class="btn btn-danger" id="deleteTermBtn" style="display:none;" onclick="deleteTerm()">Delete Term</button>
+                    </div>
                 </div>
-                <textarea id="termContent" class="form-control" rows="5" placeholder="Term text..."></textarea>
-                <div style="margin-top:15px;"><button class="btn btn-primary" onclick="saveTerm()">Save</button><button class="btn btn-secondary" onclick="clearTermForm()">Clear</button><button class="btn btn-danger" id="deleteTermBtn" style="display:none;" onclick="deleteTerm()">Delete</button></div>
-                <h3 class="mt-30">Existing Terms</h3>
-                <div id="termsList" class="terms-list"></div>
+                
+                <div class="mt-30">
+                    <h3>Available Terms</h3>
+                    <div id="termsList" class="terms-list">
+                        <div class="text-center" style="padding:40px; color:var(--gray-color);">Loading terms...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -361,366 +662,1080 @@
         let selectedCurrency = 'USD';
         let selectedPaymentMethods = [];
         let paymentAccounts = [];
-        let accountCounter = 1;
+        let accountCounter = 0;
         let selectedTermIds = [];
         let monthlySequence = {};
 
-        // ---------- AUTH ----------
+        // ---------- AUTH FUNCTIONS (FIXED LOGIN FLOW) ----------
         async function login() {
-            const email = document.getElementById('loginEmail').value, pwd = document.getElementById('loginPassword').value;
-            if (!email || !pwd) return showAuthAlert('loginAlert','Enter credentials','danger');
-            const btn = document.getElementById('loginBtn'), text = document.getElementById('loginText'), spin = document.getElementById('loginSpinner');
-            text.textContent = '...'; spin.classList.remove('hidden'); btn.disabled = true;
-            try { await window.firebaseApp.signInWithEmailAndPassword(window.firebaseApp.auth, email, pwd); }
-            catch(e) { showAuthAlert('loginAlert', e.message, 'danger'); text.textContent='Login'; spin.classList.add('hidden'); btn.disabled=false; }
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showAuthAlert('loginAlert', 'Please enter both email and password', 'danger');
+                return;
+            }
+            
+            const btn = document.getElementById('loginBtn');
+            const text = document.getElementById('loginText');
+            const spinner = document.getElementById('loginSpinner');
+            
+            text.textContent = 'Logging in...';
+            spinner.classList.remove('hidden');
+            btn.disabled = true;
+            
+            try {
+                await window.firebaseApp.signInWithEmailAndPassword(window.firebaseApp.auth, email, password);
+                // Successful login: onAuthStateChanged will handle UI transition
+                // Do NOT reset button state here — it will be reset when main app shows
+            } catch (error) {
+                console.error("Login error:", error);
+                let message = 'Login failed. ';
+                switch(error.code) {
+                    case 'auth/user-not-found':
+                        message += 'No account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        message += 'Incorrect password.';
+                        break;
+                    case 'auth/invalid-email':
+                        message += 'Invalid email address.';
+                        break;
+                    case 'auth/too-many-requests':
+                        message += 'Too many failed attempts. Please try again later.';
+                        break;
+                    default:
+                        message += error.message;
+                }
+                showAuthAlert('loginAlert', message, 'danger');
+                
+                // Reset button state only on error
+                text.textContent = 'Login';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
         }
+
         async function register() {
-            const email = document.getElementById('registerEmail').value, pwd = document.getElementById('registerPassword').value, confirm = document.getElementById('registerConfirmPassword').value;
-            if(pwd !== confirm) return showAuthAlert('registerAlert','Passwords mismatch','danger');
-            const btn = document.getElementById('registerBtn'), text = document.getElementById('registerText'), spin = document.getElementById('registerSpinner');
-            text.textContent='...'; spin.classList.remove('hidden'); btn.disabled=true;
-            try { await window.firebaseApp.createUserWithEmailAndPassword(window.firebaseApp.auth, email, pwd); }
-            catch(e) { showAuthAlert('registerAlert', e.message, 'danger'); text.textContent='Create Account'; spin.classList.add('hidden'); btn.disabled=false; }
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('registerConfirmPassword').value;
+            
+            if (!email || !password || !confirm) {
+                showAuthAlert('registerAlert', 'Please fill in all fields', 'danger');
+                return;
+            }
+            if (password !== confirm) {
+                showAuthAlert('registerAlert', 'Passwords do not match', 'danger');
+                return;
+            }
+            if (password.length < 6) {
+                showAuthAlert('registerAlert', 'Password must be at least 6 characters', 'danger');
+                return;
+            }
+            
+            const btn = document.getElementById('registerBtn');
+            const text = document.getElementById('registerText');
+            const spinner = document.getElementById('registerSpinner');
+            
+            text.textContent = 'Creating account...';
+            spinner.classList.remove('hidden');
+            btn.disabled = true;
+            
+            try {
+                await window.firebaseApp.createUserWithEmailAndPassword(window.firebaseApp.auth, email, password);
+                // onAuthStateChanged will handle success
+            } catch (error) {
+                console.error("Registration error:", error);
+                let message = 'Registration failed. ';
+                if (error.code === 'auth/email-already-in-use') message += 'Email already in use.';
+                else if (error.code === 'auth/weak-password') message += 'Password is too weak.';
+                else message += error.message;
+                
+                showAuthAlert('registerAlert', message, 'danger');
+                
+                text.textContent = 'Create Account';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            }
         }
-        function showAuthAlert(id, msg, type) {
-            const el = document.getElementById(id); if(!el) return;
-            el.textContent = msg; el.className = `alert alert-${type}`; el.style.display='block';
-            setTimeout(()=>el.style.display='none',4000);
+
+        async function logout() {
+            try {
+                await window.firebaseApp.signOut(window.firebaseApp.auth);
+            } catch (error) {
+                console.error("Logout error:", error);
+            }
         }
-        async function logout() { await window.firebaseApp.signOut(window.firebaseApp.auth); }
+
+        function showAuthAlert(alertId, message, type) {
+            const alert = document.getElementById(alertId);
+            if (!alert) return;
+            alert.textContent = message;
+            alert.className = `alert alert-${type}`;
+            alert.style.display = 'block';
+            setTimeout(() => { alert.style.display = 'none'; }, 5000);
+        }
+
         function switchAuthTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
-            document.getElementById('loginForm').classList.add('hidden'); document.getElementById('registerForm').classList.add('hidden');
-            if(tab==='login') { document.querySelector('.auth-tab:first-child').classList.add('active'); document.getElementById('loginForm').classList.remove('hidden'); }
-            else { document.querySelector('.auth-tab:last-child').classList.add('active'); document.getElementById('registerForm').classList.remove('hidden'); }
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            if (tab === 'login') {
+                document.querySelector('.auth-tab:first-child').classList.add('active');
+                document.getElementById('loginForm').classList.remove('hidden');
+            } else {
+                document.querySelector('.auth-tab:last-child').classList.add('active');
+                document.getElementById('registerForm').classList.remove('hidden');
+            }
         }
-        // ---------- ON AUTH STATE ----------
-        window.firebaseApp?.onAuthStateChanged(window.firebaseApp.auth, (user)=>{
-            if(user) { currentUser = user; document.getElementById('authScreen').style.display='none'; document.getElementById('mainApp').style.display='block';
-                document.getElementById('userEmail').textContent = user.email; initializeMainApp(); }
-            else { document.getElementById('authScreen').style.display='flex'; document.getElementById('mainApp').style.display='none'; }
+
+        function showMainApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            if (currentUser) {
+                document.getElementById('userEmail').textContent = currentUser.email;
+            }
+            
+            // Reset login button state (in case it was stuck)
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            if (loginBtn) {
+                loginText.textContent = 'Login';
+                loginSpinner.classList.add('hidden');
+                loginBtn.disabled = false;
+            }
+            
+            // Reset register button state
+            const regBtn = document.getElementById('registerBtn');
+            const regText = document.getElementById('registerText');
+            const regSpinner = document.getElementById('registerSpinner');
+            if (regBtn) {
+                regText.textContent = 'Create Account';
+                regSpinner.classList.add('hidden');
+                regBtn.disabled = false;
+            }
+        }
+
+        function showAuthScreen() {
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        // ---------- FIREBASE AUTH STATE LISTENER (FIXED) ----------
+        window.firebaseApp?.onAuthStateChanged(window.firebaseApp.auth, (user) => {
+            if (user) {
+                console.log("User signed in:", user.email);
+                currentUser = user;
+                showMainApp();
+                initializeMainApp();
+                
+                // Extra cleanup for any stuck spinners
+                const loginBtn = document.getElementById('loginBtn');
+                if (loginBtn) {
+                    document.getElementById('loginText').textContent = 'Login';
+                    document.getElementById('loginSpinner').classList.add('hidden');
+                    loginBtn.disabled = false;
+                }
+            } else {
+                console.log("No user signed in");
+                showAuthScreen();
+            }
         });
 
-        // ---------- MAIN INIT ----------
+        // ---------- MAIN INITIALIZATION ----------
         function initializeMainApp() {
             db = window.firebaseApp.db;
-            // listeners
-            document.querySelectorAll('.nav-tab').forEach(tab=>tab.addEventListener('click', function(e){
-                document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); this.classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-                document.getElementById(this.dataset.tab).classList.add('active');
-                if(this.dataset.tab==='preview') previewDocument();
-            }));
-            // item calculation listener
-            document.addEventListener('input', function(e){
-                if(e.target.classList.contains('item-desc')||e.target.classList.contains('item-qty')||e.target.classList.contains('item-price')||e.target.id==='taxRate'||e.target.id==='discountAmount')
-                    updateItemTotals();
-                if(e.target.classList.contains('term-checkbox')) updateSelectedTerms();
-                if(e.target.classList.contains('payment-method-checkbox')) updateSelectedPaymentMethods();
+            
+            // Tab switching
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById(this.dataset.tab).classList.add('active');
+                    if (this.dataset.tab === 'preview') previewDocument();
+                });
             });
-            // set today for receipt date
-            document.getElementById('receiptDate').value = new Date().toISOString().split('T')[0];
-            selectCurrency('USD');
-            loadCompanies(); loadDocumentHistory(); loadClients(); loadAllTerms();
-            addPaymentAccount(); // initial account
+            
+            // Input listeners for calculations
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('item-desc') || 
+                    e.target.classList.contains('item-qty') || 
+                    e.target.classList.contains('item-price') ||
+                    e.target.id === 'taxRate' ||
+                    e.target.id === 'discountAmount') {
+                    updateItemTotals();
+                }
+                if (e.target.classList.contains('term-checkbox')) {
+                    updateSelectedTerms();
+                }
+                if (e.target.classList.contains('payment-method-checkbox')) {
+                    updateSelectedPaymentMethods();
+                }
+            });
+            
+            // Set default receipt date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('receiptDate').value = today;
+            
+            // Initialize payment methods list
+            const pmList = document.getElementById('paymentMethodsCheckboxList');
+            if (pmList) {
+                pmList.innerHTML = `
+                    <div class="payment-method-checkbox-item"><input type="checkbox" class="payment-method-checkbox" value="Bank Transfer"> Bank Transfer</div>
+                    <div class="payment-method-checkbox-item"><input type="checkbox" class="payment-method-checkbox" value="Credit Card"> Credit Card</div>
+                    <div class="payment-method-checkbox-item"><input type="checkbox" class="payment-method-checkbox" value="M-Pesa"> M-Pesa</div>
+                    <div class="payment-method-checkbox-item"><input type="checkbox" class="payment-method-checkbox" value="Cash"> Cash</div>
+                `;
+            }
+            
+            // Add initial payment account
+            addPaymentAccount();
+            
+            // Load all data
+            loadCompanies();
+            loadDocumentHistory();
+            loadClients();
+            loadAllTerms();
             updateSerialNumber();
+            updateFormLayout();
+            selectCurrency('USD');
         }
 
         // ---------- SERIAL NUMBER ----------
         async function getNextMonthlySequence(docType) {
-            const now = new Date(), monthKey = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}`;
+            const now = new Date();
+            const monthKey = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}`;
             const key = `${docType}_${monthKey}`;
-            if(!monthlySequence[key]) {
+            
+            if (!monthlySequence[key]) {
                 let max = 0;
                 try {
                     const q = window.firebaseApp.query(
                         window.firebaseApp.collection(db, "documents"),
-                        window.firebaseApp.where("type","==",docType),
-                        window.firebaseApp.where("createdAt",">=",window.firebaseApp.Timestamp.fromDate(new Date(now.getFullYear(),now.getMonth(),1))),
-                        window.firebaseApp.orderBy("createdAt","desc")
+                        window.firebaseApp.where("type", "==", docType),
+                        window.firebaseApp.where("createdAt", ">=", window.firebaseApp.Timestamp.fromDate(new Date(now.getFullYear(), now.getMonth(), 1))),
+                        window.firebaseApp.orderBy("createdAt", "desc")
                     );
                     const snap = await window.firebaseApp.getDocs(q);
-                    snap.forEach(d=>{ let s=d.data().serialNumber; let m=s?.match(/-(\d+)$/); if(m) max=Math.max(max, parseInt(m[1])); });
-                } catch(e){ console.warn(e); }
+                    snap.forEach(d => {
+                        const s = d.data().serialNumber || '';
+                        const m = s.match(/-(\d+)$/);
+                        if (m) max = Math.max(max, parseInt(m[1]));
+                    });
+                } catch(e) { console.warn("Sequence error:", e); }
                 monthlySequence[key] = max;
             }
-            monthlySequence[key]++; return monthlySequence[key];
+            monthlySequence[key]++;
+            return monthlySequence[key];
         }
+
         async function updateSerialNumber() {
-            let type = document.getElementById('documentType').value;
-            let prefix = {invoice:'INV',quote:'QUO',receipt:'REC',proforma:'PRO'}[type]||'DOC';
-            let d=new Date(); let seq=await getNextMonthlySequence(type);
-            let serial = `${prefix}-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${String(seq).padStart(3,'0')}`;
+            const type = document.getElementById('documentType').value;
+            const prefix = {invoice:'INV', quote:'QUO', receipt:'REC', proforma:'PRO'}[type] || 'DOC';
+            const d = new Date();
+            const seq = await getNextMonthlySequence(type);
+            const serial = `${prefix}-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${String(seq).padStart(3,'0')}`;
             document.getElementById('serialNumber').value = serial;
         }
 
         // ---------- CURRENCY ----------
         function selectCurrency(curr) {
-            selectedCurrency = curr; let sym = curr==='USD' ? '$' : 'KSh';
-            document.querySelectorAll('.currency-btn').forEach(b=>b.classList.remove('active'));
-            document.getElementById(curr==='USD'?'usdCurrency':'kshCurrency')?.classList.add('active');
-            document.querySelectorAll('#currencySymbol, #currencySymbol2, #currencySymbol3, #currencySymbol4, #discountCurrencySymbol, #previewCurrencySymbol1, #previewCurrencySymbol2, #previewCurrencySymbol3, #previewCurrencySymbol4').forEach(el=>{if(el)el.textContent=sym;});
+            selectedCurrency = curr;
+            const sym = curr === 'USD' ? '$' : 'KSh';
+            
+            document.getElementById('usdCurrency')?.classList.toggle('active', curr === 'USD');
+            document.getElementById('kshCurrency')?.classList.toggle('active', curr === 'KSH');
+            
+            document.querySelectorAll('#currencySymbol, #currencySymbol2, #discountCurrencySymbol, #subtotal, #discountDisplay, #taxAmount, #totalAmount').forEach(el => {
+                if (el && !el.tagName.match(/input|select/i)) {
+                    // For text elements, we need to preserve the symbol part
+                    if (el.id === 'subtotal' || el.id === 'discountDisplay' || el.id === 'taxAmount' || el.id === 'totalAmount') {
+                        // These will be updated via updateItemTotals
+                    }
+                }
+            });
             updateItemTotals();
         }
 
         // ---------- ITEMS & TOTALS ----------
         function addItem() {
-            let tbody = document.getElementById('itemsTableBody');
-            let row = tbody.insertRow();
-            row.innerHTML = `<td><input class="form-control item-desc"></td><td><input type="number" class="form-control item-qty" value="1" min="1"></td><td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td><td class="item-total">$0.00</td><td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>`;
+            const tbody = document.getElementById('itemsTableBody');
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td><input type="text" class="form-control item-desc" placeholder="Item description"></td>
+                <td><input type="number" class="form-control item-qty" value="1" min="1"></td>
+                <td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td>
+                <td class="item-total">$0.00</td>
+                <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
+            `;
         }
-        function removeItem(b) { b.closest('tr').remove(); updateItemTotals(); }
+
+        function removeItem(btn) {
+            btn.closest('tr').remove();
+            updateItemTotals();
+        }
+
         function updateItemTotals() {
-            let sym = selectedCurrency==='USD'?'$':'KSh', subtotal=0;
-            let rows = document.querySelectorAll('#itemsTableBody tr');
-            rows.forEach(r=>{
-                let desc = r.querySelector('.item-desc')?.value, qty=parseFloat(r.querySelector('.item-qty')?.value)||0, price=parseFloat(r.querySelector('.item-price')?.value)||0;
-                let total = qty*price; subtotal+=total;
-                r.querySelector('.item-total').textContent = sym+total.toFixed(2);
+            const sym = selectedCurrency === 'USD' ? '$' : 'KSh';
+            let subtotal = 0;
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            
+            rows.forEach(row => {
+                const desc = row.querySelector('.item-desc')?.value || '';
+                const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+                const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+                const total = qty * price;
+                subtotal += total;
+                
+                row.querySelector('.item-total').textContent = sym + total.toFixed(2);
             });
-            let discount = parseFloat(document.getElementById('discountAmount').value)||0;
-            if(discount>subtotal) discount=subtotal;
-            let discounted = subtotal - discount;
-            let taxRate = parseFloat(document.getElementById('taxRate').value)||0;
-            let tax = discounted * taxRate/100;
-            let total = discounted + tax;
-            document.getElementById('subtotal').innerHTML = sym+subtotal.toFixed(2);
-            document.getElementById('discountDisplay').innerHTML = '-'+sym+discount.toFixed(2);
-            document.getElementById('taxAmount').innerHTML = sym+tax.toFixed(2);
-            document.getElementById('totalAmount').innerHTML = sym+total.toFixed(2);
-            // update preview if open
+            
+            let discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            if (discount > subtotal) discount = subtotal;
+            
+            const discounted = subtotal - discount;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            const tax = discounted * (taxRate / 100);
+            const total = discounted + tax;
+            
+            document.getElementById('subtotal').innerHTML = sym + subtotal.toFixed(2);
+            document.getElementById('discountDisplay').innerHTML = '-' + sym + discount.toFixed(2);
+            document.getElementById('taxAmount').innerHTML = sym + tax.toFixed(2);
+            document.getElementById('totalAmount').innerHTML = sym + total.toFixed(2);
+            
+            // Update preview if it's visible
+            updatePreviewTotals(sym, subtotal, discount, tax, total);
+        }
+
+        function updatePreviewTotals(sym, subtotal, discount, tax, total) {
+            const previewSub = document.getElementById('previewSubtotal');
+            const previewDisc = document.getElementById('previewDiscount');
+            const previewTax = document.getElementById('previewTax');
+            const previewTotal = document.getElementById('previewTotal');
+            const receiptSub = document.getElementById('receiptPreviewSubtotal');
+            const receiptDisc = document.getElementById('receiptPreviewDiscount');
+            const receiptTax = document.getElementById('receiptPreviewTax');
+            const receiptTotal = document.getElementById('receiptPreviewTotal');
+            
+            if (previewSub) previewSub.innerHTML = sym + subtotal.toFixed(2);
+            if (previewDisc) previewDisc.innerHTML = '-' + sym + discount.toFixed(2);
+            if (previewTax) previewTax.innerHTML = sym + tax.toFixed(2);
+            if (previewTotal) previewTotal.innerHTML = sym + total.toFixed(2);
+            
+            if (receiptSub) receiptSub.innerHTML = sym + subtotal.toFixed(2);
+            if (receiptDisc) receiptDisc.innerHTML = '-' + sym + discount.toFixed(2);
+            if (receiptTax) receiptTax.innerHTML = sym + tax.toFixed(2);
+            if (receiptTotal) receiptTotal.innerHTML = sym + total.toFixed(2);
         }
 
         // ---------- PAYMENT ACCOUNTS ----------
         function addPaymentAccount() {
-            accountCounter++; let id = `paymentAccount${accountCounter}`;
-            let container = document.getElementById('paymentAccountsContainer');
-            let div = document.createElement('div'); div.className='payment-account-item'; div.id=id;
-            div.innerHTML = `<div class="payment-account-header"><h5>Account #${accountCounter}</h5><button class="btn btn-danger btn-sm" onclick="removePaymentAccount('${id}')">Remove</button></div>
+            accountCounter++;
+            const id = `paymentAccount${accountCounter}`;
+            const container = document.getElementById('paymentAccountsContainer');
+            
+            const div = document.createElement('div');
+            div.className = 'payment-account-item';
+            div.id = id;
+            div.innerHTML = `
+                <div class="payment-account-header" style="display:flex; justify-content:space-between;">
+                    <h5>Payment Account #${accountCounter}</h5>
+                    ${accountCounter > 1 ? `<button class="btn btn-danger btn-sm" onclick="removePaymentAccount('${id}')">Remove</button>` : ''}
+                </div>
                 <div class="form-grid">
-                    <div class="form-group"><label>Type</label><select class="form-control account-type" onchange="updateAccountFields(this)"><option value="bank">Bank</option><option value="mobile">Mobile</option><option value="card">Card</option><option value="other">Other</option></select></div>
-                    <div class="form-group"><label>Account Name</label><input class="form-control account-name"></div>
-                    <div class="form-group bank-fields"><label>Bank</label><input class="form-control bank-name"></div>
-                    <div class="form-group bank-fields"><label>Account #</label><input class="form-control account-number"></div>
-                    <div class="form-group bank-fields"><label>SWIFT</label><input class="form-control swift-code"></div>
-                    <div class="form-group mobile-fields" style="display:none;"><label>Network</label><select class="form-control mobile-network"><option value="mpesa">M-Pesa</option></select></div>
-                    <div class="form-group mobile-fields" style="display:none;"><label>Phone</label><input class="form-control phone-number"></div>
-                    <div class="form-group mobile-fields" style="display:none;"><label>Paybill</label><input class="form-control paybill-number"></div>
-                    <div class="form-group card-fields" style="display:none;"><label>Card Type</label><select class="form-control card-type"><option value="visa">Visa</option></select></div>
-                    <div class="form-group card-fields" style="display:none;"><label>Last 4</label><input class="form-control card-last4" maxlength="4"></div>
-                    <div class="form-group"><label>Institution</label><input class="form-control processing-institution"></div>
-                    <div class="form-group"><label>Notes</label><textarea class="form-control account-notes" rows="1"></textarea></div>
-                </div>`;
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <select class="form-control account-type" onchange="updateAccountFields(this)">
+                            <option value="bank">Bank Account</option>
+                            <option value="mobile">Mobile Money</option>
+                            <option value="card">Card Payment</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input type="text" class="form-control account-name" placeholder="e.g., Equity Bank USD Account">
+                    </div>
+                    <div class="form-group bank-fields">
+                        <label>Bank Name</label>
+                        <input type="text" class="form-control bank-name" placeholder="e.g., Equity Bank">
+                    </div>
+                    <div class="form-group bank-fields">
+                        <label>Account Number</label>
+                        <input type="text" class="form-control account-number" placeholder="Account number">
+                    </div>
+                    <div class="form-group bank-fields">
+                        <label>SWIFT/BIC</label>
+                        <input type="text" class="form-control swift-code" placeholder="SWIFT/BIC code">
+                    </div>
+                    <div class="form-group mobile-fields" style="display:none;">
+                        <label>Mobile Network</label>
+                        <select class="form-control mobile-network">
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="airtel">Airtel Money</option>
+                        </select>
+                    </div>
+                    <div class="form-group mobile-fields" style="display:none;">
+                        <label>Phone Number</label>
+                        <input type="text" class="form-control phone-number" placeholder="Phone number">
+                    </div>
+                    <div class="form-group mobile-fields" style="display:none;">
+                        <label>Paybill/Till</label>
+                        <input type="text" class="form-control paybill-number" placeholder="Paybill/Till number">
+                    </div>
+                    <div class="form-group card-fields" style="display:none;">
+                        <label>Card Type</label>
+                        <select class="form-control card-type">
+                            <option value="visa">Visa</option>
+                            <option value="mastercard">MasterCard</option>
+                        </select>
+                    </div>
+                    <div class="form-group card-fields" style="display:none;">
+                        <label>Last 4 Digits</label>
+                        <input type="text" class="form-control card-last4" maxlength="4" placeholder="Last 4 digits">
+                    </div>
+                    <div class="form-group">
+                        <label>Processing Institution</label>
+                        <input type="text" class="form-control processing-institution" placeholder="Institution name">
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea class="form-control account-notes" rows="1" placeholder="Additional information"></textarea>
+                    </div>
+                </div>
+            `;
             container.appendChild(div);
-            paymentAccounts.push({id, accountType:'bank',accountName:'',bankName:'',accountNumber:'',swiftCode:''});
-        }
-        function removePaymentAccount(id) {
-            if(paymentAccounts.length<=1) return alert('At least one account required');
-            document.getElementById(id)?.remove();
-            paymentAccounts = paymentAccounts.filter(a=>a.id!==id);
-        }
-        function updateAccountFields(sel) {
-            let item = sel.closest('.payment-account-item');
-            let type = sel.value;
-            item.querySelectorAll('.bank-fields, .mobile-fields, .card-fields').forEach(f=>f.style.display='none');
-            if(type==='bank') item.querySelectorAll('.bank-fields').forEach(f=>f.style.display='block');
-            if(type==='mobile') item.querySelectorAll('.mobile-fields').forEach(f=>f.style.display='block');
-            if(type==='card') item.querySelectorAll('.card-fields').forEach(f=>f.style.display='block');
-        }
-        function updatePaymentAccountsData() {
-            paymentAccounts = [];
-            document.querySelectorAll('.payment-account-item').forEach(item=>{
-                paymentAccounts.push({
-                    id: item.id,
-                    accountType: item.querySelector('.account-type')?.value||'bank',
-                    accountName: item.querySelector('.account-name')?.value||'',
-                    bankName: item.querySelector('.bank-name')?.value||'',
-                    accountNumber: item.querySelector('.account-number')?.value||'',
-                    swiftCode: item.querySelector('.swift-code')?.value||'',
-                });
+            
+            paymentAccounts.push({
+                id: id,
+                accountType: 'bank',
+                accountName: '',
+                bankName: '',
+                accountNumber: '',
+                swiftCode: ''
             });
         }
+
+        function removePaymentAccount(id) {
+            if (paymentAccounts.length <= 1) {
+                alert('You must keep at least one payment account');
+                return;
+            }
+            document.getElementById(id)?.remove();
+            paymentAccounts = paymentAccounts.filter(a => a.id !== id);
+        }
+
+        function updateAccountFields(select) {
+            const item = select.closest('.payment-account-item');
+            const type = select.value;
+            
+            item.querySelectorAll('.bank-fields, .mobile-fields, .card-fields').forEach(f => f.style.display = 'none');
+            
+            if (type === 'bank') {
+                item.querySelectorAll('.bank-fields').forEach(f => f.style.display = 'block');
+            } else if (type === 'mobile') {
+                item.querySelectorAll('.mobile-fields').forEach(f => f.style.display = 'block');
+            } else if (type === 'card') {
+                item.querySelectorAll('.card-fields').forEach(f => f.style.display = 'block');
+            }
+        }
+
         function updateSelectedPaymentMethods() {
             selectedPaymentMethods = [];
-            document.querySelectorAll('#paymentMethodsCheckboxList .payment-method-checkbox:checked').forEach(cb=>selectedPaymentMethods.push(cb.value));
+            document.querySelectorAll('#paymentMethodsCheckboxList .payment-method-checkbox:checked').forEach(cb => {
+                selectedPaymentMethods.push(cb.value);
+            });
         }
 
         // ---------- TERMS ----------
         async function loadAllTerms() {
-            if(!currentUser) return;
+            if (!currentUser || !db) return;
             try {
-                let q = window.firebaseApp.query(window.firebaseApp.collection(db,"terms"), window.firebaseApp.where("userId","==",currentUser.uid), window.firebaseApp.orderBy("createdAt","desc"));
-                let snap = await window.firebaseApp.getDocs(q);
-                terms = []; let listEl=document.getElementById('termsList'), chkEl=document.getElementById('termsCheckboxList');
-                listEl.innerHTML=''; chkEl.innerHTML='';
-                snap.forEach(doc=>{
-                    let t = {id:doc.id, ...doc.data()}; terms.push(t);
-                    chkEl.insertAdjacentHTML('beforeend',`<div class="term-checkbox-item"><input type="checkbox" class="term-checkbox" value="${doc.id}"><div class="term-checkbox-content"><div class="term-checkbox-name">${t.name}</div><div class="term-checkbox-text">${(t.content||'').substring(0,100)}...</div></div></div>`);
-                    listEl.insertAdjacentHTML('beforeend',`<div class="term-item"><h5>${t.name}</h5><p>${t.content.substring(0,100)}...</p><button class="btn btn-primary btn-sm" onclick="editTerm('${doc.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteTerm('${doc.id}')">Delete</button></div>`);
+                const q = window.firebaseApp.query(
+                    window.firebaseApp.collection(db, "terms"),
+                    window.firebaseApp.where("userId", "==", currentUser.uid),
+                    window.firebaseApp.orderBy("createdAt", "desc")
+                );
+                const snap = await window.firebaseApp.getDocs(q);
+                terms = [];
+                const listEl = document.getElementById('termsList');
+                const chkEl = document.getElementById('termsCheckboxList');
+                if (listEl) listEl.innerHTML = '';
+                if (chkEl) chkEl.innerHTML = '';
+                
+                if (snap.empty) {
+                    if (chkEl) chkEl.innerHTML = '<div class="text-center" style="padding:20px;">No terms found. Add your first term!</div>';
+                    if (listEl) listEl.innerHTML = '<div class="text-center" style="padding:20px;">No terms found.</div>';
+                    return;
+                }
+                
+                snap.forEach(doc => {
+                    const term = { id: doc.id, ...doc.data() };
+                    terms.push(term);
+                    
+                    if (chkEl) {
+                        chkEl.insertAdjacentHTML('beforeend', `
+                            <div class="term-checkbox-item">
+                                <input type="checkbox" class="term-checkbox" value="${doc.id}">
+                                <div class="term-checkbox-content">
+                                    <div class="term-checkbox-name">${term.name || 'Untitled'}</div>
+                                    <div class="term-checkbox-text">${(term.content || '').substring(0,100)}...</div>
+                                </div>
+                            </div>
+                        `);
+                    }
+                    
+                    if (listEl) {
+                        listEl.insertAdjacentHTML('beforeend', `
+                            <div class="term-item" style="padding:15px; border:1px solid #eee; margin-bottom:10px; border-radius:8px;">
+                                <h5>${term.name || 'Untitled'}</h5>
+                                <p style="font-size:0.9rem; color:var(--gray-color);">Type: ${term.documentType || 'all'}</p>
+                                <div style="font-size:0.9rem; max-height:100px; overflow-y:auto;">${(term.content || '').replace(/\n/g,'<br>')}</div>
+                                <div style="margin-top:10px;">
+                                    <button class="btn btn-primary btn-sm" onclick="editTerm('${doc.id}')">Edit</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteTerm('${doc.id}')">Delete</button>
+                                </div>
+                            </div>
+                        `);
+                    }
                 });
-            } catch(e){ console.error(e); }
+            } catch(e) { console.error("Load terms error:", e); }
         }
-        function loadTermsForDocumentType(docType){
-            // filter display in create (optional)
-        }
-        function updateSelectedTerms() {
-            selectedTermIds = Array.from(document.querySelectorAll('.term-checkbox:checked')).map(cb=>cb.value);
-            let termsText = selectedTermIds.map(id=>{ let t = terms.find(tt=>tt.id===id); return t?.content||''; }).filter(Boolean).join('\n\n');
-            document.getElementById('termsContent').textContent = termsText || 'No terms selected';
-            document.getElementById('previewTerms').innerHTML = termsText.replace(/\n/g,'<br>')||'<p>No terms selected</p>';
-        }
-        async function saveTerm() {
-            let name = document.getElementById('termName').value, content = document.getElementById('termContent').value, type = document.getElementById('termDocumentType').value;
-            if(!name||!content) return alert('Name and content required');
-            let data = { name, content, documentType:type, userId:currentUser.uid, updatedAt:window.firebaseApp.Timestamp.now() };
-            if(currentTermId) await window.firebaseApp.updateDoc(window.firebaseApp.doc(db,"terms",currentTermId), data);
-            else { data.createdAt=window.firebaseApp.Timestamp.now(); await window.firebaseApp.addDoc(window.firebaseApp.collection(db,"terms"), data); }
-            clearTermForm(); loadAllTerms();
-        }
-        function editTerm(id){ let t=terms.find(tt=>tt.id===id); if(t){ currentTermId=id; document.getElementById('termName').value=t.name; document.getElementById('termContent').value=t.content; document.getElementById('termDocumentType').value=t.documentType; document.getElementById('deleteTermBtn').style.display='inline-block'; } }
-        function clearTermForm(){ currentTermId=null; document.getElementById('termName').value=''; document.getElementById('termContent').value=''; document.getElementById('deleteTermBtn').style.display='none'; }
-        async function deleteTerm(id){ if(confirm('Delete term?')){ await window.firebaseApp.deleteDoc(window.firebaseApp.doc(db,"terms",id||currentTermId)); loadAllTerms(); clearTermForm(); } }
 
-        // ---------- COMPANY ----------
-        async function loadCompanies() {
-            let snap = await window.firebaseApp.getDocs(window.firebaseApp.collection(db,"companies"));
-            companies=[]; let sel = document.getElementById('companySelect'); sel.innerHTML='<option value="">Select</option>';
-            let list = document.getElementById('companyList'); list.innerHTML='';
-            snap.forEach(d=>{
-                let c={id:d.id, ...d.data()}; companies.push(c);
-                sel.insertAdjacentHTML('beforeend',`<option value="${d.id}">${c.name}</option>`);
-                list.insertAdjacentHTML('beforeend',`<div class="company-card"><h4>${c.name}</h4><p>${c.email||''}</p><button class="btn btn-primary btn-sm" onclick="editCompany('${d.id}')">Edit</button></div>`);
+        function loadTermsForDocumentType(docType) {
+            // Filter display in create tab
+            const chkEl = document.getElementById('termsCheckboxList');
+            if (!chkEl || terms.length === 0) return;
+            
+            chkEl.innerHTML = '';
+            let hasAny = false;
+            terms.forEach(term => {
+                if (term.documentType === docType || term.documentType === 'all') {
+                    hasAny = true;
+                    chkEl.insertAdjacentHTML('beforeend', `
+                        <div class="term-checkbox-item">
+                            <input type="checkbox" class="term-checkbox" value="${term.id}">
+                            <div class="term-checkbox-content">
+                                <div class="term-checkbox-name">${term.name}</div>
+                                <div class="term-checkbox-text">${(term.content || '').substring(0,100)}...</div>
+                            </div>
+                        </div>
+                    `);
+                }
             });
-            if(companies.length) { sel.value=companies[0].id; onCompanySelect(); }
+            if (!hasAny) {
+                chkEl.innerHTML = '<div class="text-center" style="padding:20px;">No terms for this document type</div>';
+            }
         }
+
+        function updateSelectedTerms() {
+            selectedTermIds = Array.from(document.querySelectorAll('.term-checkbox:checked')).map(cb => cb.value);
+            let termsText = selectedTermIds.map(id => {
+                const t = terms.find(tt => tt.id === id);
+                return t ? t.content : '';
+            }).filter(Boolean).join('\n\n');
+            
+            document.getElementById('termsContent').textContent = termsText || 'No terms selected';
+            document.getElementById('previewTerms').innerHTML = termsText.replace(/\n/g,'<br>') || '<p>No terms selected</p>';
+        }
+
+        async function saveTerm() {
+            const name = document.getElementById('termName').value.trim();
+            const content = document.getElementById('termContent').value.trim();
+            const docType = document.getElementById('termDocumentType').value;
+            
+            if (!name || !content) return showAlert('termsAlert', 'Name and content required', 'danger');
+            
+            const data = {
+                name, content,
+                documentType: docType,
+                userId: currentUser.uid,
+                updatedAt: window.firebaseApp.Timestamp.now()
+            };
+            
+            try {
+                if (currentTermId) {
+                    await window.firebaseApp.updateDoc(window.firebaseApp.doc(db, "terms", currentTermId), data);
+                    showAlert('termsAlert', 'Term updated', 'success');
+                } else {
+                    data.createdAt = window.firebaseApp.Timestamp.now();
+                    await window.firebaseApp.addDoc(window.firebaseApp.collection(db, "terms"), data);
+                    showAlert('termsAlert', 'Term saved', 'success');
+                }
+                clearTermForm();
+                await loadAllTerms();
+                loadTermsForDocumentType(document.getElementById('documentType').value);
+            } catch(e) {
+                console.error(e);
+                showAlert('termsAlert', 'Error: ' + e.message, 'danger');
+            }
+        }
+
+        function editTerm(id) {
+            const term = terms.find(t => t.id === id);
+            if (!term) return;
+            currentTermId = id;
+            document.getElementById('termName').value = term.name || '';
+            document.getElementById('termContent').value = term.content || '';
+            document.getElementById('termDocumentType').value = term.documentType || 'all';
+            document.getElementById('deleteTermBtn').style.display = 'inline-block';
+            document.querySelector('.nav-tab[data-tab="terms"]').click();
+        }
+
+        function clearTermForm() {
+            currentTermId = null;
+            document.getElementById('termName').value = '';
+            document.getElementById('termContent').value = '';
+            document.getElementById('termDocumentType').value = 'all';
+            document.getElementById('deleteTermBtn').style.display = 'none';
+        }
+
+        async function deleteTerm(id) {
+            const targetId = id || currentTermId;
+            if (!targetId || !confirm('Delete this term?')) return;
+            try {
+                await window.firebaseApp.deleteDoc(window.firebaseApp.doc(db, "terms", targetId));
+                showAlert('termsAlert', 'Term deleted', 'success');
+                if (!id) clearTermForm();
+                await loadAllTerms();
+                loadTermsForDocumentType(document.getElementById('documentType').value);
+            } catch(e) {
+                console.error(e);
+                showAlert('termsAlert', 'Error: ' + e.message, 'danger');
+            }
+        }
+
+        // ---------- COMPANIES ----------
+        async function loadCompanies() {
+            if (!db) return;
+            try {
+                const snap = await window.firebaseApp.getDocs(window.firebaseApp.collection(db, "companies"));
+                companies = [];
+                const sel = document.getElementById('companySelect');
+                const list = document.getElementById('companyList');
+                if (sel) sel.innerHTML = '<option value="">Select a company</option>';
+                if (list) list.innerHTML = '';
+                
+                snap.forEach(doc => {
+                    const c = { id: doc.id, ...doc.data() };
+                    companies.push(c);
+                    if (sel) sel.insertAdjacentHTML('beforeend', `<option value="${doc.id}">${c.name || 'Unnamed'}</option>`);
+                    if (list) {
+                        list.insertAdjacentHTML('beforeend', `
+                            <div class="company-card" style="padding:20px; border:1px solid #eee; border-radius:8px;">
+                                <h4>${c.name || 'Unnamed'}</h4>
+                                <p style="color:var(--gray-color);">${c.email || 'No email'}</p>
+                                <p style="font-size:0.9rem;">${c.address || ''}</p>
+                                <div style="margin-top:10px;">
+                                    <button class="btn btn-primary btn-sm" onclick="editCompany('${doc.id}')">Edit</button>
+                                </div>
+                            </div>
+                        `);
+                    }
+                });
+                
+                if (companies.length > 0 && sel) {
+                    sel.value = companies[0].id;
+                    onCompanySelect();
+                }
+            } catch(e) { console.error("Load companies error:", e); }
+        }
+
         function onCompanySelect() {
-            let id = document.getElementById('companySelect').value; if(!id) return;
-            let company = companies.find(c=>c.id===id); if(!company) return;
-            document.getElementById('previewCompanyName').textContent = company.name;
-            document.getElementById('previewCompanyContact').innerHTML = company.email+'<br>'+company.phone||'';
+            const id = document.getElementById('companySelect').value;
+            if (!id) return;
+            const company = companies.find(c => c.id === id);
+            if (company) {
+                document.getElementById('previewCompanyName').textContent = company.name || 'Company Name';
+                document.getElementById('previewCompanyContact').innerHTML = `${company.email || ''}<br>${company.phone || ''}`;
+                if (company.taxPin) document.getElementById('previewCompanyTax').textContent = `TAX PIN: ${company.taxPin}`;
+            }
         }
+
         async function saveCompany() {
-            let name = document.getElementById('companyName').value, email = document.getElementById('companyEmail').value;
-            if(!name||!email) return alert('Name/email required');
-            let data = { name, email, phone:document.getElementById('companyPhone').value, address:document.getElementById('companyAddress').value, taxPin:document.getElementById('companyTaxPin').value, primaryColor:document.getElementById('primaryColor').value, secondaryColor:document.getElementById('secondaryColor').value, updatedAt:window.firebaseApp.Timestamp.now() };
-            if(currentCompanyId) { await window.firebaseApp.updateDoc(window.firebaseApp.doc(db,"companies",currentCompanyId), data); } else { data.createdAt=window.firebaseApp.Timestamp.now(); await window.firebaseApp.addDoc(window.firebaseApp.collection(db,"companies"), data); }
-            loadCompanies(); clearCompanyForm();
+            const name = document.getElementById('companyName').value.trim();
+            const email = document.getElementById('companyEmail').value.trim();
+            if (!name || !email) return showAlert('adminAlert', 'Name and email required', 'danger');
+            
+            const data = {
+                name, email,
+                phone: document.getElementById('companyPhone').value,
+                address: document.getElementById('companyAddress').value,
+                taxPin: document.getElementById('companyTaxPin').value,
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                updatedAt: window.firebaseApp.Timestamp.now()
+            };
+            
+            try {
+                if (currentCompanyId) {
+                    await window.firebaseApp.updateDoc(window.firebaseApp.doc(db, "companies", currentCompanyId), data);
+                    showAlert('adminAlert', 'Company updated', 'success');
+                } else {
+                    data.createdAt = window.firebaseApp.Timestamp.now();
+                    await window.firebaseApp.addDoc(window.firebaseApp.collection(db, "companies"), data);
+                    showAlert('adminAlert', 'Company saved', 'success');
+                }
+                loadCompanies();
+                clearCompanyForm();
+            } catch(e) {
+                console.error(e);
+                showAlert('adminAlert', 'Error: ' + e.message, 'danger');
+            }
         }
-        function editCompany(id) { currentCompanyId = id; let c=companies.find(cc=>cc.id===id); if(c){ document.getElementById('companyName').value=c.name||''; document.getElementById('companyEmail').value=c.email||''; document.getElementById('companyPhone').value=c.phone||''; document.getElementById('companyAddress').value=c.address||''; document.getElementById('companyTaxPin').value=c.taxPin||''; document.getElementById('primaryColor').value=c.primaryColor||'#4361ee'; document.getElementById('secondaryColor').value=c.secondaryColor||'#3a0ca3'; document.getElementById('deleteCompanyBtn').style.display='inline-block'; } }
-        function clearCompanyForm() { currentCompanyId=null; document.getElementById('companyName').value=''; document.getElementById('companyEmail').value=''; document.getElementById('companyPhone').value=''; document.getElementById('companyAddress').value=''; document.getElementById('companyTaxPin').value=''; document.getElementById('primaryColor').value='#4361ee'; document.getElementById('secondaryColor').value='#3a0ca3'; document.getElementById('deleteCompanyBtn').style.display='none'; }
-        async function deleteCompany() { if(!currentCompanyId||!confirm('Delete?')) return; await window.firebaseApp.deleteDoc(window.firebaseApp.doc(db,"companies",currentCompanyId)); loadCompanies(); clearCompanyForm(); }
+
+        function editCompany(id) {
+            const c = companies.find(c => c.id === id);
+            if (!c) return;
+            currentCompanyId = id;
+            document.getElementById('companyName').value = c.name || '';
+            document.getElementById('companyEmail').value = c.email || '';
+            document.getElementById('companyPhone').value = c.phone || '';
+            document.getElementById('companyAddress').value = c.address || '';
+            document.getElementById('companyTaxPin').value = c.taxPin || '';
+            document.getElementById('primaryColor').value = c.primaryColor || '#4361ee';
+            document.getElementById('secondaryColor').value = c.secondaryColor || '#3a0ca3';
+            document.getElementById('deleteCompanyBtn').style.display = 'inline-block';
+            document.querySelector('.nav-tab[data-tab="admin"]').click();
+        }
+
+        function clearCompanyForm() {
+            currentCompanyId = null;
+            document.getElementById('companyName').value = '';
+            document.getElementById('companyEmail').value = '';
+            document.getElementById('companyPhone').value = '';
+            document.getElementById('companyAddress').value = '';
+            document.getElementById('companyTaxPin').value = '';
+            document.getElementById('primaryColor').value = '#4361ee';
+            document.getElementById('secondaryColor').value = '#3a0ca3';
+            document.getElementById('deleteCompanyBtn').style.display = 'none';
+        }
+
+        async function deleteCompany() {
+            if (!currentCompanyId || !confirm('Delete this company?')) return;
+            try {
+                await window.firebaseApp.deleteDoc(window.firebaseApp.doc(db, "companies", currentCompanyId));
+                showAlert('adminAlert', 'Company deleted', 'success');
+                loadCompanies();
+                clearCompanyForm();
+            } catch(e) {
+                console.error(e);
+                showAlert('adminAlert', 'Error: ' + e.message, 'danger');
+            }
+        }
 
         // ---------- CLIENTS ----------
         async function loadClients() {
-            if(!currentUser) return;
-            let snap = await window.firebaseApp.getDocs(window.firebaseApp.query(window.firebaseApp.collection(db,"clients"), window.firebaseApp.where("userId","==",currentUser.uid)));
-            clients=[]; let list = document.getElementById('clientList'); list.innerHTML='';
-            snap.forEach(d=>{ let c={id:d.id,...d.data()}; clients.push(c); list.insertAdjacentHTML('beforeend',`<div class="client-card" onclick="selectClient({name:'${c.name}',email:'${c.email||''}',phone:'${c.phone||''}',address:'${c.address||''}'})"><h4>${c.name}</h4><p>${c.email}</p></div>`); });
+            if (!currentUser || !db) return;
+            try {
+                const q = window.firebaseApp.query(
+                    window.firebaseApp.collection(db, "clients"),
+                    window.firebaseApp.where("userId", "==", currentUser.uid),
+                    window.firebaseApp.orderBy("createdAt", "desc")
+                );
+                const snap = await window.firebaseApp.getDocs(q);
+                clients = [];
+                const list = document.getElementById('clientList');
+                if (list) list.innerHTML = '';
+                
+                snap.forEach(doc => {
+                    const client = { id: doc.id, ...doc.data() };
+                    clients.push(client);
+                    if (list) {
+                        list.insertAdjacentHTML('beforeend', `
+                            <div class="client-card" onclick="selectClient({name:'${client.name?.replace(/'/g,"\\'")}',email:'${client.email||''}',phone:'${client.phone||''}',address:'${client.address?.replace(/'/g,"\\'")||''}'})">
+                                <h4>${client.name || 'Unnamed'}</h4>
+                                <p>📧 ${client.email || 'No email'}</p>
+                                <p>📱 ${client.phone || 'No phone'}</p>
+                                <p>📍 ${client.address || 'No address'}</p>
+                            </div>
+                        `);
+                    }
+                });
+                
+                if (list && clients.length === 0) {
+                    list.innerHTML = '<div class="text-center" style="padding:40px;">No clients found. Add your first client!</div>';
+                }
+            } catch(e) { console.error("Load clients error:", e); }
         }
+
         function selectClient(client) {
-            document.getElementById('customerName').value = client.name||'';
-            document.getElementById('customerEmail').value = client.email||'';
-            document.getElementById('customerPhone').value = client.phone||'';
-            document.getElementById('customerAddress').value = client.address||'';
+            document.getElementById('customerName').value = client.name || '';
+            document.getElementById('customerEmail').value = client.email || '';
+            document.getElementById('customerPhone').value = client.phone || '';
+            document.getElementById('customerAddress').value = client.address || '';
             document.querySelector('.nav-tab[data-tab="create"]').click();
+            showAlert('createAlert', `Client "${client.name}" selected`, 'success');
         }
-        function clearClientForm() { document.getElementById('customerName').value=''; document.getElementById('customerEmail').value=''; document.getElementById('customerPhone').value=''; document.getElementById('customerAddress').value=''; }
+
+        function showClientList() {
+            document.querySelector('.nav-tab[data-tab="clients"]').click();
+        }
+
+        function clearClientForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+        }
+
         async function saveCurrentClient() {
-            let name = document.getElementById('customerName').value; if(!name) return alert('Name required');
-            let data = { name, email:document.getElementById('customerEmail').value, phone:document.getElementById('customerPhone').value, address:document.getElementById('customerAddress').value, userId:currentUser.uid, updatedAt:window.firebaseApp.Timestamp.now() };
-            let existing = clients.find(c=>c.email===data.email||c.name===data.name);
-            if(existing) await window.firebaseApp.updateDoc(window.firebaseApp.doc(db,"clients",existing.id), data);
-            else { data.createdAt=window.firebaseApp.Timestamp.now(); await window.firebaseApp.addDoc(window.firebaseApp.collection(db,"clients"), data); }
-            loadClients(); alert('Client saved');
-        }
-
-        // ---------- GENERATE DOCUMENT (FIXED) ----------
-        async function generateDocument() {
-            if(selectedTermIds.length===0) return showAlert('createAlert','Select at least one term','danger');
-            if(selectedPaymentMethods.length===0) return showAlert('createAlert','Select payment method','danger');
-            let companyId = document.getElementById('companySelect').value;
-            if(!companyId) return showAlert('createAlert','Select company','danger');
-            let customer = document.getElementById('customerName').value.trim();
-            if(!customer) return showAlert('createAlert','Customer name required','danger');
-            let type = document.getElementById('documentType').value;
-            let items = [], subtotal=0;
-            document.querySelectorAll('#itemsTableBody tr').forEach(row=>{
-                let desc = row.querySelector('.item-desc')?.value;
-                let qty = parseFloat(row.querySelector('.item-qty')?.value)||0, price = parseFloat(row.querySelector('.item-price')?.value)||0, total = qty*price;
-                if(desc.trim()) { items.push({description:desc, quantity:qty, unitPrice:price, total}); subtotal+=total; }
-            });
-            if(items.length===0) return showAlert('createAlert','Add at least one item','danger');
-            let discount = parseFloat(document.getElementById('discountAmount').value)||0; if(discount>subtotal) discount=subtotal;
-            let taxRate = parseFloat(document.getElementById('taxRate').value)||0, tax = (subtotal-discount)*taxRate/100, totalAmount = subtotal-discount+tax;
-            let company = companies.find(c=>c.id===companyId);
-            let termsText = selectedTermIds.map(id=>{let t=terms.find(tt=>tt.id===id); return t?.content||'';}).join('\n\n');
-            let docData = {
-                type, serialNumber: document.getElementById('serialNumber').value, currency:selectedCurrency,
-                companyId, companyName:company?.name, companyEmail:company?.email, customerName:customer,
-                customerEmail:document.getElementById('customerEmail').value, customerPhone:document.getElementById('customerPhone').value, customerAddress:document.getElementById('customerAddress').value,
-                items, subtotal, discount, taxRate, taxAmount:tax, total:totalAmount,
-                selectedPaymentMethods, paymentAccounts, selectedTermIds, terms:termsText,
-                userId:currentUser.uid, createdAt:window.firebaseApp.Timestamp.now(), revoked:false, payments:[]
+            const name = document.getElementById('customerName').value.trim();
+            if (!name) return showAlert('createAlert', 'Client name required', 'danger');
+            
+            const data = {
+                name,
+                email: document.getElementById('customerEmail').value.trim(),
+                phone: document.getElementById('customerPhone').value.trim(),
+                address: document.getElementById('customerAddress').value.trim(),
+                userId: currentUser.uid,
+                updatedAt: window.firebaseApp.Timestamp.now()
             };
-            if(type==='receipt') { docData.receiptReason = document.getElementById('receiptReason').value; docData.receiptDate = document.getElementById('receiptDate').value; docData.totalAmount = totalAmount; }
-            await window.firebaseApp.addDoc(window.firebaseApp.collection(db,"documents"), docData);
-            showAlert('createAlert','Document generated','success');
-            clearForm(); loadDocumentHistory();
+            
+            try {
+                const existing = clients.find(c => c.email === data.email || c.name === data.name);
+                if (existing) {
+                    await window.firebaseApp.updateDoc(window.firebaseApp.doc(db, "clients", existing.id), data);
+                    showAlert('createAlert', 'Client updated', 'success');
+                } else {
+                    data.createdAt = window.firebaseApp.Timestamp.now();
+                    await window.firebaseApp.addDoc(window.firebaseApp.collection(db, "clients"), data);
+                    showAlert('createAlert', 'Client saved', 'success');
+                }
+                loadClients();
+            } catch(e) {
+                console.error(e);
+                showAlert('createAlert', 'Error: ' + e.message, 'danger');
+            }
         }
 
-        // ---------- PREVIEW (LIVE) ----------
+        // ---------- DOCUMENT GENERATION ----------
+        async function generateDocument() {
+            if (selectedTermIds.length === 0) return showAlert('createAlert', 'Please select at least one term', 'danger');
+            if (selectedPaymentMethods.length === 0) return showAlert('createAlert', 'Please select at least one payment method', 'danger');
+            
+            const companyId = document.getElementById('companySelect').value;
+            if (!companyId) return showAlert('createAlert', 'Please select a company', 'danger');
+            
+            const customerName = document.getElementById('customerName').value.trim();
+            if (!customerName) return showAlert('createAlert', 'Customer name required', 'danger');
+            
+            const type = document.getElementById('documentType').value;
+            
+            // Validate items
+            let items = [], subtotal = 0;
+            document.querySelectorAll('#itemsTableBody tr').forEach(row => {
+                const desc = row.querySelector('.item-desc')?.value;
+                if (desc && desc.trim()) {
+                    const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+                    const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+                    const total = qty * price;
+                    items.push({
+                        description: desc,
+                        quantity: qty,
+                        unitPrice: price,
+                        total: total
+                    });
+                    subtotal += total;
+                }
+            });
+            
+            if (items.length === 0) return showAlert('createAlert', 'Add at least one item', 'danger');
+            
+            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const discountVal = discount > subtotal ? subtotal : discount;
+            const discounted = subtotal - discountVal;
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            const tax = discounted * (taxRate / 100);
+            const total = discounted + tax;
+            
+            const company = companies.find(c => c.id === companyId);
+            
+            // Build terms text
+            let termsText = selectedTermIds.map(id => {
+                const t = terms.find(tt => tt.id === id);
+                return t ? t.content : '';
+            }).filter(Boolean).join('\n\n');
+            
+            // Collect payment accounts data
+            const accounts = [];
+            document.querySelectorAll('.payment-account-item').forEach(item => {
+                accounts.push({
+                    id: item.id,
+                    accountType: item.querySelector('.account-type')?.value || 'bank',
+                    accountName: item.querySelector('.account-name')?.value || '',
+                    bankName: item.querySelector('.bank-name')?.value || '',
+                    accountNumber: item.querySelector('.account-number')?.value || '',
+                    swiftCode: item.querySelector('.swift-code')?.value || ''
+                });
+            });
+            
+            const docData = {
+                type,
+                serialNumber: document.getElementById('serialNumber').value,
+                currency: selectedCurrency,
+                companyId,
+                companyName: company?.name || '',
+                companyEmail: company?.email || '',
+                companyPhone: company?.phone || '',
+                companyAddress: company?.address || '',
+                taxPin: company?.taxPin || '',
+                customerName,
+                customerEmail: document.getElementById('customerEmail').value.trim(),
+                customerPhone: document.getElementById('customerPhone').value.trim(),
+                customerAddress: document.getElementById('customerAddress').value.trim(),
+                items,
+                subtotal,
+                discount: discountVal,
+                taxRate,
+                taxAmount: tax,
+                total: total,
+                selectedPaymentMethods,
+                paymentAccounts: accounts,
+                selectedTermIds,
+                terms: termsText,
+                userId: currentUser.uid,
+                createdAt: window.firebaseApp.Timestamp.now(),
+                revoked: false,
+                payments: []
+            };
+            
+            if (type === 'receipt') {
+                docData.receiptReason = document.getElementById('receiptReason').value.trim() || 'Payment';
+                docData.receiptDate = document.getElementById('receiptDate').value;
+                docData.totalAmount = total;
+            }
+            
+            try {
+                const btn = document.getElementById('generateBtn');
+                const text = document.getElementById('generateText');
+                const spinner = document.getElementById('generateSpinner');
+                
+                text.textContent = 'Generating...';
+                spinner.classList.remove('hidden');
+                btn.disabled = true;
+                
+                await window.firebaseApp.addDoc(window.firebaseApp.collection(db, "documents"), docData);
+                
+                showAlert('createAlert', 'Document generated successfully!', 'success');
+                clearForm();
+                loadDocumentHistory();
+                
+                text.textContent = 'Generate Document';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+            } catch(e) {
+                console.error("Generate error:", e);
+                showAlert('createAlert', 'Error: ' + e.message, 'danger');
+                
+                document.getElementById('generateText').textContent = 'Generate Document';
+                document.getElementById('generateSpinner').classList.add('hidden');
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        // ---------- PREVIEW ----------
         function previewDocument() {
-            let customer = document.getElementById('customerName').value || 'John Doe';
-            let details = `<strong>${customer}</strong><br>${document.getElementById('customerEmail').value}<br>${document.getElementById('customerPhone').value}<br>${document.getElementById('customerAddress').value}`;
+            const customerName = document.getElementById('customerName').value || 'John Doe';
+            const customerEmail = document.getElementById('customerEmail').value || 'john@example.com';
+            const customerPhone = document.getElementById('customerPhone').value || '+1234567890';
+            const customerAddress = document.getElementById('customerAddress').value || '123 Main St, City, Country';
+            
+            const details = `<strong>${customerName}</strong><br>${customerEmail}<br>${customerPhone}<br>${customerAddress}`;
             document.getElementById('previewCustomerDetails').innerHTML = details;
             document.getElementById('previewCustomerDetailsStandard').innerHTML = details;
-            let type = document.getElementById('documentType').value;
-            let title = {invoice:'INVOICE',quote:'QUOTE',receipt:'RECEIPT',proforma:'PROFORMA'}[type]||'DOCUMENT';
+            
+            const type = document.getElementById('documentType').value;
+            const title = {invoice:'INVOICE', quote:'QUOTE', receipt:'RECEIPT', proforma:'PROFORMA INVOICE'}[type] || 'DOCUMENT';
             document.getElementById('previewDocumentTitle').textContent = title;
-            document.getElementById('previewDocType').textContent = title;
-            document.getElementById('previewSerialNumber').textContent = document.getElementById('serialNumber').value;
-            let today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+            document.getElementById('previewDocType').textContent = title.charAt(0) + title.slice(1).toLowerCase();
+            
+            const serial = document.getElementById('serialNumber').value;
+            document.getElementById('previewSerialNumber').textContent = serial;
+            document.getElementById('previewReceiptSerial').textContent = serial;
+            
+            const today = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
             document.getElementById('previewDate').textContent = today;
             document.getElementById('previewReceiptDate').textContent = today;
+            
             document.getElementById('previewCurrency').textContent = selectedCurrency;
-            // show receipt section if receipt
-            if(type==='receipt') { document.getElementById('receiptPreview').classList.remove('hidden'); document.getElementById('standardPreview').classList.add('hidden'); document.getElementById('previewReceiptReason').textContent = document.getElementById('receiptReason').value||'Payment'; }
-            else { document.getElementById('receiptPreview').classList.add('hidden'); document.getElementById('standardPreview').classList.remove('hidden'); }
-            // populate preview items
-            let sym = selectedCurrency==='USD'?'$':'KSh';
-            let itemsHtml = ''; let previewBody = document.getElementById('previewItems'); previewBody.innerHTML='';
-            document.querySelectorAll('#itemsTableBody tr').forEach(row=>{
-                let d=row.querySelector('.item-desc')?.value, q=row.querySelector('.item-qty')?.value||0, p=row.querySelector('.item-price')?.value||0, t=q*p;
-                if(d.trim()) previewBody.insertAdjacentHTML('beforeend',`<tr><td>${d}</td><td>${q}</td><td>${sym}${parseFloat(p).toFixed(2)}</td><td>${sym}${t.toFixed(2)}</td></tr>`);
+            document.getElementById('previewReceiptCurrency').textContent = selectedCurrency;
+            
+            if (type === 'receipt') {
+                document.getElementById('receiptPreview').classList.remove('hidden');
+                document.getElementById('standardPreview').classList.add('hidden');
+                document.getElementById('previewReceiptReason').textContent = document.getElementById('receiptReason').value || 'Payment for services';
+            } else {
+                document.getElementById('receiptPreview').classList.add('hidden');
+                document.getElementById('standardPreview').classList.remove('hidden');
+            }
+            
+            // Items preview
+            const sym = selectedCurrency === 'USD' ? '$' : 'KSh';
+            const previewBody = document.getElementById('previewItems');
+            const receiptBody = document.getElementById('receiptPreviewItems');
+            if (previewBody) previewBody.innerHTML = '';
+            if (receiptBody) receiptBody.innerHTML = '';
+            
+            document.querySelectorAll('#itemsTableBody tr').forEach(row => {
+                const desc = row.querySelector('.item-desc')?.value;
+                if (desc && desc.trim()) {
+                    const qty = row.querySelector('.item-qty')?.value || 0;
+                    const price = row.querySelector('.item-price')?.value || 0;
+                    const total = parseFloat(qty) * parseFloat(price);
+                    
+                    const rowHtml = `<tr><td>${desc}</td><td>${qty}</td><td>${sym}${parseFloat(price).toFixed(2)}</td><td>${sym}${total.toFixed(2)}</td></tr>`;
+                    if (previewBody) previewBody.insertAdjacentHTML('beforeend', rowHtml);
+                    if (receiptBody) receiptBody.insertAdjacentHTML('beforeend', rowHtml);
+                }
             });
-            if(!previewBody.children.length) previewBody.innerHTML='<tr><td colspan="4" class="text-center">No items</td></tr>';
-            updateItemTotals(); // also updates preview totals fields
-            // switch to preview tab
+            
+            if (previewBody && previewBody.children.length === 0) {
+                previewBody.innerHTML = '<tr><td colspan="4" class="text-center">No items added</td></tr>';
+            }
+            if (receiptBody && receiptBody.children.length === 0) {
+                receiptBody.innerHTML = '<tr><td colspan="4" class="text-center">No items added</td></tr>';
+            }
+            
+            updateItemTotals();
+            updateSelectedTerms();
+            
+            // Payment preview
+            const previewAccounts = document.getElementById('previewPaymentAccounts');
+            if (previewAccounts) {
+                previewAccounts.innerHTML = '<p>Payment accounts will appear here</p>';
+            }
+            
+            // Switch to preview tab
             document.querySelector('.nav-tab[data-tab="preview"]').click();
         }
+
         function refreshPreview() { previewDocument(); }
 
-        // ---------- PDF GENERATION - FULLY CORRECTED ----------
+        // ---------- PDF GENERATION (FIXED) ----------
         async function generatePDF() {
             try {
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                 const element = document.getElementById('documentPreview');
                 
-                // 1. Add pdf-mode class to trigger print-like styles
+                // Add pdf-mode class for A4 styling
                 element.classList.add('pdf-mode');
-                // 2. Force A4 friendly inline styles (backup)
+                
+                // Force dimensions for capture
                 element.style.width = '210mm';
                 element.style.padding = '12mm 12mm';
                 element.style.margin = '0 auto';
                 element.style.background = 'white';
                 element.style.fontSize = '12px';
                 element.style.boxSizing = 'border-box';
-
-                // 3. Hide any UI buttons inside preview via CSS (already in style)
-                // 4. Render with html2canvas, high scale
+                
+                // Render with high quality
                 const canvas = await html2canvas(element, {
-                    scale: 2.2,
+                    scale: 2,
                     useCORS: true,
                     allowTaint: false,
                     backgroundColor: '#ffffff',
@@ -728,11 +1743,16 @@
                     windowWidth: element.scrollWidth,
                     windowHeight: element.scrollHeight
                 });
-
-                // 5. Remove pdf-mode and restore styles
+                
+                // Remove pdf-mode and restore styles
                 element.classList.remove('pdf-mode');
-                element.style.width = ''; element.style.padding = ''; element.style.margin = ''; element.style.background = ''; element.style.fontSize = ''; element.style.boxSizing = '';
-
+                element.style.width = '';
+                element.style.padding = '';
+                element.style.margin = '';
+                element.style.background = '';
+                element.style.fontSize = '';
+                element.style.boxSizing = '';
+                
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -740,101 +1760,247 @@
                 const contentWidth = pdfWidth - margin * 2;
                 const contentHeight = pdfHeight - margin * 2;
                 
-                const canvasRatio = canvas.width / canvas.height;
+                const ratio = canvas.width / canvas.height;
                 let imgWidth = contentWidth;
-                let imgHeight = imgWidth / canvasRatio;
+                let imgHeight = imgWidth / ratio;
+                
                 if (imgHeight > contentHeight) {
                     imgHeight = contentHeight;
-                    imgWidth = imgHeight * canvasRatio;
+                    imgWidth = imgHeight * ratio;
                 }
+                
                 const x = margin + (contentWidth - imgWidth) / 2;
                 const y = margin + (contentHeight - imgHeight) / 2;
-
+                
                 pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
                 pdf.save(`${document.getElementById('serialNumber').value || 'document'}.pdf`);
-                showAlert('historyAlert', 'PDF generated successfully', 'success');
+                
+                showAlert('historyAlert', 'PDF generated successfully!', 'success');
             } catch (err) {
                 console.error('PDF error:', err);
                 alert('PDF generation failed: ' + err.message);
+                
+                // Fallback: simple text PDF
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF();
+                    pdf.text('Document preview could not be rendered.', 20, 20);
+                    pdf.save('document.pdf');
+                } catch(e) {}
             }
         }
 
         // ---------- DOCUMENT HISTORY ----------
         async function loadDocumentHistory() {
-            if(!db) return;
-            let filter = document.getElementById('historyFilter').value;
-            let q = filter==='all' ? window.firebaseApp.query(window.firebaseApp.collection(db,"documents"), window.firebaseApp.orderBy("createdAt","desc"))
-                : window.firebaseApp.query(window.firebaseApp.collection(db,"documents"), window.firebaseApp.where("type","==",filter), window.firebaseApp.orderBy("createdAt","desc"));
-            let snap = await window.firebaseApp.getDocs(q);
-            documents = []; let tbody = document.getElementById('historyTableBody'); tbody.innerHTML = '';
-            snap.forEach(d=>{ let doc = {id:d.id, ...d.data()}; documents.push(doc);
-                let date = doc.createdAt?.toDate().toLocaleDateString()||'';
-                let sym = doc.currency==='KSH'?'KSh':'$';
-                tbody.insertAdjacentHTML('beforeend',`<tr><td>${doc.serialNumber||''}</td><td>${doc.type}</td><td>${doc.customerName||''}</td><td>${date}</td><td>${sym}${(doc.total||doc.totalAmount||0).toFixed(2)}</td><td>${doc.revoked?'Revoked':'Active'}</td><td><button class="btn btn-primary btn-sm" onclick="viewDocument('${d.id}')">View</button> <button class="btn btn-success btn-sm" onclick="downloadDocumentPDF('${d.id}')">PDF</button></td></tr>`);
-            });
+            if (!db) return;
+            try {
+                const filter = document.getElementById('historyFilter').value;
+                let q;
+                if (filter === 'all') {
+                    q = window.firebaseApp.query(window.firebaseApp.collection(db, "documents"), window.firebaseApp.orderBy("createdAt", "desc"));
+                } else {
+                    q = window.firebaseApp.query(
+                        window.firebaseApp.collection(db, "documents"),
+                        window.firebaseApp.where("type", "==", filter),
+                        window.firebaseApp.orderBy("createdAt", "desc")
+                    );
+                }
+                
+                const snap = await window.firebaseApp.getDocs(q);
+                documents = [];
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = '';
+                
+                if (snap.empty) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:40px;">No documents found.</td></tr>';
+                    return;
+                }
+                
+                snap.forEach(doc => {
+                    const data = { id: doc.id, ...doc.data() };
+                    documents.push(data);
+                    
+                    const date = data.createdAt?.toDate()?.toLocaleDateString() || '';
+                    const sym = data.currency === 'KSH' ? 'KSh' : '$';
+                    const total = data.totalAmount || data.total || 0;
+                    
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td>${data.serialNumber || 'N/A'}</td>
+                            <td><span style="text-transform:capitalize;">${data.type || ''}</span></td>
+                            <td>${data.customerName || ''}</td>
+                            <td>${date}</td>
+                            <td>${sym}${total.toFixed(2)}</td>
+                            <td><span class="status-badge" style="padding:4px 8px; background:${data.revoked?'#f72585':'#4cc9f0'}; color:white; border-radius:20px;">${data.revoked?'Revoked':'Active'}</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="viewDocument('${doc.id}')">View</button>
+                                <button class="btn btn-success btn-sm" onclick="downloadDocumentPDF('${doc.id}')">PDF</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            } catch(e) {
+                console.error("History error:", e);
+                showAlert('historyAlert', 'Error loading history: ' + e.message, 'danger');
+            }
         }
+
         function viewDocument(id) {
-            let doc = documents.find(d=>d.id===id); if(!doc) return;
-            // populate create form with doc data – simplified
-            document.getElementById('documentType').value = doc.type; updateFormLayout(); selectCurrency(doc.currency||'USD');
-            document.getElementById('customerName').value = doc.customerName||''; document.getElementById('customerEmail').value = doc.customerEmail||''; 
-            document.getElementById('customerPhone').value = doc.customerPhone||''; document.getElementById('customerAddress').value = doc.customerAddress||'';
-            if(doc.type==='receipt') { document.getElementById('receiptReason').value = doc.receiptReason||''; document.getElementById('receiptDate').value = doc.receiptDate||''; }
-            // items
-            let tbody = document.getElementById('itemsTableBody'); tbody.innerHTML = '';
-            if(doc.items) doc.items.forEach(it=>{
-                let row = tbody.insertRow();
-                row.innerHTML = `<td><input class="form-control item-desc" value="${it.description||''}"></td><td><input type="number" class="form-control item-qty" value="${it.quantity||1}"></td><td><input type="number" class="form-control item-price" value="${it.unitPrice||0}" step="0.01"></td><td class="item-total">$0.00</td><td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>`;
-            }); else addItem();
-            document.getElementById('discountAmount').value = doc.discount||0; document.getElementById('taxRate').value = doc.taxRate||0;
-            updateItemTotals(); previewDocument();
+            const doc = documents.find(d => d.id === id);
+            if (!doc) return;
+            
+            document.getElementById('documentType').value = doc.type || 'invoice';
+            selectCurrency(doc.currency || 'USD');
+            
+            if (doc.companyId) {
+                const sel = document.getElementById('companySelect');
+                for (let i = 0; i < sel.options.length; i++) {
+                    if (sel.options[i].value === doc.companyId) {
+                        sel.value = doc.companyId;
+                        break;
+                    }
+                }
+                onCompanySelect();
+            }
+            
+            document.getElementById('customerName').value = doc.customerName || '';
+            document.getElementById('customerEmail').value = doc.customerEmail || '';
+            document.getElementById('customerPhone').value = doc.customerPhone || '';
+            document.getElementById('customerAddress').value = doc.customerAddress || '';
+            
+            if (doc.type === 'receipt') {
+                document.getElementById('receiptReason').value = doc.receiptReason || '';
+                document.getElementById('receiptDate').value = doc.receiptDate || '';
+            }
+            
+            // Load items
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
+            if (doc.items && doc.items.length > 0) {
+                doc.items.forEach(item => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td><input type="text" class="form-control item-desc" value="${item.description || ''}"></td>
+                        <td><input type="number" class="form-control item-qty" value="${item.quantity || 1}" min="1"></td>
+                        <td><input type="number" class="form-control item-price" value="${item.unitPrice || 0}" min="0" step="0.01"></td>
+                        <td class="item-total">$0.00</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
+                    `;
+                });
+            } else {
+                addItem();
+            }
+            
+            document.getElementById('discountAmount').value = doc.discount || 0;
+            document.getElementById('taxRate').value = doc.taxRate || 0;
+            
+            updateItemTotals();
+            previewDocument();
             document.querySelector('.nav-tab[data-tab="create"]').click();
         }
-        async function downloadDocumentPDF(id) { viewDocument(id); setTimeout(()=>generatePDF(), 800); }
 
-        // ---------- UTILS ----------
-        function showAlert(alertId, msg, type) {
-            let el = document.getElementById(alertId); if(el) { el.textContent=msg; el.className=`alert alert-${type}`; el.style.display='block'; setTimeout(()=>el.style.display='none',4000); }
+        async function downloadDocumentPDF(id) {
+            viewDocument(id);
+            setTimeout(() => generatePDF(), 1000);
         }
+
+        // ---------- FORM UTILITIES ----------
         function updateFormLayout() {
-            let isReceipt = document.getElementById('documentType').value==='receipt';
+            const isReceipt = document.getElementById('documentType').value === 'receipt';
             document.getElementById('receiptFields').classList.toggle('hidden', !isReceipt);
         }
-        function clearForm() {
-            document.getElementById('customerName').value=''; document.getElementById('customerEmail').value=''; document.getElementById('customerPhone').value=''; document.getElementById('customerAddress').value='';
-            document.getElementById('itemsTableBody').innerHTML = `<tr><td><input class="form-control item-desc"></td><td><input type="number" class="form-control item-qty" value="1" min="1"></td><td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td><td class="item-total">$0.00</td><td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td></tr>`;
-            document.getElementById('discountAmount').value='0'; document.getElementById('taxRate').value='0';
-            document.getElementById('receiptReason').value=''; 
-            document.getElementById('receiptDate').value = new Date().toISOString().split('T')[0];
-            selectedTermIds = []; selectedPaymentMethods = [];
-            updateSerialNumber(); updateItemTotals();
-        }
-        // initialize after DOM
-        window.addEventListener('DOMContentLoaded', ()=>{
-            // stub for currency buttons
-            if(!document.getElementById('usdCurrency')) {
-                let btnContainer = document.querySelector('.currency-selection');
-                if(btnContainer) btnContainer.innerHTML = '<button class="currency-btn active" id="usdCurrency" onclick="selectCurrency(\'USD\')">USD</button><button class="currency-btn" id="kshCurrency" onclick="selectCurrency(\'KSH\')">KSH</button>';
-            }
-            // default payment methods stub
-            let pm = document.getElementById('paymentMethodsCheckboxList');
-            if(pm) pm.innerHTML = '<div class="payment-method-checkbox-item"><input type="checkbox" class="payment-method-checkbox" value="Bank Transfer"> Bank Transfer</div><div class="payment-method-checkbox-item"><input type="checkbox" class="payment-method-checkbox" value="M-Pesa"> M-Pesa</div>';
-            // set receipt date
-            document.getElementById('receiptDate').value = new Date().toISOString().split('T')[0];
-        });
 
-        // expose globals
-        window.switchAuthTab = switchAuthTab; window.login = login; window.register = register; window.logout = logout;
-        window.selectCurrency = selectCurrency; window.addItem = addItem; window.removeItem = removeItem;
-        window.updateFormLayout = updateFormLayout; window.updateSerialNumber = updateSerialNumber;
-        window.addPaymentAccount = addPaymentAccount; window.removePaymentAccount = removePaymentAccount;
-        window.updateAccountFields = updateAccountFields; window.saveCompany = saveCompany; window.deleteCompany = deleteCompany; window.editCompany = editCompany; window.clearCompanyForm = clearCompanyForm;
-        window.loadCompanies = loadCompanies; window.onCompanySelect = onCompanySelect;
-        window.saveCurrentClient = saveCurrentClient; window.clearClientForm = clearClientForm; window.selectClient = selectClient; window.loadClients = loadClients;
-        window.saveTerm = saveTerm; window.editTerm = editTerm; window.deleteTerm = deleteTerm; window.clearTermForm = clearTermForm; window.loadAllTerms = loadAllTerms; window.loadTermsForDocumentType = loadTermsForDocumentType;
-        window.generateDocument = generateDocument; window.previewDocument = previewDocument; window.refreshPreview = refreshPreview;
-        window.generatePDF = generatePDF; window.viewDocument = viewDocument; window.downloadDocumentPDF = downloadDocumentPDF; window.loadDocumentHistory = loadDocumentHistory;
-        window.showAlert = showAlert; window.updateItemTotals = updateItemTotals; window.updateSelectedTerms = updateSelectedTerms; window.updateSelectedPaymentMethods = updateSelectedPaymentMethods;
+        function clearForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerEmail').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+            
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td><input type="text" class="form-control item-desc" placeholder="Item description"></td>
+                    <td><input type="number" class="form-control item-qty" value="1" min="1"></td>
+                    <td><input type="number" class="form-control item-price" value="0" min="0" step="0.01"></td>
+                    <td class="item-total">$0.00</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="removeItem(this)">✕</button></td>
+                </tr>
+            `;
+            
+            document.getElementById('discountAmount').value = '0';
+            document.getElementById('taxRate').value = '0';
+            document.getElementById('receiptReason').value = '';
+            document.getElementById('receiptDate').value = new Date().toISOString().split('T')[0];
+            
+            selectedTermIds = [];
+            selectedPaymentMethods = [];
+            
+            document.querySelectorAll('.term-checkbox').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#paymentMethodsCheckboxList .payment-method-checkbox').forEach(cb => cb.checked = false);
+            
+            updateItemTotals();
+            updateSerialNumber();
+            updateSelectedTerms();
+        }
+
+        function showAlert(alertId, message, type) {
+            const el = document.getElementById(alertId);
+            if (el) {
+                el.textContent = message;
+                el.className = `alert alert-${type}`;
+                el.style.display = 'block';
+                setTimeout(() => { el.style.display = 'none'; }, 4000);
+            }
+        }
+
+        // Payment modal stub
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        // Expose globals
+        window.switchAuthTab = switchAuthTab;
+        window.login = login;
+        window.register = register;
+        window.logout = logout;
+        window.selectCurrency = selectCurrency;
+        window.addItem = addItem;
+        window.removeItem = removeItem;
+        window.addPaymentAccount = addPaymentAccount;
+        window.removePaymentAccount = removePaymentAccount;
+        window.updateAccountFields = updateAccountFields;
+        window.saveCompany = saveCompany;
+        window.deleteCompany = deleteCompany;
+        window.editCompany = editCompany;
+        window.clearCompanyForm = clearCompanyForm;
+        window.loadCompanies = loadCompanies;
+        window.onCompanySelect = onCompanySelect;
+        window.saveCurrentClient = saveCurrentClient;
+        window.clearClientForm = clearClientForm;
+        window.selectClient = selectClient;
+        window.showClientList = showClientList;
+        window.loadClients = loadClients;
+        window.saveTerm = saveTerm;
+        window.editTerm = editTerm;
+        window.deleteTerm = deleteTerm;
+        window.clearTermForm = clearTermForm;
+        window.loadAllTerms = loadAllTerms;
+        window.loadTermsForDocumentType = loadTermsForDocumentType;
+        window.generateDocument = generateDocument;
+        window.previewDocument = previewDocument;
+        window.refreshPreview = refreshPreview;
+        window.generatePDF = generatePDF;
+        window.viewDocument = viewDocument;
+        window.downloadDocumentPDF = downloadDocumentPDF;
+        window.loadDocumentHistory = loadDocumentHistory;
+        window.updateFormLayout = updateFormLayout;
+        window.updateSerialNumber = updateSerialNumber;
+        window.updateItemTotals = updateItemTotals;
+        window.updateSelectedTerms = updateSelectedTerms;
+        window.updateSelectedPaymentMethods = updateSelectedPaymentMethods;
+        window.clearForm = clearForm;
+        window.showAlert = showAlert;
+        window.closePaymentModal = closePaymentModal;
     </script>
 </body>
 </html>
