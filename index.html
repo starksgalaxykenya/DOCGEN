@@ -2052,81 +2052,174 @@
             previewDocument();
         }
         
-        // ---------- PDF GENERATION ----------
-        async function generatePDF() {
-            try {
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-                const element = document.getElementById('documentPreview');
-                
-                if (!element) {
-                    throw new Error('Preview element not found');
-                }
-                
-                // Add pdf-mode class for A4 styling
-                element.classList.add('pdf-mode');
-                
-                // Force dimensions for capture
-                element.style.width = '210mm';
-                element.style.padding = '12mm 12mm';
-                element.style.margin = '0 auto';
-                element.style.background = 'white';
-                element.style.fontSize = '12px';
-                element.style.boxSizing = 'border-box';
-                
-                // Wait for styles to apply
-                await new Promise(resolve => setTimeout(resolve, 300));
-                
-                // Render with html2canvas
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: false,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    windowWidth: element.scrollWidth,
-                    windowHeight: element.scrollHeight
-                });
-                
-                // Remove pdf-mode and restore styles
-                element.classList.remove('pdf-mode');
-                element.style.width = '';
-                element.style.padding = '';
-                element.style.margin = '';
-                element.style.background = '';
-                element.style.fontSize = '';
-                element.style.boxSizing = '';
-                
-                const imgData = canvas.toDataURL('image/png');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const margin = 5;
-                const contentWidth = pdfWidth - margin * 2;
-                const contentHeight = pdfHeight - margin * 2;
-                
-                const ratio = canvas.width / canvas.height;
-                let imgWidth = contentWidth;
-                let imgHeight = imgWidth / ratio;
-                
-                if (imgHeight > contentHeight) {
-                    imgHeight = contentHeight;
-                    imgWidth = imgHeight * ratio;
-                }
-                
-                const x = margin + (contentWidth - imgWidth) / 2;
-                const y = margin + (contentHeight - imgHeight) / 2;
-                
-                pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
-                
-                const filename = `${document.getElementById('serialNumber').value || 'document'}.pdf`;
-                pdf.save(filename);
-                
-                showAlert('historyAlert', 'PDF generated successfully!', 'success');
-            } catch (err) {
-                console.error('PDF generation error:', err);
-                alert('PDF generation failed: ' + err.message);
-            }
+       // ---------- PDF GENERATION (FIXED) ----------
+async function generatePDF() {
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ 
+            orientation: 'portrait', 
+            unit: 'mm', 
+            format: 'a4',
+            compress: true
+        });
+        
+        const element = document.getElementById('documentPreview');
+        if (!element) {
+            throw new Error('Preview element not found');
         }
+
+        // Save original styles
+        const originalStyles = {
+            width: element.style.width,
+            padding: element.style.padding,
+            margin: element.style.margin,
+            background: element.style.background,
+            fontSize: element.style.fontSize,
+            boxSizing: element.style.boxSizing
+        };
+
+        // Add pdf-mode class for A4 styling
+        element.classList.add('pdf-mode');
+        
+        // Force dimensions for capture
+        element.style.width = '210mm';
+        element.style.padding = '10mm 10mm';
+        element.style.margin = '0 auto';
+        element.style.background = 'white';
+        element.style.fontSize = '12px';
+        element.style.boxSizing = 'border-box';
+        
+        // Wait for styles to apply and fonts to render
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Render with html2canvas - use lower scale for better compatibility
+        const canvas = await html2canvas(element, {
+            scale: 1.5,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            windowWidth: element.scrollWidth,
+            windowHeight: element.scrollHeight,
+            onclone: function(clonedDoc) {
+                const clonedElement = clonedDoc.getElementById('documentPreview');
+                if (clonedElement) {
+                    clonedElement.classList.add('pdf-mode');
+                    clonedElement.style.width = '210mm';
+                    clonedElement.style.padding = '10mm 10mm';
+                    clonedElement.style.margin = '0 auto';
+                    clonedElement.style.background = 'white';
+                }
+            }
+        });
+
+        // Restore original styles and remove pdf-mode
+        element.classList.remove('pdf-mode');
+        Object.assign(element.style, originalStyles);
+
+        // Validate canvas
+        if (!canvas || canvas.width === 0 || canvas.height === 0) {
+            throw new Error('Canvas rendering failed - empty canvas');
+        }
+
+        // Get image data
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        if (!imgData || imgData.length < 100) {
+            throw new Error('Image data is invalid');
+        }
+
+        // Calculate dimensions for PDF
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        // Margins (10mm each side)
+        const margin = 10;
+        const maxWidth = pdfWidth - (margin * 2);
+        const maxHeight = pdfHeight - (margin * 2);
+        
+        // Calculate image dimensions to fit within margins while maintaining aspect ratio
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = imgWidth / imgHeight;
+        
+        let finalWidth = maxWidth;
+        let finalHeight = finalWidth / ratio;
+        
+        if (finalHeight > maxHeight) {
+            finalHeight = maxHeight;
+            finalWidth = finalHeight * ratio;
+        }
+        
+        // Center the image on the page
+        const x = margin + (maxWidth - finalWidth) / 2;
+        const y = margin + (maxHeight - finalHeight) / 2;
+        
+        // Validate coordinates
+        if (isNaN(x) || isNaN(y) || isNaN(finalWidth) || isNaN(finalHeight) || 
+            x < 0 || y < 0 || finalWidth <= 0 || finalHeight <= 0) {
+            throw new Error('Invalid PDF coordinates calculated');
+        }
+        
+        // Add image to PDF
+        pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight, undefined, 'FAST');
+        
+        // Add metadata
+        pdf.setProperties({
+            title: document.getElementById('serialNumber')?.value || 'Document',
+            subject: 'Generated Document',
+            creator: 'STARKS GALAXY LIMITED Document Generator'
+        });
+        
+        // Save PDF
+        const filename = `${document.getElementById('serialNumber')?.value || 'document'}.pdf`;
+        pdf.save(filename);
+        
+        showAlert('historyAlert', 'PDF generated successfully!', 'success');
+        
+    } catch (err) {
+        console.error('PDF generation error:', err);
+        
+        // Fallback: Generate a simple text PDF
+        try {
+            console.log('Attempting fallback PDF generation...');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            // Get document data
+            const docType = document.getElementById('documentType')?.value || 'Document';
+            const serial = document.getElementById('serialNumber')?.value || 'N/A';
+            const customer = document.getElementById('customerName')?.value || 'Customer';
+            const total = document.getElementById('totalAmount')?.textContent || '$0.00';
+            const date = new Date().toLocaleDateString();
+            
+            // Add content
+            pdf.setFontSize(20);
+            pdf.setTextColor(67, 97, 238);
+            pdf.text('STARKS GALAXY LIMITED', 20, 20);
+            
+            pdf.setFontSize(16);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(docType.toUpperCase(), 20, 35);
+            
+            pdf.setFontSize(12);
+            pdf.text(`Serial No: ${serial}`, 20, 50);
+            pdf.text(`Date: ${date}`, 20, 60);
+            pdf.text(`Customer: ${customer}`, 20, 70);
+            pdf.text(`Total: ${total}`, 20, 80);
+            pdf.text(`Currency: ${selectedCurrency}`, 20, 90);
+            
+            pdf.text('This document was generated as a fallback due to rendering issues.', 20, 120);
+            pdf.text('Please try again with a simpler document layout.', 20, 130);
+            
+            pdf.save(`${serial || 'document'}-fallback.pdf`);
+            
+            showAlert('historyAlert', 'PDF generated with fallback mode', 'warning');
+        } catch (fallbackErr) {
+            console.error('Fallback PDF generation failed:', fallbackErr);
+            alert('PDF generation failed. Please try refreshing the page or using a simpler document layout.');
+        }
+    }
+}
         
         // ---------- DOCUMENT HISTORY ----------
         async function loadDocumentHistory() {
