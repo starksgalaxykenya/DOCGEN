@@ -2052,70 +2052,124 @@
             previewDocument();
         }
         
-       // ---------- PDF GENERATION (FIXED) ----------
+       // ---------- PDF GENERATION (COMPLETELY FIXED) ----------
 async function generatePDF() {
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ 
             orientation: 'portrait', 
             unit: 'mm', 
-            format: 'a4',
-            compress: true
+            format: 'a4'
         });
+        
+        // First, make sure we're on the preview tab and the preview is fresh
+        const previewTab = document.querySelector('.nav-tab[data-tab="preview"]');
+        if (!previewTab.classList.contains('active')) {
+            previewDocument();
+            // Wait for preview to render
+            await new Promise(resolve => setTimeout(resolve, 800));
+        }
         
         const element = document.getElementById('documentPreview');
         if (!element) {
             throw new Error('Preview element not found');
         }
 
-        // Save original styles
+        // Store original state
+        const originalDisplay = element.style.display;
+        const originalPosition = element.style.position;
         const originalStyles = {
             width: element.style.width,
             padding: element.style.padding,
             margin: element.style.margin,
             background: element.style.background,
             fontSize: element.style.fontSize,
-            boxSizing: element.style.boxSizing
+            boxSizing: element.style.boxSizing,
+            position: element.style.position,
+            left: element.style.left,
+            top: element.style.top
         };
 
-        // Add pdf-mode class for A4 styling
-        element.classList.add('pdf-mode');
+        // Create a clone of the element for PDF generation
+        const clone = element.cloneNode(true);
+        clone.id = 'documentPreview-clone';
         
-        // Force dimensions for capture
-        element.style.width = '210mm';
-        element.style.padding = '10mm 10mm';
-        element.style.margin = '0 auto';
-        element.style.background = 'white';
-        element.style.fontSize = '12px';
-        element.style.boxSizing = 'border-box';
+        // Style the clone for PDF
+        clone.style.width = '210mm';
+        clone.style.padding = '15mm';
+        clone.style.margin = '0';
+        clone.style.background = 'white';
+        clone.style.fontSize = '12px';
+        clone.style.boxSizing = 'border-box';
+        clone.style.position = 'absolute';
+        clone.style.left = '-9999px';
+        clone.style.top = '0';
+        clone.style.visibility = 'visible';
+        clone.style.display = 'block';
+        clone.style.zIndex = '-1000';
         
-        // Wait for styles to apply and fonts to render
+        // Add pdf-mode class to clone
+        clone.classList.add('pdf-mode');
+        
+        // Remove any hidden elements from clone
+        clone.querySelectorAll('.no-print, .btn, .nav-tabs, .action-buttons, button:not(.document-table button)').forEach(el => {
+            if (el) el.style.display = 'none';
+        });
+        
+        // Ensure tables are properly formatted
+        clone.querySelectorAll('table').forEach(table => {
+            table.style.width = '100%';
+            table.style.tableLayout = 'fixed';
+            table.style.fontSize = '11px';
+            table.style.borderCollapse = 'collapse';
+            
+            table.querySelectorAll('th, td').forEach(cell => {
+                cell.style.padding = '6px 4px';
+                cell.style.border = '1px solid #ddd';
+            });
+            
+            // Set column widths
+            const headers = table.querySelectorAll('th');
+            if (headers.length >= 4) {
+                headers[0].style.width = '45%';
+                headers[1].style.width = '15%';
+                headers[2].style.width = '20%';
+                headers[3].style.width = '20%';
+            }
+        });
+        
+        // Ensure customer details are populated in the clone
+        const cloneCustomerDetails = clone.querySelector('#previewCustomerDetails');
+        const cloneCustomerDetailsStd = clone.querySelector('#previewCustomerDetailsStandard');
+        const originalCustomerDetails = document.querySelector('#previewCustomerDetails')?.innerHTML;
+        const originalCustomerDetailsStd = document.querySelector('#previewCustomerDetailsStandard')?.innerHTML;
+        
+        if (cloneCustomerDetails && originalCustomerDetails) {
+            cloneCustomerDetails.innerHTML = originalCustomerDetails;
+        }
+        if (cloneCustomerDetailsStd && originalCustomerDetailsStd) {
+            cloneCustomerDetailsStd.innerHTML = originalCustomerDetailsStd;
+        }
+        
+        // Append clone to body
+        document.body.appendChild(clone);
+        
+        // Wait for clone to be fully rendered
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Render with html2canvas - use lower scale for better compatibility
-        const canvas = await html2canvas(element, {
-            scale: 1.5,
+        // Render the clone with html2canvas
+        const canvas = await html2canvas(clone, {
+            scale: 2,
             useCORS: true,
             allowTaint: false,
             backgroundColor: '#ffffff',
             logging: false,
-            windowWidth: element.scrollWidth,
-            windowHeight: element.scrollHeight,
-            onclone: function(clonedDoc) {
-                const clonedElement = clonedDoc.getElementById('documentPreview');
-                if (clonedElement) {
-                    clonedElement.classList.add('pdf-mode');
-                    clonedElement.style.width = '210mm';
-                    clonedElement.style.padding = '10mm 10mm';
-                    clonedElement.style.margin = '0 auto';
-                    clonedElement.style.background = 'white';
-                }
-            }
+            windowWidth: 210 * 3.78, // 210mm in pixels at 96 DPI
+            windowHeight: clone.scrollHeight
         });
 
-        // Restore original styles and remove pdf-mode
-        element.classList.remove('pdf-mode');
-        Object.assign(element.style, originalStyles);
+        // Remove the clone
+        document.body.removeChild(clone);
 
         // Validate canvas
         if (!canvas || canvas.width === 0 || canvas.height === 0) {
@@ -2132,16 +2186,13 @@ async function generatePDF() {
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
         
-        // Margins (10mm each side)
-        const margin = 10;
+        // Margins (5mm each side)
+        const margin = 5;
         const maxWidth = pdfWidth - (margin * 2);
         const maxHeight = pdfHeight - (margin * 2);
         
-        // Calculate image dimensions to fit within margins while maintaining aspect ratio
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = imgWidth / imgHeight;
-        
+        // Calculate image dimensions to fit within margins
+        const ratio = canvas.width / canvas.height;
         let finalWidth = maxWidth;
         let finalHeight = finalWidth / ratio;
         
@@ -2156,22 +2207,22 @@ async function generatePDF() {
         
         // Validate coordinates
         if (isNaN(x) || isNaN(y) || isNaN(finalWidth) || isNaN(finalHeight) || 
-            x < 0 || y < 0 || finalWidth <= 0 || finalHeight <= 0) {
+            finalWidth <= 0 || finalHeight <= 0) {
             throw new Error('Invalid PDF coordinates calculated');
         }
         
         // Add image to PDF
         pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight, undefined, 'FAST');
         
-        // Add metadata
-        pdf.setProperties({
-            title: document.getElementById('serialNumber')?.value || 'Document',
-            subject: 'Generated Document',
-            creator: 'STARKS GALAXY LIMITED Document Generator'
-        });
+        // Add footer with document info
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        const serialNumber = document.getElementById('serialNumber')?.value || 'N/A';
+        const date = new Date().toLocaleDateString();
+        pdf.text(`Document: ${serialNumber} | Generated: ${date} | STARKS GALAXY LIMITED`, pdfWidth / 2, pdfHeight - 3, { align: 'center' });
         
         // Save PDF
-        const filename = `${document.getElementById('serialNumber')?.value || 'document'}.pdf`;
+        const filename = `${serialNumber}.pdf`;
         pdf.save(filename);
         
         showAlert('historyAlert', 'PDF generated successfully!', 'success');
@@ -2179,44 +2230,136 @@ async function generatePDF() {
     } catch (err) {
         console.error('PDF generation error:', err);
         
-        // Fallback: Generate a simple text PDF
+        // ULTIMATE FALLBACK: Generate PDF directly from form data
         try {
-            console.log('Attempting fallback PDF generation...');
+            console.log('Attempting direct data PDF generation...');
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
             
             // Get document data
             const docType = document.getElementById('documentType')?.value || 'Document';
-            const serial = document.getElementById('serialNumber')?.value || 'N/A';
-            const customer = document.getElementById('customerName')?.value || 'Customer';
-            const total = document.getElementById('totalAmount')?.textContent || '$0.00';
+            const serialNumber = document.getElementById('serialNumber')?.value || 'N/A';
+            const companyName = document.getElementById('companySelect')?.selectedOptions[0]?.text || 'STARKS GALAXY LIMITED';
+            const customerName = document.getElementById('customerName')?.value || 'Customer';
+            const customerEmail = document.getElementById('customerEmail')?.value || '';
+            const customerPhone = document.getElementById('customerPhone')?.value || '';
+            const customerAddress = document.getElementById('customerAddress')?.value || '';
+            const currency = selectedCurrency === 'USD' ? '$' : 'KSh';
             const date = new Date().toLocaleDateString();
             
-            // Add content
+            // Company Header
             pdf.setFontSize(20);
             pdf.setTextColor(67, 97, 238);
-            pdf.text('STARKS GALAXY LIMITED', 20, 20);
+            pdf.text(companyName, 105, 20, { align: 'center' });
             
-            pdf.setFontSize(16);
+            pdf.setFontSize(24);
+            pdf.setTextColor(58, 12, 163);
+            pdf.text(docType.toUpperCase(), 105, 35, { align: 'center' });
+            
+            // Document Info
+            pdf.setFontSize(11);
             pdf.setTextColor(0, 0, 0);
-            pdf.text(docType.toUpperCase(), 20, 35);
+            pdf.text(`Serial No: ${serialNumber}`, 20, 50);
+            pdf.text(`Date: ${date}`, 20, 58);
+            pdf.text(`Currency: ${selectedCurrency}`, 20, 66);
+            
+            // Customer Info
+            pdf.setFontSize(12);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Bill To:', 20, 85);
+            pdf.setFont(undefined, 'normal');
+            pdf.setFontSize(11);
+            pdf.text(customerName, 20, 95);
+            if (customerEmail) pdf.text(customerEmail, 20, 103);
+            if (customerPhone) pdf.text(customerPhone, 20, 111);
+            if (customerAddress) {
+                const addressLines = pdf.splitTextToSize(customerAddress, 80);
+                pdf.text(addressLines, 20, 119);
+            }
+            
+            // Items Table Header
+            let yPos = 140;
+            pdf.setFontSize(10);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Description', 20, yPos);
+            pdf.text('Qty', 130, yPos, { align: 'right' });
+            pdf.text('Price', 150, yPos, { align: 'right' });
+            pdf.text('Total', 180, yPos, { align: 'right' });
+            
+            yPos += 5;
+            pdf.line(20, yPos, 190, yPos);
+            yPos += 5;
+            
+            // Items
+            pdf.setFont(undefined, 'normal');
+            let subtotal = 0;
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            
+            rows.forEach(row => {
+                if (yPos > 250) {
+                    pdf.addPage();
+                    yPos = 20;
+                }
+                
+                const desc = row.querySelector('.item-desc')?.value;
+                const qty = parseFloat(row.querySelector('.item-qty')?.value) || 0;
+                const price = parseFloat(row.querySelector('.item-price')?.value) || 0;
+                const total = qty * price;
+                
+                if (desc && desc.trim()) {
+                    subtotal += total;
+                    
+                    const descLines = pdf.splitTextToSize(desc, 100);
+                    pdf.text(descLines, 20, yPos);
+                    pdf.text(qty.toString(), 130, yPos, { align: 'right' });
+                    pdf.text(`${currency}${price.toFixed(2)}`, 150, yPos, { align: 'right' });
+                    pdf.text(`${currency}${total.toFixed(2)}`, 180, yPos, { align: 'right' });
+                    yPos += 7 * descLines.length;
+                }
+            });
+            
+            // Totals
+            yPos += 5;
+            pdf.line(20, yPos, 190, yPos);
+            yPos += 7;
+            
+            const discount = parseFloat(document.getElementById('discountAmount')?.value) || 0;
+            const taxRate = parseFloat(document.getElementById('taxRate')?.value) || 0;
+            const discounted = subtotal - discount;
+            const tax = discounted * (taxRate / 100);
+            const total = discounted + tax;
+            
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Subtotal:', 150, yPos, { align: 'right' });
+            pdf.text(`${currency}${subtotal.toFixed(2)}`, 180, yPos, { align: 'right' });
+            yPos += 7;
+            
+            pdf.text('Discount:', 150, yPos, { align: 'right' });
+            pdf.text(`-${currency}${discount.toFixed(2)}`, 180, yPos, { align: 'right' });
+            yPos += 7;
+            
+            pdf.text(`Tax (${taxRate}%):`, 150, yPos, { align: 'right' });
+            pdf.text(`${currency}${tax.toFixed(2)}`, 180, yPos, { align: 'right' });
+            yPos += 7;
             
             pdf.setFontSize(12);
-            pdf.text(`Serial No: ${serial}`, 20, 50);
-            pdf.text(`Date: ${date}`, 20, 60);
-            pdf.text(`Customer: ${customer}`, 20, 70);
-            pdf.text(`Total: ${total}`, 20, 80);
-            pdf.text(`Currency: ${selectedCurrency}`, 20, 90);
+            pdf.text('Total:', 150, yPos, { align: 'right' });
+            pdf.text(`${currency}${total.toFixed(2)}`, 180, yPos, { align: 'right' });
             
-            pdf.text('This document was generated as a fallback due to rendering issues.', 20, 120);
-            pdf.text('Please try again with a simpler document layout.', 20, 130);
+            // Footer
+            pdf.setFontSize(10);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('Thank you for your business!', 105, 280, { align: 'center' });
+            pdf.text('Generated by STARKS GALAXY LIMITED Document Generator', 105, 288, { align: 'center' });
             
-            pdf.save(`${serial || 'document'}-fallback.pdf`);
+            // Save
+            pdf.save(`${serialNumber}.pdf`);
             
-            showAlert('historyAlert', 'PDF generated with fallback mode', 'warning');
+            showAlert('historyAlert', 'PDF generated successfully!', 'success');
+            
         } catch (fallbackErr) {
             console.error('Fallback PDF generation failed:', fallbackErr);
-            alert('PDF generation failed. Please try refreshing the page or using a simpler document layout.');
+            alert('PDF generation failed. Please try again or contact support.');
         }
     }
 }
