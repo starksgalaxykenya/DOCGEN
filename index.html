@@ -1145,6 +1145,134 @@
         </div>
     </div>
 
+    <!-- Document Template Modal -->
+    <div id="documentTemplateModal" class="modal">
+        <div class="modal-content">
+            <h2>Save Document Template</h2>
+            <div id="docTemplateAlert" class="alert"></div>
+            
+            <div class="form-group">
+                <label>Template Name *</label>
+                <input type="text" id="docTemplateName" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="docTemplateDescription" class="form-control" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Document Type</label>
+                <select id="docTemplateType" class="form-control">
+                    <option value="invoice">Invoice</option>
+                    <option value="quote">Quote</option>
+                    <option value="receipt">Receipt</option>
+                    <option value="proforma">Proforma</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Template Content</label>
+                <textarea id="docTemplateContent" class="form-control" rows="5" placeholder="Enter default notes, terms, etc..."></textarea>
+            </div>
+            
+            <div class="flex">
+                <button class="btn btn-primary" onclick="templates.saveDocumentTemplate()">Save Template</button>
+                <button class="btn btn-secondary" onclick="ui.closeModal('documentTemplateModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clause Modal -->
+    <div id="clauseModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Standard Clause</h2>
+            <div id="clauseModalAlert" class="alert"></div>
+            
+            <div class="form-group">
+                <label>Clause Title *</label>
+                <input type="text" id="clauseTitle" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label>Clause Content *</label>
+                <textarea id="clauseContent" class="form-control" rows="5" placeholder="Enter clause text..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Category</label>
+                <select id="clauseCategory" class="form-control">
+                    <option value="general">General</option>
+                    <option value="payment">Payment</option>
+                    <option value="termination">Termination</option>
+                    <option value="confidentiality">Confidentiality</option>
+                    <option value="liability">Liability</option>
+                </select>
+            </div>
+            
+            <div class="flex">
+                <button class="btn btn-primary" onclick="templates.saveClause()">Save Clause</button>
+                <button class="btn btn-secondary" onclick="ui.closeModal('clauseModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Method Modal -->
+    <div id="paymentMethodModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Payment Method</h2>
+            <div id="paymentMethodAlert" class="alert"></div>
+            
+            <div class="form-group">
+                <label>Method Name *</label>
+                <input type="text" id="paymentMethodName" class="form-control" placeholder="e.g., Bank Transfer, M-Pesa">
+            </div>
+            
+            <div class="form-group">
+                <label>Instructions</label>
+                <textarea id="paymentMethodInstructions" class="form-control" rows="3" placeholder="Payment instructions..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Account Details (Optional)</label>
+                <input type="text" id="paymentMethodDetails" class="form-control" placeholder="Account number, paybill, etc.">
+            </div>
+            
+            <div class="flex">
+                <button class="btn btn-primary" onclick="settings.savePaymentMethod()">Save Method</button>
+                <button class="btn btn-secondary" onclick="ui.closeModal('paymentMethodModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Rate Modal -->
+    <div id="taxRateModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Tax Rate</h2>
+            <div id="taxRateAlert" class="alert"></div>
+            
+            <div class="form-group">
+                <label>Tax Name *</label>
+                <input type="text" id="taxName" class="form-control" placeholder="e.g., VAT, Sales Tax">
+            </div>
+            
+            <div class="form-group">
+                <label>Rate (%) *</label>
+                <input type="number" id="taxRate" class="form-control" min="0" max="100" step="0.1" value="16">
+            </div>
+            
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="taxDescription" class="form-control" rows="2"></textarea>
+            </div>
+            
+            <div class="flex">
+                <button class="btn btn-primary" onclick="settings.saveTaxRate()">Save Tax Rate</button>
+                <button class="btn btn-secondary" onclick="ui.closeModal('taxRateModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== GLOBAL STATE ====================
         const state = {
@@ -1156,7 +1284,9 @@
             templates: { contract: [], document: [], clause: [] },
             settings: {},
             monthlySequence: {},
-            currentFilters: { invoice: 'all', contract: 'all' }
+            currentFilters: { invoice: 'all', contract: 'all' },
+            paymentMethods: [],
+            taxRates: []
         };
 
         // ==================== UTILITIES ====================
@@ -1174,7 +1304,7 @@
             formatCurrency: (amount, currency = 'USD') => {
                 const num = amount || 0;
                 const symbols = { USD: '$', KSH: 'KSh', EUR: '€', GBP: '£' };
-                return symbols[currency] + num.toFixed(2);
+                return (symbols[currency] || '$') + num.toFixed(2);
             },
             
             formatDate: (timestamp) => {
@@ -1574,6 +1704,12 @@
                             const total = d.total || 0;
                             const dueDate = d.dueDate?.toDate?.();
                             return paid < total && dueDate && dueDate < now;
+                        });
+                    } else if (state.currentFilters.invoice === 'partial') {
+                        filtered = filtered.filter(d => {
+                            const paid = d.paidAmount || 0;
+                            const total = d.total || 0;
+                            return paid > 0 && paid < total;
                         });
                     }
                     
@@ -2013,6 +2149,14 @@
                     filtered = filtered.filter(c => c.status === state.currentFilters.contract);
                 }
                 
+                // Check for expired contracts
+                const now = new Date();
+                filtered.forEach(contract => {
+                    if (contract.status === 'active' && contract.endDate?.toDate?.() < now) {
+                        contract.status = 'expired';
+                    }
+                });
+                
                 if (filtered.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="10" class="text-center">No contracts found</td></tr>';
                     return;
@@ -2072,6 +2216,8 @@
                 
                 document.getElementById('contractTitle').value = template.title || '';
                 document.getElementById('contractType').value = template.type || 'service';
+                document.getElementById('governingLaw').value = template.governingLaw || 'Laws of Kenya';
+                document.getElementById('disputeResolution').value = template.disputeResolution || 'court';
                 
                 // Load clauses
                 const list = document.getElementById('clausesList');
@@ -2353,7 +2499,7 @@
                 }
                 
                 grid.innerHTML = state.templates.document.map(template => `
-                    <div class="card">
+                    <div class="card" onclick="templates.useDocumentTemplate('${template.id}')">
                         <h4>${template.name || 'Unnamed'}</h4>
                         <p>${template.description || ''}</p>
                         <p>Type: ${template.documentType || 'General'}</p>
@@ -2391,6 +2537,21 @@
                 document.getElementById('templateDescription').value = '';
                 document.getElementById('templateCategory').value = 'service';
                 ui.openModal('contractTemplateModal');
+            },
+            
+            showDocumentTemplateModal: () => {
+                document.getElementById('docTemplateName').value = '';
+                document.getElementById('docTemplateDescription').value = '';
+                document.getElementById('docTemplateType').value = 'invoice';
+                document.getElementById('docTemplateContent').value = '';
+                ui.openModal('documentTemplateModal');
+            },
+            
+            showClauseModal: () => {
+                document.getElementById('clauseTitle').value = '';
+                document.getElementById('clauseContent').value = '';
+                document.getElementById('clauseCategory').value = 'general';
+                ui.openModal('clauseModal');
             },
             
             saveContractTemplate: async () => {
@@ -2432,6 +2593,82 @@
                     await templates.loadContractTemplates();
                 } catch (error) {
                     utils.showAlert('templateAlert', error.message, 'danger');
+                }
+            },
+            
+            saveDocumentTemplate: async () => {
+                const name = document.getElementById('docTemplateName').value.trim();
+                if (!name) {
+                    utils.showAlert('docTemplateAlert', 'Template name is required', 'danger');
+                    return;
+                }
+                
+                const templateData = {
+                    name,
+                    description: document.getElementById('docTemplateDescription').value,
+                    documentType: document.getElementById('docTemplateType').value,
+                    content: document.getElementById('docTemplateContent').value,
+                    userId: state.currentUser.uid,
+                    createdAt: window.firebase.Timestamp.now()
+                };
+                
+                try {
+                    await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'documentTemplates'), templateData);
+                    utils.showAlert('docTemplateAlert', 'Template saved successfully!', 'success');
+                    ui.closeModal('documentTemplateModal');
+                    await templates.loadDocumentTemplates();
+                } catch (error) {
+                    utils.showAlert('docTemplateAlert', error.message, 'danger');
+                }
+            },
+            
+            saveClause: async () => {
+                const title = document.getElementById('clauseTitle').value.trim();
+                const content = document.getElementById('clauseContent').value.trim();
+                
+                if (!title || !content) {
+                    utils.showAlert('clauseModalAlert', 'Title and content are required', 'danger');
+                    return;
+                }
+                
+                const clauseData = {
+                    title,
+                    content,
+                    category: document.getElementById('clauseCategory').value,
+                    userId: state.currentUser.uid,
+                    createdAt: window.firebase.Timestamp.now()
+                };
+                
+                try {
+                    await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'standardClauses'), clauseData);
+                    utils.showAlert('clauseModalAlert', 'Clause saved successfully!', 'success');
+                    ui.closeModal('clauseModal');
+                    await templates.loadStandardClauses();
+                } catch (error) {
+                    utils.showAlert('clauseModalAlert', error.message, 'danger');
+                }
+            },
+            
+            useContractTemplate: (id) => {
+                const template = state.templates.contract.find(t => t.id === id);
+                if (template) {
+                    ui.showContractModal();
+                    setTimeout(() => {
+                        document.getElementById('contractTemplate').value = id;
+                        contracts.loadTemplate();
+                    }, 100);
+                }
+            },
+            
+            useDocumentTemplate: (id) => {
+                const template = state.templates.document.find(t => t.id === id);
+                if (template && template.documentType) {
+                    ui.showDocumentModal(template.documentType);
+                    setTimeout(() => {
+                        if (template.content) {
+                            document.getElementById('documentNotes').value = template.content;
+                        }
+                    }, 100);
                 }
             }
         };
@@ -2934,6 +3171,10 @@
                     
                     const total = receipts.reduce((sum, d) => sum + (d.total || 0), 0);
                     
+                    // Update report stats
+                    document.getElementById('totalRevenueReport').textContent = utils.formatCurrency(total);
+                    document.getElementById('paidReport').textContent = utils.formatCurrency(total);
+                    
                     html += `
                         <p>Total Revenue: ${utils.formatCurrency(total)}</p>
                         <p>Number of Receipts: ${receipts.length}</p>
@@ -2966,6 +3207,14 @@
                     
                     const total = invoices.reduce((sum, d) => sum + ((d.total || 0) - (d.paidAmount || 0)), 0);
                     
+                    // Update report stats
+                    document.getElementById('outstandingReport').textContent = utils.formatCurrency(total);
+                    
+                    const now = new Date();
+                    const overdue = invoices.filter(i => i.dueDate?.toDate?.() < now);
+                    const overdueTotal = overdue.reduce((sum, d) => sum + ((d.total || 0) - (d.paidAmount || 0)), 0);
+                    document.getElementById('overdueReport').textContent = utils.formatCurrency(overdueTotal);
+                    
                     html += `
                         <p>Total Outstanding: ${utils.formatCurrency(total)}</p>
                         <p>Number of Unpaid Invoices: ${invoices.length}</p>
@@ -2994,6 +3243,99 @@
                                         </tr>
                                     `;
                                 }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else if (type === 'client') {
+                    // Group by client
+                    const clientTotals = {};
+                    state.documents.forEach(doc => {
+                        if (doc.type === 'invoice') {
+                            if (!clientTotals[doc.customerName]) {
+                                clientTotals[doc.customerName] = {
+                                    totalInvoiced: 0,
+                                    totalPaid: 0,
+                                    lastInvoice: null
+                                };
+                            }
+                            clientTotals[doc.customerName].totalInvoiced += doc.total || 0;
+                            clientTotals[doc.customerName].totalPaid += doc.paidAmount || 0;
+                            if (!clientTotals[doc.customerName].lastInvoice || 
+                                doc.createdAt?.toDate?.() > clientTotals[doc.customerName].lastInvoice) {
+                                clientTotals[doc.customerName].lastInvoice = doc.createdAt?.toDate?.();
+                            }
+                        }
+                    });
+                    
+                    html += `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Total Invoiced</th>
+                                    <th>Total Paid</th>
+                                    <th>Outstanding</th>
+                                    <th>Last Invoice</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Object.entries(clientTotals).map(([name, data]) => `
+                                    <tr>
+                                        <td>${name}</td>
+                                        <td>${utils.formatCurrency(data.totalInvoiced)}</td>
+                                        <td>${utils.formatCurrency(data.totalPaid)}</td>
+                                        <td>${utils.formatCurrency(data.totalInvoiced - data.totalPaid)}</td>
+                                        <td>${utils.formatDate(data.lastInvoice)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else if (type === 'aging') {
+                    const now = new Date();
+                    const aging = {
+                        current: [],
+                        '1-30': [],
+                        '31-60': [],
+                        '61-90': [],
+                        '90+': []
+                    };
+                    
+                    state.documents.filter(d => d.type === 'invoice' && (d.total || 0) > (d.paidAmount || 0))
+                        .forEach(inv => {
+                            const dueDate = inv.dueDate?.toDate?.();
+                            if (dueDate) {
+                                const daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+                                const balance = (inv.total || 0) - (inv.paidAmount || 0);
+                                
+                                if (daysOverdue <= 0) {
+                                    aging.current.push(balance);
+                                } else if (daysOverdue <= 30) {
+                                    aging['1-30'].push(balance);
+                                } else if (daysOverdue <= 60) {
+                                    aging['31-60'].push(balance);
+                                } else if (daysOverdue <= 90) {
+                                    aging['61-90'].push(balance);
+                                } else {
+                                    aging['90+'].push(balance);
+                                }
+                            }
+                        });
+                    
+                    html += `
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Aging Period</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Current (Not Due)</td><td>${utils.formatCurrency(aging.current.reduce((a,b) => a + b, 0))}</td></tr>
+                                <tr><td>1-30 Days</td><td>${utils.formatCurrency(aging['1-30'].reduce((a,b) => a + b, 0))}</td></tr>
+                                <tr><td>31-60 Days</td><td>${utils.formatCurrency(aging['31-60'].reduce((a,b) => a + b, 0))}</td></tr>
+                                <tr><td>61-90 Days</td><td>${utils.formatCurrency(aging['61-90'].reduce((a,b) => a + b, 0))}</td></tr>
+                                <tr><td>90+ Days</td><td>${utils.formatCurrency(aging['90+'].reduce((a,b) => a + b, 0))}</td></tr>
                             </tbody>
                         </table>
                     `;
@@ -3027,12 +3369,13 @@
                 try {
                     if (clients.currentId) {
                         await window.firebase.updateDoc(window.firebase.doc(window.firebase.db, 'clients', clients.currentId), clientData);
+                        utils.showAlert('clientAlert', 'Client updated successfully!', 'success');
                     } else {
                         clientData.createdAt = window.firebase.Timestamp.now();
                         await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'clients'), clientData);
+                        utils.showAlert('clientAlert', 'Client saved successfully!', 'success');
                     }
                     
-                    utils.showAlert('clientAlert', 'Client saved successfully!', 'success');
                     ui.closeModal('clientModal');
                     await data.loadClients();
                 } catch (error) {
@@ -3071,6 +3414,25 @@
                         state.settings = snapshot.docs[0].data();
                         settings.populateForm();
                     }
+                    
+                    // Load payment methods
+                    const paymentQ = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'paymentMethods'),
+                        window.firebase.where('userId', '==', state.currentUser.uid)
+                    );
+                    const paymentSnapshot = await window.firebase.getDocs(paymentQ);
+                    state.paymentMethods = paymentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Load tax rates
+                    const taxQ = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'taxRates'),
+                        window.firebase.where('userId', '==', state.currentUser.uid)
+                    );
+                    const taxSnapshot = await window.firebase.getDocs(taxQ);
+                    state.taxRates = taxSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    settings.renderPaymentMethods();
+                    settings.renderTaxRates();
                 } catch (error) {
                     console.error('Load settings error:', error);
                 }
@@ -3081,6 +3443,47 @@
                 document.getElementById('quotePrefix').value = state.settings.quotePrefix || 'QUO';
                 document.getElementById('receiptPrefix').value = state.settings.receiptPrefix || 'REC';
                 document.getElementById('contractPrefix').value = state.settings.contractPrefix || 'CON';
+                
+                if (state.settings.defaultCompany) {
+                    document.getElementById('defaultCompany').value = state.settings.defaultCompany;
+                }
+            },
+            
+            renderPaymentMethods: () => {
+                const list = document.getElementById('paymentMethodsList');
+                if (!list) return;
+                
+                if (state.paymentMethods.length === 0) {
+                    list.innerHTML = '<p class="text-center">No payment methods added yet</p>';
+                    return;
+                }
+                
+                list.innerHTML = state.paymentMethods.map(method => `
+                    <div class="card">
+                        <h4>${method.name}</h4>
+                        <p>${method.instructions || ''}</p>
+                        <p><small>${method.details || ''}</small></p>
+                        <button class="btn btn-sm btn-danger" onclick="settings.deletePaymentMethod('${method.id}')">Delete</button>
+                    </div>
+                `).join('');
+            },
+            
+            renderTaxRates: () => {
+                const list = document.getElementById('taxRatesList');
+                if (!list) return;
+                
+                if (state.taxRates.length === 0) {
+                    list.innerHTML = '<p class="text-center">No tax rates added yet</p>';
+                    return;
+                }
+                
+                list.innerHTML = state.taxRates.map(tax => `
+                    <div class="card">
+                        <h4>${tax.name} (${tax.rate}%)</h4>
+                        <p>${tax.description || ''}</p>
+                        <button class="btn btn-sm btn-danger" onclick="settings.deleteTaxRate('${tax.id}')">Delete</button>
+                    </div>
+                `).join('');
             },
             
             showTab: (tab, element) => {
@@ -3116,6 +3519,7 @@
                         await window.firebase.updateDoc(window.firebase.doc(window.firebase.db, 'settings', snapshot.docs[0].id), settingsData);
                     }
                     
+                    state.settings = settingsData;
                     alert('Settings saved successfully!');
                 } catch (error) {
                     console.error('Save settings error:', error);
@@ -3124,11 +3528,93 @@
             },
             
             addPaymentMethod: () => {
-                alert('Payment method creation form will be implemented');
+                document.getElementById('paymentMethodName').value = '';
+                document.getElementById('paymentMethodInstructions').value = '';
+                document.getElementById('paymentMethodDetails').value = '';
+                ui.openModal('paymentMethodModal');
+            },
+            
+            savePaymentMethod: async () => {
+                const name = document.getElementById('paymentMethodName').value.trim();
+                if (!name) {
+                    utils.showAlert('paymentMethodAlert', 'Method name is required', 'danger');
+                    return;
+                }
+                
+                const methodData = {
+                    name,
+                    instructions: document.getElementById('paymentMethodInstructions').value,
+                    details: document.getElementById('paymentMethodDetails').value,
+                    userId: state.currentUser.uid,
+                    createdAt: window.firebase.Timestamp.now()
+                };
+                
+                try {
+                    await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'paymentMethods'), methodData);
+                    utils.showAlert('paymentMethodAlert', 'Payment method added successfully!', 'success');
+                    ui.closeModal('paymentMethodModal');
+                    await settings.load();
+                } catch (error) {
+                    utils.showAlert('paymentMethodAlert', error.message, 'danger');
+                }
+            },
+            
+            deletePaymentMethod: async (id) => {
+                if (!confirm('Are you sure you want to delete this payment method?')) return;
+                
+                try {
+                    await window.firebase.deleteDoc(window.firebase.doc(window.firebase.db, 'paymentMethods', id));
+                    await settings.load();
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Error deleting payment method');
+                }
             },
             
             addTaxRate: () => {
-                alert('Tax rate creation form will be implemented');
+                document.getElementById('taxName').value = '';
+                document.getElementById('taxRate').value = '16';
+                document.getElementById('taxDescription').value = '';
+                ui.openModal('taxRateModal');
+            },
+            
+            saveTaxRate: async () => {
+                const name = document.getElementById('taxName').value.trim();
+                const rate = parseFloat(document.getElementById('taxRate').value);
+                
+                if (!name || isNaN(rate) || rate < 0 || rate > 100) {
+                    utils.showAlert('taxRateAlert', 'Please enter a valid tax name and rate (0-100)', 'danger');
+                    return;
+                }
+                
+                const taxData = {
+                    name,
+                    rate,
+                    description: document.getElementById('taxDescription').value,
+                    userId: state.currentUser.uid,
+                    createdAt: window.firebase.Timestamp.now()
+                };
+                
+                try {
+                    await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'taxRates'), taxData);
+                    utils.showAlert('taxRateAlert', 'Tax rate added successfully!', 'success');
+                    ui.closeModal('taxRateModal');
+                    await settings.load();
+                } catch (error) {
+                    utils.showAlert('taxRateAlert', error.message, 'danger');
+                }
+            },
+            
+            deleteTaxRate: async (id) => {
+                if (!confirm('Are you sure you want to delete this tax rate?')) return;
+                
+                try {
+                    await window.firebase.deleteDoc(window.firebase.doc(window.firebase.db, 'taxRates', id));
+                    await settings.load();
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Error deleting tax rate');
+                }
             }
         };
 
