@@ -51,6 +51,8 @@
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- html2pdf library for multi-page PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         
@@ -167,12 +169,12 @@
         .badge-info { background: #dbeafe; color: #1e40af; }
 
         /* Document Preview */
-        .document-preview { padding: 40px; background: white; border-radius: 12px; border: 1px solid var(--border); position: relative; }
+        .document-preview { padding: 40px; background: white; border-radius: 12px; border: 1px solid var(--border); position: relative; min-height: 500px; }
         .document-preview.pdf-mode { width: 210mm; padding: 15mm; margin: 0 auto; font-size: 12px; }
-        .watermark { position: absolute; opacity: 0.1; font-size: 80px; transform: rotate(-45deg); top: 50%; left: 50%; margin-top: -40px; margin-left: -200px; pointer-events: none; color: var(--danger); }
+        .watermark { position: absolute; opacity: 0.1; font-size: 80px; transform: rotate(-45deg); top: 50%; left: 50%; margin-top: -40px; margin-left: -200px; pointer-events: none; color: var(--danger); z-index: 1; }
+        .terminated-watermark { position: absolute; opacity: 0.2; font-size: 60px; transform: rotate(-45deg); top: 50%; left: 50%; margin-top: -30px; margin-left: -150px; pointer-events: none; color: var(--danger); z-index: 1; font-weight: bold; }
         .contract-clauses { margin: 20px 0; }
         .clause-item { background: var(--light); padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--primary); }
-        .signature-box { border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-top: 30px; }
 
         /* Progress Bar */
         .progress-bar { height: 8px; background: var(--light); border-radius: 4px; overflow: hidden; margin: 10px 0; }
@@ -186,6 +188,37 @@
         .sub-tab { padding: 10px 20px; cursor: pointer; color: var(--gray); border-bottom: 3px solid transparent; transition: all 0.3s; }
         .sub-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
         .sub-tab:hover { color: var(--primary); }
+
+        /* Company Filter */
+        .company-filter { margin-bottom: 20px; max-width: 300px; }
+
+        /* Signature and Stamp Styles */
+        .signature-box { border: 1px solid var(--border); padding: 20px; border-radius: 8px; margin-top: 30px; position: relative; background: white; }
+        .stamp-container { position: relative; display: inline-block; margin: 10px; }
+        .stamp-image { max-width: 150px; max-height: 150px; display: block; }
+        .stamp-date-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff0000 !important; font-weight: bold; font-size: 14px; text-align: center; width: 100%; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); z-index: 2; }
+        .digital-signature-text { color: #ff0000 !important; font-weight: bold; font-style: italic; font-size: 14px; margin-top: 5px; }
+        .signature-image { max-height: 60px; max-width: 200px; display: block; margin: 10px auto; border: 1px solid var(--border); padding: 5px; border-radius: 4px; background: white; }
+        .letterhead-image { max-width: 100%; max-height: 120px; object-fit: contain; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto; }
+
+        /* Contract Multi-page Styles */
+        .contract-page { page-break-after: always; position: relative; min-height: 297mm; padding: 20mm; margin-bottom: 20px; background: white; }
+        .contract-page:last-child { page-break-after: auto; }
+        .contract-footer { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--gray); }
+        .contract-header { margin-bottom: 20px; }
+        .contract-content { margin-bottom: 20px; line-height: 1.6; }
+
+        /* Print Styles */
+        @media print {
+            .document-preview { padding: 0; }
+            .stamp-date-overlay { color: #ff0000 !important; }
+            .digital-signature-text { color: #ff0000 !important; }
+            .contract-page { page-break-after: always; }
+        }
+
+        /* Bank Card Styles */
+        .bank-card { border-left: 4px solid var(--primary); margin-bottom: 15px; }
+        .bank-details { font-size: 0.9rem; color: var(--gray); margin-top: 5px; }
 
         @media (max-width: 768px) {
             .top-nav { flex-direction: column; }
@@ -255,6 +288,7 @@
                 <div class="nav-links">
                     <div class="nav-link active" data-section="dashboard">Dashboard</div>
                     <div class="nav-link" data-section="companies">Companies</div>
+                    <div class="nav-link" data-section="banks">Banks</div>
                     <div class="nav-link" data-section="invoices">Invoices</div>
                     <div class="nav-link" data-section="quotes">Quotes</div>
                     <div class="nav-link" data-section="receipts">Receipts</div>
@@ -276,6 +310,17 @@
                 <!-- Dashboard Section -->
                 <div id="dashboardSection" class="content-section active">
                     <h2>Dashboard</h2>
+                    
+                    <!-- Company Filter for Dashboard -->
+                    <div class="company-filter">
+                        <select id="dashboardCompanyFilter" class="form-control" onchange="data.updateDashboard()">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Termination Notifications -->
+                    <div id="terminationNotifications" class="alert alert-warning" style="display:none;"></div>
+                    
                     <div class="stats-grid">
                         <div class="stat-card">
                             <h3 id="totalRevenue">$0</h3>
@@ -345,9 +390,28 @@
                     <div class="cards-grid" id="companiesGrid"></div>
                 </div>
 
+                <!-- Banks Section -->
+                <div id="banksSection" class="content-section">
+                    <h2>Bank Account Management</h2>
+                    <div class="flex mb-20">
+                        <button class="btn btn-primary" onclick="ui.showBankModal()">Add Bank Account</button>
+                        <button class="btn btn-success" onclick="banks.load()">Refresh</button>
+                    </div>
+                    
+                    <div class="cards-grid" id="banksGrid"></div>
+                </div>
+
                 <!-- Invoices Section -->
                 <div id="invoicesSection" class="content-section">
                     <h2>Invoice Management</h2>
+                    
+                    <!-- Company Filter -->
+                    <div class="company-filter">
+                        <select id="invoiceCompanyFilter" class="form-control" onchange="invoices.filterByCompany()">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                    
                     <div class="sub-tabs">
                         <div class="sub-tab active" onclick="invoices.filter('all', this)">All</div>
                         <div class="sub-tab" onclick="invoices.filter('pending', this)">Pending</div>
@@ -387,6 +451,14 @@
                 <!-- Quotes Section -->
                 <div id="quotesSection" class="content-section">
                     <h2>Quote Management</h2>
+                    
+                    <!-- Company Filter -->
+                    <div class="company-filter">
+                        <select id="quoteCompanyFilter" class="form-control" onchange="quotes.filterByCompany()">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                    
                     <div class="flex mb-20">
                         <button class="btn btn-primary" onclick="ui.showDocumentModal('quote')">Create New Quote</button>
                         <button class="btn btn-success" onclick="data.loadDocuments('quote')">Refresh</button>
@@ -418,6 +490,14 @@
                 <!-- Receipts Section -->
                 <div id="receiptsSection" class="content-section">
                     <h2>Receipt Management</h2>
+                    
+                    <!-- Company Filter -->
+                    <div class="company-filter">
+                        <select id="receiptCompanyFilter" class="form-control" onchange="receipts.filterByCompany()">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                    
                     <div class="flex mb-20">
                         <button class="btn btn-primary" onclick="ui.showDocumentModal('receipt')">Create New Receipt</button>
                         <button class="btn btn-success" onclick="data.loadDocuments('receipt')">Refresh</button>
@@ -448,6 +528,14 @@
                 <!-- Proforma Section -->
                 <div id="proformaSection" class="content-section">
                     <h2>Proforma Invoice Management</h2>
+                    
+                    <!-- Company Filter -->
+                    <div class="company-filter">
+                        <select id="proformaCompanyFilter" class="form-control" onchange="proforma.filterByCompany()">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                    
                     <div class="flex mb-20">
                         <button class="btn btn-primary" onclick="ui.showDocumentModal('proforma')">Create New Proforma</button>
                         <button class="btn btn-success" onclick="data.loadDocuments('proforma')">Refresh</button>
@@ -479,6 +567,14 @@
                 <!-- Contracts Section -->
                 <div id="contractsSection" class="content-section">
                     <h2>Contract Management</h2>
+                    
+                    <!-- Company Filter -->
+                    <div class="company-filter">
+                        <select id="contractCompanyFilter" class="form-control" onchange="contracts.filterByCompany()">
+                            <option value="">All Companies</option>
+                        </select>
+                    </div>
+                    
                     <div class="flex mb-20">
                         <button class="btn btn-primary" onclick="ui.showContractModal()">Create New Contract</button>
                         <button class="btn btn-success" onclick="data.loadContracts()">Refresh</button>
@@ -488,6 +584,7 @@
                         <div class="sub-tab active" onclick="contracts.filter('all', this)">All</div>
                         <div class="sub-tab" onclick="contracts.filter('draft', this)">Draft</div>
                         <div class="sub-tab" onclick="contracts.filter('active', this)">Active</div>
+                        <div class="sub-tab" onclick="contracts.filter('terminated', this)">Terminated</div>
                         <div class="sub-tab" onclick="contracts.filter('expired', this)">Expired</div>
                     </div>
                     
@@ -618,6 +715,7 @@
                         <div class="sub-tab active" onclick="settings.showTab('general', this)">General</div>
                         <div class="sub-tab" onclick="settings.showTab('payment', this)">Payment Methods</div>
                         <div class="sub-tab" onclick="settings.showTab('tax', this)">Tax Settings</div>
+                        <div class="sub-tab" onclick="settings.showTab('termination', this)">Termination Settings</div>
                     </div>
                     
                     <!-- General Settings -->
@@ -665,6 +763,27 @@
                         <h3>Tax Rates</h3>
                         <div id="taxRatesList" class="cards-grid"></div>
                         <button class="btn btn-success mt-20" onclick="settings.addTaxRate()">Add Tax Rate</button>
+                    </div>
+                    
+                    <!-- Termination Settings -->
+                    <div id="terminationSettingsTab" class="hidden">
+                        <h3>Contract Termination Settings</h3>
+                        <div class="form-group">
+                            <label>Termination Notice Period (Days)</label>
+                            <input type="number" id="terminationNoticeDays" class="form-control" value="14" min="1" max="90">
+                        </div>
+                        <div class="form-group">
+                            <label>Termination Email Template</label>
+                            <textarea id="terminationEmailTemplate" class="form-control" rows="5">Dear {clientName},
+
+We hereby give notice of termination of contract {contractNumber} effective {terminationDate}.
+
+Please find attached the termination notice for your records.
+
+Regards,
+{companyName}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="settings.saveTerminationSettings()">Save Termination Settings</button>
                     </div>
                 </div>
             </div>
@@ -726,25 +845,15 @@
                 </div>
             </div>
             
+            <!-- New fields for Stamp and Letterhead -->
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Bank Name</label>
-                    <input type="text" id="companyBank" class="form-control">
+                    <label>Stamp Image URL</label>
+                    <input type="url" id="companyStampUrl" class="form-control" placeholder="https://example.com/stamp.png">
                 </div>
                 <div class="form-group">
-                    <label>Account Number</label>
-                    <input type="text" id="companyAccount" class="form-control">
-                </div>
-            </div>
-            
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>SWIFT/BIC</label>
-                    <input type="text" id="companySwift" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>IBAN</label>
-                    <input type="text" id="companyIban" class="form-control">
+                    <label>Letterhead Image URL</label>
+                    <input type="url" id="companyLetterheadUrl" class="form-control" placeholder="https://example.com/letterhead.png">
                 </div>
             </div>
             
@@ -752,6 +861,72 @@
                 <button class="btn btn-primary" onclick="companies.save()">Save Company</button>
                 <button class="btn btn-danger" id="deleteCompanyBtn" style="display:none;" onclick="companies.delete()">Delete</button>
                 <button class="btn btn-secondary" onclick="ui.closeModal('companyModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Modal -->
+    <div id="bankModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Bank Account</h2>
+            <div id="bankAlert" class="alert"></div>
+            
+            <div class="form-group">
+                <label>Bank Name *</label>
+                <input type="text" id="bankName" class="form-control" placeholder="e.g., Equity Bank">
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Account Name *</label>
+                    <input type="text" id="bankAccountName" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Account Number *</label>
+                    <input type="text" id="bankAccountNumber" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Branch</label>
+                    <input type="text" id="bankBranch" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>SWIFT/BIC</label>
+                    <input type="text" id="bankSwift" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>IBAN</label>
+                    <input type="text" id="bankIban" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="bankCurrency" class="form-control">
+                        <option value="USD">USD ($)</option>
+                        <option value="KSH">KSH (KSh)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Mobile Money Details (Optional)</label>
+                <input type="text" id="bankMobileMoney" class="form-control" placeholder="Paybill/Till No. or Phone">
+            </div>
+            
+            <div class="form-group">
+                <label>Cash Payment Instructions (Optional)</label>
+                <textarea id="bankCashInstructions" class="form-control" rows="2" placeholder="Instructions for cash payments..."></textarea>
+            </div>
+            
+            <div class="flex">
+                <button class="btn btn-primary" onclick="banks.save()">Save Bank Account</button>
+                <button class="btn btn-secondary" onclick="ui.closeModal('bankModal')">Cancel</button>
             </div>
         </div>
     </div>
@@ -787,7 +962,7 @@
                         <option value="GBP">GBP (£)</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="docDueDateGroup">
                     <label>Due Date</label>
                     <input type="date" id="docDueDate" class="form-control">
                 </div>
@@ -808,11 +983,15 @@
                     <label>Payment Method</label>
                     <select id="receiptPaymentMethod" class="form-control">
                         <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Mobile Money">Mobile Money (M-Pesa/Airtel Money)</option>
                         <option value="Credit Card">Credit Card</option>
-                        <option value="M-Pesa">M-Pesa</option>
                         <option value="Cash">Cash</option>
                         <option value="Check">Check</option>
                     </select>
+                </div>
+                <div class="form-group" id="paymentMethodDetails" style="display:none;">
+                    <label>Payment Details</label>
+                    <textarea id="paymentDetailsText" class="form-control" rows="2" readonly></textarea>
                 </div>
             </div>
 
@@ -984,6 +1163,45 @@
         </div>
     </div>
 
+    <!-- Termination Modal -->
+    <div id="terminationModal" class="modal">
+        <div class="modal-content">
+            <h2>Terminate Contract</h2>
+            <div id="terminationAlert" class="alert"></div>
+            
+            <div class="form-group">
+                <label>Contract</label>
+                <input type="text" id="terminationContractTitle" class="form-control" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>Termination Date *</label>
+                <input type="date" id="terminationDate" class="form-control" value="">
+            </div>
+            
+            <div class="form-group">
+                <label>Termination Reason *</label>
+                <textarea id="terminationReason" class="form-control" rows="3" placeholder="Reason for termination..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Notice Period (Days)</label>
+                <input type="number" id="terminationNoticePeriod" class="form-control" value="14" min="1" max="90">
+                <small class="text-muted">Notification will be sent this many days before termination</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Additional Notes</label>
+                <textarea id="terminationNotes" class="form-control" rows="2" placeholder="Any additional notes..."></textarea>
+            </div>
+            
+            <div class="flex">
+                <button class="btn btn-danger" onclick="contracts.terminate()">Terminate Contract</button>
+                <button class="btn btn-secondary" onclick="ui.closeModal('terminationModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Contract Template Modal -->
     <div id="contractTemplateModal" class="modal">
         <div class="modal-content">
@@ -1055,13 +1273,30 @@
             
             <div class="form-group">
                 <label>Payment Method</label>
-                <select id="paymentMethod" class="form-control">
+                <select id="paymentMethod" class="form-control" onchange="payments.updateMethodDetails()">
                     <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Mobile Money">Mobile Money (M-Pesa/Airtel Money)</option>
                     <option value="Credit Card">Credit Card</option>
-                    <option value="M-Pesa">M-Pesa</option>
                     <option value="Cash">Cash</option>
                     <option value="Check">Check</option>
                 </select>
+            </div>
+            
+            <div class="form-group" id="paymentBankSelect" style="display:none;">
+                <label>Select Bank Account</label>
+                <select id="paymentBankAccount" class="form-control">
+                    <option value="">Select Bank Account</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="paymentMobileDetails" style="display:none;">
+                <label>Mobile Money Details</label>
+                <textarea id="paymentMobileText" class="form-control" rows="2" readonly></textarea>
+            </div>
+            
+            <div class="form-group" id="paymentCashDetails" style="display:none;">
+                <label>Cash Payment Instructions</label>
+                <textarea id="paymentCashText" class="form-control" rows="2" readonly></textarea>
             </div>
             
             <div class="form-group">
@@ -1123,7 +1358,7 @@
 
     <!-- Preview Modal -->
     <div id="previewModal" class="modal">
-        <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-content" style="max-width: 1200px;">
             <h2>Document Preview</h2>
             <div class="flex mb-20">
                 <button class="btn btn-primary" onclick="pdf.generate()">Download PDF</button>
@@ -1278,16 +1513,35 @@
         const state = {
             currentUser: null,
             companies: [],
+            banks: [],
             clients: [],
             documents: [],
             contracts: [],
             templates: { contract: [], document: [], clause: [] },
             settings: {},
             monthlySequence: {},
-            currentFilters: { invoice: 'all', contract: 'all' },
+            currentFilters: { 
+                invoice: 'all', 
+                contract: 'all',
+                company: {
+                    dashboard: '',
+                    invoice: '',
+                    quote: '',
+                    receipt: '',
+                    proforma: '',
+                    contract: ''
+                }
+            },
             paymentMethods: [],
-            taxRates: []
+            taxRates: [],
+            terminationSettings: {
+                noticeDays: 14,
+                emailTemplate: `Dear {clientName},\n\nWe hereby give notice of termination of contract {contractNumber} effective {terminationDate}.\n\nPlease find attached the termination notice for your records.\n\nRegards,\n{companyName}`
+            }
         };
+
+        // Company signature URL constant - using raw GitHub content URL
+        const COMPANY_SIGNATURE_URL = "https://raw.githubusercontent.com/starksgalaxykenya/DOCGEN/main/signature.png";
 
         // ==================== UTILITIES ====================
         const utils = {
@@ -1318,6 +1572,16 @@
                 return String(timestamp);
             },
             
+            formatDateForStamp: (timestamp) => {
+                if (!timestamp) return '';
+                const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit' 
+                }).replace(/\//g, '-');
+            },
+            
             generateSerialNumber: async (type, companyId = null) => {
                 const now = new Date();
                 const settings = state.settings;
@@ -1340,6 +1604,54 @@
                 }
                 
                 return `${prefix}-${monthKey}-${String(state.monthlySequence[key]).padStart(3, '0')}`;
+            },
+            
+            // Helper to check if image URL is valid and return fallback if needed
+            getImageUrl: (url, fallback = null) => {
+                if (!url) return fallback;
+                // For GitHub URLs, ensure we use raw content
+                if (url.includes('github.com') && !url.includes('raw.githubusercontent.com')) {
+                    return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+                }
+                return url;
+            },
+            
+            // Split contract content into pages
+            splitIntoPages: (content, maxLinesPerPage = 40) => {
+                const lines = content.split('\n');
+                const pages = [];
+                for (let i = 0; i < lines.length; i += maxLinesPerPage) {
+                    pages.push(lines.slice(i, i + maxLinesPerPage).join('\n'));
+                }
+                return pages;
+            },
+            
+            // Check for termination notifications
+            checkTerminationNotifications: () => {
+                const now = new Date();
+                const notifications = [];
+                
+                state.contracts.forEach(contract => {
+                    if (contract.status === 'terminated' && contract.terminationDate) {
+                        const termDate = contract.terminationDate.toDate ? contract.terminationDate.toDate() : new Date(contract.terminationDate);
+                        const daysUntilTermination = Math.ceil((termDate - now) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysUntilTermination <= 14 && daysUntilTermination > 0) {
+                            notifications.push({
+                                contract: contract,
+                                daysLeft: daysUntilTermination,
+                                message: `Contract ${contract.contractNumber} (${contract.title}) will be terminated in ${daysUntilTermination} days on ${utils.formatDate(termDate)}`
+                            });
+                        }
+                    }
+                });
+                
+                if (notifications.length > 0) {
+                    const notificationDiv = document.getElementById('terminationNotifications');
+                    notificationDiv.style.display = 'block';
+                    notificationDiv.innerHTML = '<strong>⚠️ Termination Notices:</strong><br>' + 
+                        notifications.map(n => n.message).join('<br>');
+                }
             }
         };
 
@@ -1468,18 +1780,22 @@
                             <p>📧 ${company.email || 'No email'}</p>
                             <p>📱 ${company.phone || 'No phone'}</p>
                             <p>📍 ${company.address || 'No address'}</p>
-                            <p>🏦 ${company.bank || 'No bank details'}</p>
+                            ${company.stampUrl ? '<p>✅ Stamp configured</p>' : ''}
+                            ${company.letterheadUrl ? '<p>✅ Letterhead configured</p>' : ''}
                         </div>
                     `;
                 });
             },
             
             updateSelects: () => {
-                const selects = ['docCompany', 'contractCompany', 'defaultCompany'];
+                const selects = ['docCompany', 'contractCompany', 'defaultCompany', 
+                                'dashboardCompanyFilter', 'invoiceCompanyFilter', 
+                                'quoteCompanyFilter', 'receiptCompanyFilter', 
+                                'proformaCompanyFilter', 'contractCompanyFilter'];
                 selects.forEach(id => {
                     const select = document.getElementById(id);
                     if (select) {
-                        select.innerHTML = '<option value="">Select Company</option>';
+                        select.innerHTML = '<option value="">All Companies</option>';
                         state.companies.forEach(company => {
                             select.innerHTML += `<option value="${company.id}">${company.name || 'Unnamed'}</option>`;
                         });
@@ -1504,10 +1820,8 @@
                     address: document.getElementById('companyAddress').value,
                     logo: document.getElementById('companyLogo').value,
                     color: document.getElementById('companyColor').value,
-                    bank: document.getElementById('companyBank').value,
-                    account: document.getElementById('companyAccount').value,
-                    swift: document.getElementById('companySwift').value,
-                    iban: document.getElementById('companyIban').value,
+                    stampUrl: utils.getImageUrl(document.getElementById('companyStampUrl').value),
+                    letterheadUrl: utils.getImageUrl(document.getElementById('companyLetterheadUrl').value),
                     userId: state.currentUser.uid,
                     updatedAt: window.firebase.Timestamp.now()
                 };
@@ -1544,10 +1858,8 @@
                 document.getElementById('companyAddress').value = company.address || '';
                 document.getElementById('companyLogo').value = company.logo || '';
                 document.getElementById('companyColor').value = company.color || '#2563eb';
-                document.getElementById('companyBank').value = company.bank || '';
-                document.getElementById('companyAccount').value = company.account || '';
-                document.getElementById('companySwift').value = company.swift || '';
-                document.getElementById('companyIban').value = company.iban || '';
+                document.getElementById('companyStampUrl').value = company.stampUrl || '';
+                document.getElementById('companyLetterheadUrl').value = company.letterheadUrl || '';
                 
                 document.getElementById('deleteCompanyBtn').style.display = 'inline-block';
                 ui.openModal('companyModal');
@@ -1567,15 +1879,137 @@
             }
         };
 
+        // ==================== BANKS MANAGEMENT ====================
+        const banks = {
+            currentId: null,
+            
+            load: async () => {
+                if (!state.currentUser || !window.firebase) return;
+                
+                try {
+                    const q = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'banks'),
+                        window.firebase.where('userId', '==', state.currentUser.uid),
+                        window.firebase.orderBy('createdAt', 'desc')
+                    );
+                    const snapshot = await window.firebase.getDocs(q);
+                    state.banks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    banks.render();
+                    banks.updateSelects();
+                } catch (error) {
+                    console.error('Load banks error:', error);
+                }
+            },
+            
+            render: () => {
+                const grid = document.getElementById('banksGrid');
+                if (!grid) return;
+                
+                if (state.banks.length === 0) {
+                    grid.innerHTML = '<p class="text-center">No bank accounts yet. Add your first bank account!</p>';
+                    return;
+                }
+                
+                grid.innerHTML = '';
+                state.banks.forEach(bank => {
+                    grid.innerHTML += `
+                        <div class="card bank-card" onclick="banks.edit('${bank.id}')">
+                            <h4>${bank.bankName || 'Unnamed Bank'}</h4>
+                            <p><strong>Account:</strong> ${bank.accountName} - ${bank.accountNumber}</p>
+                            <p><strong>Branch:</strong> ${bank.branch || 'N/A'}</p>
+                            <p><strong>Currency:</strong> ${bank.currency || 'USD'}</p>
+                            ${bank.mobileMoney ? `<p><strong>Mobile:</strong> ${bank.mobileMoney}</p>` : ''}
+                            ${bank.cashInstructions ? `<p><strong>Cash:</strong> Available</p>` : ''}
+                        </div>
+                    `;
+                });
+            },
+            
+            updateSelects: () => {
+                const selects = ['paymentBankAccount'];
+                selects.forEach(id => {
+                    const select = document.getElementById(id);
+                    if (select) {
+                        select.innerHTML = '<option value="">Select Bank Account</option>';
+                        state.banks.forEach(bank => {
+                            select.innerHTML += `<option value="${bank.id}">${bank.bankName} - ${bank.accountName} (${bank.currency})</option>`;
+                        });
+                    }
+                });
+            },
+            
+            save: async () => {
+                const bankName = document.getElementById('bankName').value.trim();
+                const accountName = document.getElementById('bankAccountName').value.trim();
+                const accountNumber = document.getElementById('bankAccountNumber').value.trim();
+                
+                if (!bankName || !accountName || !accountNumber) {
+                    utils.showAlert('bankAlert', 'Bank name, account name, and account number are required', 'danger');
+                    return;
+                }
+                
+                const bankData = {
+                    bankName,
+                    accountName,
+                    accountNumber,
+                    branch: document.getElementById('bankBranch').value,
+                    swift: document.getElementById('bankSwift').value,
+                    iban: document.getElementById('bankIban').value,
+                    currency: document.getElementById('bankCurrency').value,
+                    mobileMoney: document.getElementById('bankMobileMoney').value,
+                    cashInstructions: document.getElementById('bankCashInstructions').value,
+                    userId: state.currentUser.uid,
+                    createdAt: window.firebase.Timestamp.now(),
+                    updatedAt: window.firebase.Timestamp.now()
+                };
+                
+                try {
+                    if (banks.currentId) {
+                        await window.firebase.updateDoc(window.firebase.doc(window.firebase.db, 'banks', banks.currentId), bankData);
+                        utils.showAlert('bankAlert', 'Bank account updated successfully!', 'success');
+                    } else {
+                        await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'banks'), bankData);
+                        utils.showAlert('bankAlert', 'Bank account added successfully!', 'success');
+                    }
+                    
+                    ui.closeModal('bankModal');
+                    await banks.load();
+                } catch (error) {
+                    utils.showAlert('bankAlert', error.message, 'danger');
+                }
+            },
+            
+            edit: (id) => {
+                const bank = state.banks.find(b => b.id === id);
+                if (!bank) return;
+                
+                banks.currentId = id;
+                document.getElementById('bankName').value = bank.bankName || '';
+                document.getElementById('bankAccountName').value = bank.accountName || '';
+                document.getElementById('bankAccountNumber').value = bank.accountNumber || '';
+                document.getElementById('bankBranch').value = bank.branch || '';
+                document.getElementById('bankSwift').value = bank.swift || '';
+                document.getElementById('bankIban').value = bank.iban || '';
+                document.getElementById('bankCurrency').value = bank.currency || 'USD';
+                document.getElementById('bankMobileMoney').value = bank.mobileMoney || '';
+                document.getElementById('bankCashInstructions').value = bank.cashInstructions || '';
+                
+                ui.openModal('bankModal');
+            }
+        };
+
         // ==================== DATA MANAGEMENT ====================
         const data = {
             loadAll: async () => {
                 await companies.load();
+                await banks.load();
                 await data.loadClients();
                 await data.loadDocuments();
                 await data.loadContracts();
                 await templates.loadAll();
                 await settings.load();
+                utils.checkTerminationNotifications();
             },
 
             loadClients: async () => {
@@ -1650,6 +2084,7 @@
                     const snapshot = await window.firebase.getDocs(q);
                     state.contracts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     contracts.render();
+                    utils.checkTerminationNotifications();
                 } catch (error) {
                     console.error('Load contracts error:', error);
                 }
@@ -1684,7 +2119,13 @@
                     
                     let filtered = state.documents.filter(d => d.type === 'invoice');
                     
-                    // Apply filters
+                    // Apply company filter
+                    const companyFilter = state.currentFilters.company.invoice;
+                    if (companyFilter) {
+                        filtered = filtered.filter(d => d.companyId === companyFilter);
+                    }
+                    
+                    // Apply status filters
                     if (state.currentFilters.invoice === 'pending') {
                         filtered = filtered.filter(d => {
                             const paid = d.paidAmount || 0;
@@ -1762,7 +2203,13 @@
                     const tbody = document.getElementById('receiptsBody');
                     if (!tbody) return;
                     
-                    const filtered = state.documents.filter(d => d.type === 'receipt');
+                    let filtered = state.documents.filter(d => d.type === 'receipt');
+                    
+                    // Apply company filter
+                    const companyFilter = state.currentFilters.company.receipt;
+                    if (companyFilter) {
+                        filtered = filtered.filter(d => d.companyId === companyFilter);
+                    }
                     
                     if (filtered.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="8" class="text-center">No receipts found</td></tr>';
@@ -1791,7 +2238,13 @@
                     const tbody = document.getElementById('quotesBody');
                     if (!tbody) return;
                     
-                    const filtered = state.documents.filter(d => d.type === 'quote');
+                    let filtered = state.documents.filter(d => d.type === 'quote');
+                    
+                    // Apply company filter
+                    const companyFilter = state.currentFilters.company.quote;
+                    if (companyFilter) {
+                        filtered = filtered.filter(d => d.companyId === companyFilter);
+                    }
                     
                     if (filtered.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="9" class="text-center">No quotes found</td></tr>';
@@ -1823,7 +2276,13 @@
                     const tbody = document.getElementById('proformaBody');
                     if (!tbody) return;
                     
-                    const filtered = state.documents.filter(d => d.type === 'proforma');
+                    let filtered = state.documents.filter(d => d.type === 'proforma');
+                    
+                    // Apply company filter
+                    const companyFilter = state.currentFilters.company.proforma;
+                    if (companyFilter) {
+                        filtered = filtered.filter(d => d.companyId === companyFilter);
+                    }
                     
                     if (filtered.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="9" class="text-center">No proforma invoices found</td></tr>';
@@ -1884,35 +2343,47 @@
             },
 
             updateDashboard: () => {
-                const totalRevenue = state.documents
+                const companyFilter = state.currentFilters.company.dashboard;
+                
+                let filteredDocs = state.documents;
+                let filteredContracts = state.contracts;
+                
+                if (companyFilter) {
+                    filteredDocs = filteredDocs.filter(d => d.companyId === companyFilter);
+                    filteredContracts = filteredContracts.filter(c => c.companyId === companyFilter);
+                }
+                
+                const totalRevenue = filteredDocs
                     .filter(d => d.type === 'receipt')
                     .reduce((sum, d) => sum + (d.total || 0), 0);
                     
-                const outstanding = state.documents
+                const outstanding = filteredDocs
                     .filter(d => d.type === 'invoice')
                     .reduce((sum, d) => sum + ((d.total || 0) - (d.paidAmount || 0)), 0);
                     
                 const now = new Date();
-                const thisMonth = state.documents
+                const thisMonth = filteredDocs
                     .filter(d => {
                         const date = d.createdAt?.toDate?.();
                         return date && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
                     })
                     .reduce((sum, d) => sum + (d.total || 0), 0);
                     
-                const overdueInvoices = state.documents
+                const overdueInvoices = filteredDocs
                     .filter(d => d.type === 'invoice' && d.dueDate?.toDate?.() < now && (d.total || 0) > (d.paidAmount || 0)).length;
                     
-                const paidInvoices = state.documents
+                const paidInvoices = filteredDocs
                     .filter(d => d.type === 'invoice' && (d.paidAmount || 0) >= (d.total || 0)).length;
                     
-                const pendingQuotes = state.documents
+                const pendingQuotes = filteredDocs
                     .filter(d => d.type === 'quote' && d.status === 'pending').length;
+                    
+                const terminatedContracts = filteredContracts.filter(c => c.status === 'terminated').length;
                     
                 document.getElementById('totalRevenue').textContent = utils.formatCurrency(totalRevenue);
                 document.getElementById('outstandingInvoices').textContent = utils.formatCurrency(outstanding);
-                document.getElementById('totalReceipts').textContent = state.documents.filter(d => d.type === 'receipt').length;
-                document.getElementById('activeContracts').textContent = state.contracts.filter(c => c.status === 'active').length;
+                document.getElementById('totalReceipts').textContent = filteredDocs.filter(d => d.type === 'receipt').length;
+                document.getElementById('activeContracts').textContent = filteredContracts.filter(c => c.status === 'active').length;
                 document.getElementById('monthlyRevenue').textContent = utils.formatCurrency(thisMonth);
                 document.getElementById('overdueInvoices').textContent = overdueInvoices;
                 document.getElementById('paidInvoices').textContent = paidInvoices;
@@ -1927,12 +2398,24 @@
                 document.querySelectorAll('#invoicesSection .sub-tab').forEach(t => t.classList.remove('active'));
                 element.classList.add('active');
                 data.renderDocuments('invoice');
+            },
+            
+            filterByCompany: () => {
+                const filter = document.getElementById('invoiceCompanyFilter').value;
+                state.currentFilters.company.invoice = filter;
+                data.renderDocuments('invoice');
             }
         };
 
         // ==================== QUOTES ====================
         const quotes = {
             selectedIds: new Set(),
+            
+            filterByCompany: () => {
+                const filter = document.getElementById('quoteCompanyFilter').value;
+                state.currentFilters.company.quote = filter;
+                data.renderDocuments('quote');
+            },
             
             toggleAll: () => {
                 const checkboxes = document.querySelectorAll('#quotesBody .quote-select');
@@ -2001,6 +2484,12 @@
 
         // ==================== RECEIPTS ====================
         const receipts = {
+            filterByCompany: () => {
+                const filter = document.getElementById('receiptCompanyFilter').value;
+                state.currentFilters.company.receipt = filter;
+                data.renderDocuments('receipt');
+            },
+            
             fromInvoice: (invoiceId = null) => {
                 if (invoiceId) {
                     const invoice = state.documents.find(d => d.id === invoiceId);
@@ -2065,6 +2554,12 @@
         // ==================== PROFORMA ====================
         const proforma = {
             selectedIds: new Set(),
+            
+            filterByCompany: () => {
+                const filter = document.getElementById('proformaCompanyFilter').value;
+                state.currentFilters.company.proforma = filter;
+                data.renderDocuments('proforma');
+            },
             
             toggleAll: () => {
                 const checkboxes = document.querySelectorAll('#proformaBody .proforma-select');
@@ -2133,10 +2628,18 @@
 
         // ==================== CONTRACTS ====================
         const contracts = {
+            currentTerminationId: null,
+            
             filter: (status, element) => {
                 state.currentFilters.contract = status;
                 document.querySelectorAll('#contractsSection .sub-tab').forEach(t => t.classList.remove('active'));
                 element.classList.add('active');
+                contracts.render();
+            },
+            
+            filterByCompany: () => {
+                const filter = document.getElementById('contractCompanyFilter').value;
+                state.currentFilters.company.contract = filter;
                 contracts.render();
             },
             
@@ -2145,6 +2648,13 @@
                 if (!tbody) return;
                 
                 let filtered = state.contracts;
+                
+                // Apply company filter
+                const companyFilter = state.currentFilters.company.contract;
+                if (companyFilter) {
+                    filtered = filtered.filter(c => c.companyId === companyFilter);
+                }
+                
                 if (state.currentFilters.contract !== 'all') {
                     filtered = filtered.filter(c => c.status === state.currentFilters.contract);
                 }
@@ -2170,7 +2680,8 @@
                     
                     let statusClass = 'warning';
                     if (contract.status === 'active') statusClass = 'success';
-                    if (contract.status === 'expired') statusClass = 'danger';
+                    if (contract.status === 'terminated') statusClass = 'danger';
+                    if (contract.status === 'expired') statusClass = 'secondary';
                     
                     return `
                         <tr>
@@ -2187,6 +2698,7 @@
                                 <button class="btn btn-sm btn-primary" onclick="contracts.view('${contract.id}')">View</button>
                                 <button class="btn btn-sm btn-success" onclick="pdf.fromContract('${contract.id}')">PDF</button>
                                 ${contract.status === 'draft' ? `<button class="btn btn-sm btn-danger" onclick="contracts.sign('${contract.id}')">Sign</button>` : ''}
+                                ${contract.status === 'active' ? `<button class="btn btn-sm btn-warning" onclick="contracts.showTerminationModal('${contract.id}')">Terminate</button>` : ''}
                             </td>
                         </tr>
                     `;
@@ -2290,6 +2802,83 @@
                 ui.openModal('contractTemplateModal');
             },
             
+            showTerminationModal: (id) => {
+                const contract = state.contracts.find(c => c.id === id);
+                if (!contract) return;
+                
+                contracts.currentTerminationId = id;
+                document.getElementById('terminationContractTitle').value = `${contract.contractNumber} - ${contract.title}`;
+                
+                // Set default termination date (14 days from now)
+                const termDate = new Date();
+                termDate.setDate(termDate.getDate() + 14);
+                document.getElementById('terminationDate').value = termDate.toISOString().split('T')[0];
+                
+                document.getElementById('terminationReason').value = '';
+                document.getElementById('terminationNoticePeriod').value = state.terminationSettings.noticeDays || 14;
+                document.getElementById('terminationNotes').value = '';
+                
+                ui.openModal('terminationModal');
+            },
+            
+            terminate: async () => {
+                const reason = document.getElementById('terminationReason').value.trim();
+                const termDate = document.getElementById('terminationDate').value;
+                const noticePeriod = document.getElementById('terminationNoticePeriod').value;
+                const notes = document.getElementById('terminationNotes').value;
+                
+                if (!reason || !termDate) {
+                    utils.showAlert('terminationAlert', 'Please provide termination reason and date', 'danger');
+                    return;
+                }
+                
+                if (!contracts.currentTerminationId) return;
+                
+                const contract = state.contracts.find(c => c.id === contracts.currentTerminationId);
+                const company = state.companies.find(c => c.id === contract.companyId);
+                const client = state.clients.find(c => c.id === contract.clientId);
+                
+                try {
+                    const terminationData = {
+                        status: 'terminated',
+                        terminatedAt: window.firebase.Timestamp.now(),
+                        terminationDate: window.firebase.Timestamp.fromDate(new Date(termDate)),
+                        terminationReason: reason,
+                        terminationNoticePeriod: noticePeriod,
+                        terminationNotes: notes,
+                        terminationNoticeCreated: true
+                    };
+                    
+                    await window.firebase.updateDoc(window.firebase.doc(window.firebase.db, 'contracts', contracts.currentTerminationId), terminationData);
+                    
+                    // Create termination notification
+                    const notificationData = {
+                        type: 'termination_notice',
+                        contractId: contracts.currentTerminationId,
+                        contractNumber: contract.contractNumber,
+                        clientName: client.name,
+                        companyName: company.name,
+                        terminationDate: window.firebase.Timestamp.fromDate(new Date(termDate)),
+                        noticePeriod: noticePeriod,
+                        createdAt: window.firebase.Timestamp.now(),
+                        notificationDate: window.firebase.Timestamp.fromDate(new Date(new Date(termDate).setDate(new Date(termDate).getDate() - noticePeriod))),
+                        userId: state.currentUser.uid
+                    };
+                    
+                    await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'notifications'), notificationData);
+                    
+                    utils.showAlert('terminationAlert', 'Contract terminated successfully. Termination notice will be sent.', 'success');
+                    ui.closeModal('terminationModal');
+                    await data.loadContracts();
+                    
+                    // Show termination notice preview
+                    alert(`Termination notice will be sent to ${client.name} ${noticePeriod} days before termination on ${termDate}`);
+                    
+                } catch (error) {
+                    utils.showAlert('terminationAlert', error.message, 'danger');
+                }
+            },
+            
             view: (id) => {
                 const contract = state.contracts.find(c => c.id === id);
                 if (!contract) return;
@@ -2298,13 +2887,45 @@
                 const company = state.companies.find(c => c.id === contract.companyId);
                 const client = state.clients.find(c => c.id === contract.clientId);
                 
-                preview.innerHTML = `
-                    <div style="text-align: center; margin-bottom: 30px; color: ${company?.color || '#2563eb'};">
-                        <h1>${contract.title}</h1>
-                        <p>Contract No: ${contract.contractNumber}</p>
-                        <p>Date: ${utils.formatDate(contract.createdAt)}</p>
+                // Clear previous content
+                preview.innerHTML = '';
+                
+                // Generate stamp HTML if company has stamp URL
+                const stampHtml = company?.stampUrl ? `
+                    <div class="stamp-container" style="position: relative; display: inline-block; margin: 20px auto;">
+                        <img src="${utils.getImageUrl(company.stampUrl)}" class="stamp-image" style="max-width: 150px; max-height: 150px; display: block;" onerror="this.style.display='none'">
+                        <div class="stamp-date-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff0000 !important; font-weight: bold; font-size: 14px; text-align: center; width: 100%; text-shadow: 1px 1px 2px white; pointer-events: none;">${utils.formatDateForStamp(contract.signedAt || contract.createdAt)}</div>
                     </div>
-                    
+                ` : '';
+                
+                // Generate signature HTML with company signature
+                const signatureHtml = `
+                    <img src="${COMPANY_SIGNATURE_URL}" class="signature-image" style="max-height: 60px; max-width: 200px; display: block; margin: 10px auto; border: 1px solid var(--border); padding: 5px; border-radius: 4px; background: white;" onerror="this.style.display='none'">
+                `;
+                
+                const letterheadHtml = company?.letterheadUrl ? `
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="${utils.getImageUrl(company.letterheadUrl)}" class="letterhead-image" style="max-width: 100%; max-height: 120px; object-fit: contain;" onerror="this.style.display='none'">
+                    </div>
+                ` : '';
+                
+                // Prepare contract content
+                const clausesContent = (contract.clauses || []).map((clause, index) => `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: ${company?.color || '#2563eb'};">${index + 1}. ${clause.title}</h4>
+                        <p>${clause.content}</p>
+                    </div>
+                `).join('');
+                
+                const specialConditionsHtml = contract.specialConditions ? `
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="color: ${company?.color || '#2563eb'};">SPECIAL CONDITIONS</h3>
+                        <p>${contract.specialConditions}</p>
+                    </div>
+                ` : '';
+                
+                // Main contract content
+                const mainContent = `
                     <div style="margin-bottom: 30px; padding: 20px; background: var(--light); border-radius: 8px;">
                         <h3 style="color: ${company?.color || '#2563eb'};">THIS AGREEMENT</h3>
                         <p>is made on this day ${utils.formatDate(contract.startDate)}</p>
@@ -2321,47 +2942,99 @@
                     
                     <div style="margin-bottom: 30px;">
                         <h3 style="color: ${company?.color || '#2563eb'};">CLAUSES</h3>
-                        ${(contract.clauses || []).map((clause, index) => `
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="color: ${company?.color || '#2563eb'};">${index + 1}. ${clause.title}</h4>
-                                <p>${clause.content}</p>
-                            </div>
-                        `).join('')}
+                        ${clausesContent}
                     </div>
                     
-                    ${contract.specialConditions ? `
-                        <div style="margin-bottom: 30px;">
-                            <h3 style="color: ${company?.color || '#2563eb'};">SPECIAL CONDITIONS</h3>
-                            <p>${contract.specialConditions}</p>
-                        </div>
-                    ` : ''}
+                    ${specialConditionsHtml}
                     
                     <div style="margin-bottom: 30px;">
                         <h3 style="color: ${company?.color || '#2563eb'};">GOVERNING LAW</h3>
                         <p>This agreement shall be governed by and construed in accordance with the laws of ${contract.governingLaw}.</p>
                         <p>Disputes shall be resolved through ${contract.disputeResolution || 'court jurisdiction'}.</p>
                     </div>
-                    
-                    <div class="signature-box" style="display: flex; justify-content: space-between; margin-top: 50px;">
-                        <div style="text-align: center; width: 45%;">
-                            <p><strong>SIGNED for and on behalf of ${contract.partyA}</strong></p>
-                            <div style="margin-top: 40px;">
-                                <p>_________________________</p>
-                                <p>Authorized Signature</p>
-                                <p>Date: _______________</p>
+                `;
+                
+                // Split content into pages (roughly 40 lines per page)
+                const lines = mainContent.split('\n');
+                const pages = [];
+                const linesPerPage = 40;
+                
+                for (let i = 0; i < lines.length; i += linesPerPage) {
+                    pages.push(lines.slice(i, i + linesPerPage).join('\n'));
+                }
+                
+                // Build multi-page contract
+                let contractHtml = letterheadHtml;
+                
+                if (contract.status === 'terminated') {
+                    contractHtml += `<div class="terminated-watermark">TERMINATED</div>`;
+                } else if (contract.revoked) {
+                    contractHtml += `<div class="watermark">REVOKED</div>`;
+                }
+                
+                contractHtml += `
+                    <div style="text-align: center; margin-bottom: 30px; color: ${company?.color || '#2563eb'};">
+                        <h1>${contract.title}</h1>
+                        <p>Contract No: ${contract.contractNumber}</p>
+                        <p>Date: ${utils.formatDate(contract.createdAt)}</p>
+                    </div>
+                `;
+                
+                // Add each page
+                pages.forEach((pageContent, index) => {
+                    contractHtml += `
+                        <div class="contract-page">
+                            <div class="contract-header">
+                                <p style="text-align: right; font-size: 10px; color: var(--gray);">Page ${index + 1} of ${pages.length}</p>
+                            </div>
+                            <div class="contract-content">
+                                ${pageContent}
+                            </div>
+                            <div class="contract-footer">
+                                <p>Contract ${contract.contractNumber} - Page ${index + 1}</p>
                             </div>
                         </div>
-                        <div style="text-align: center; width: 45%;">
-                            <p><strong>SIGNED for and on behalf of ${contract.partyBName}</strong></p>
-                            <div style="margin-top: 40px;">
-                                <p>_________________________</p>
-                                <p>Authorized Signature</p>
-                                <p>Date: _______________</p>
+                    `;
+                });
+                
+                // Add signature page
+                contractHtml += `
+                    <div class="contract-page">
+                        <div class="contract-header">
+                            <p style="text-align: right; font-size: 10px; color: var(--gray);">Page ${pages.length + 1} of ${pages.length + 1}</p>
+                        </div>
+                        <div class="contract-content">
+                            <div class="signature-box" style="display: flex; justify-content: space-between; margin-top: 50px; position: relative; background: white; padding: 30px;">
+                                <div style="text-align: center; width: 45%;">
+                                    <p><strong>SIGNED for and on behalf of ${contract.partyA}</strong></p>
+                                    <div style="margin-top: 20px;">
+                                        ${contract.status === 'active' || contract.status === 'terminated' ? signatureHtml : ''}
+                                        <p style="margin-top: 10px;">${contract.status === 'active' || contract.status === 'terminated' ? '_________________________' : '_________________________'}</p>
+                                        <p>Authorized Signature</p>
+                                        <p>Date: ${utils.formatDate(contract.signedAt || contract.createdAt)}</p>
+                                        ${contract.status === 'active' ? stampHtml : ''}
+                                        ${contract.status === 'terminated' ? '<p style="color: red; font-weight: bold;">TERMINATED</p>' : ''}
+                                    </div>
+                                </div>
+                                <div style="text-align: center; width: 45%;">
+                                    <p><strong>SIGNED for and on behalf of ${contract.partyBName}</strong></p>
+                                    <div style="margin-top: 20px;">
+                                        <p>_________________________</p>
+                                        <p>Authorized Signature</p>
+                                        <p>Date: ${utils.formatDate(contract.createdAt)}</p>
+                                        ${contract.status === 'active' ? '<p class="digital-signature-text" style="color: #ff0000 !important; font-weight: bold; font-style: italic;">Digitally Signed</p>' : ''}
+                                        ${contract.status === 'terminated' ? '<p style="color: red;">Termination Date: ' + utils.formatDate(contract.terminationDate) + '</p>' : ''}
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                        <div class="contract-footer">
+                            <p>Contract ${contract.contractNumber} - Signature Page</p>
                         </div>
                     </div>
                 `;
                 
+                preview.innerHTML = contractHtml;
                 ui.openModal('previewModal');
             },
             
@@ -2691,7 +3364,44 @@
                 document.getElementById('paymentAmount').value = ((invoice.total || 0) - (invoice.paidAmount || 0)).toFixed(2);
                 document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
                 
+                // Hide all payment detail sections initially
+                document.getElementById('paymentBankSelect').style.display = 'none';
+                document.getElementById('paymentMobileDetails').style.display = 'none';
+                document.getElementById('paymentCashDetails').style.display = 'none';
+                
                 ui.openModal('paymentModal');
+            },
+            
+            updateMethodDetails: () => {
+                const method = document.getElementById('paymentMethod').value;
+                
+                document.getElementById('paymentBankSelect').style.display = 'none';
+                document.getElementById('paymentMobileDetails').style.display = 'none';
+                document.getElementById('paymentCashDetails').style.display = 'none';
+                
+                if (method === 'Bank Transfer') {
+                    document.getElementById('paymentBankSelect').style.display = 'block';
+                    const bankSelect = document.getElementById('paymentBankAccount');
+                    banks.updateSelects();
+                } else if (method === 'Mobile Money') {
+                    document.getElementById('paymentMobileDetails').style.display = 'block';
+                    const mobileText = document.getElementById('paymentMobileText');
+                    const bank = state.banks.find(b => b.mobileMoney);
+                    if (bank) {
+                        mobileText.value = bank.mobileMoney;
+                    } else {
+                        mobileText.value = 'Please contact us for mobile money payment details.';
+                    }
+                } else if (method === 'Cash') {
+                    document.getElementById('paymentCashDetails').style.display = 'block';
+                    const cashText = document.getElementById('paymentCashText');
+                    const bank = state.banks.find(b => b.cashInstructions);
+                    if (bank) {
+                        cashText.value = bank.cashInstructions;
+                    } else {
+                        cashText.value = 'Please contact us for cash payment instructions.';
+                    }
+                }
             },
             
             record: async () => {
@@ -2701,6 +3411,15 @@
                 const method = document.getElementById('paymentMethod').value;
                 const reference = document.getElementById('paymentReference').value;
                 const notes = document.getElementById('paymentNotes').value;
+                
+                let paymentDetails = '';
+                if (method === 'Bank Transfer') {
+                    const bankId = document.getElementById('paymentBankAccount').value;
+                    const bank = state.banks.find(b => b.id === bankId);
+                    if (bank) {
+                        paymentDetails = `${bank.bankName} - ${bank.accountName} (${bank.accountNumber})`;
+                    }
+                }
                 
                 if (!invoiceId || amount <= 0) {
                     utils.showAlert('paymentAlert', 'Please select an invoice and enter a valid amount', 'danger');
@@ -2716,6 +3435,7 @@
                     method,
                     reference,
                     notes,
+                    paymentDetails,
                     recordedAt: window.firebase.Timestamp.now()
                 };
                 
@@ -2747,6 +3467,7 @@
                         receiptReason: `Payment for Invoice ${invoice.serialNumber}`,
                         referenceInvoice: invoice.serialNumber,
                         paymentMethod: method,
+                        paymentDetails: paymentDetails,
                         userId: state.currentUser.uid,
                         createdAt: window.firebase.Timestamp.now()
                     };
@@ -2847,7 +3568,7 @@
                     totalDiscount,
                     totalTax,
                     total: grandTotal,
-                    dueDate: document.getElementById('docDueDate').value ? window.firebase.Timestamp.fromDate(new Date(document.getElementById('docDueDate').value)) : null,
+                    dueDate: documents.currentType !== 'receipt' && document.getElementById('docDueDate').value ? window.firebase.Timestamp.fromDate(new Date(document.getElementById('docDueDate').value)) : null,
                     notes: document.getElementById('documentNotes').value,
                     terms: document.getElementById('documentTerms').value,
                     userId: state.currentUser.uid,
@@ -2862,6 +3583,7 @@
                     docData.receiptDate = window.firebase.Timestamp.fromDate(new Date());
                     docData.paymentMethod = document.getElementById('receiptPaymentMethod').value;
                     docData.referenceInvoice = document.getElementById('receiptInvoice').value;
+                    delete docData.dueDate; // Remove due date for receipts
                 }
 
                 const btn = document.getElementById('saveDocBtn');
@@ -2894,7 +3616,26 @@
                 const balance = total - paidAmount;
                 const paidPercent = total > 0 ? (paidAmount / total) * 100 : 0;
                 
+                // Clear previous content
+                preview.innerHTML = '';
+                
+                // Generate stamp HTML if company has stamp URL
+                const stampHtml = company?.stampUrl ? `
+                    <div class="stamp-container" style="position: relative; display: inline-block; margin: 20px auto;">
+                        <img src="${utils.getImageUrl(company.stampUrl)}" class="stamp-image" style="max-width: 150px; max-height: 150px; display: block;" onerror="this.style.display='none'">
+                        <div class="stamp-date-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ff0000 !important; font-weight: bold; font-size: 14px; text-align: center; width: 100%; text-shadow: 1px 1px 2px white; pointer-events: none;">${utils.formatDateForStamp(doc.createdAt)}</div>
+                    </div>
+                ` : '';
+                
+                const letterheadHtml = company?.letterheadUrl ? `
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="${utils.getImageUrl(company.letterheadUrl)}" class="letterhead-image" style="max-width: 100%; max-height: 120px; object-fit: contain;" onerror="this.style.display='none'">
+                    </div>
+                ` : '';
+                
                 preview.innerHTML = `
+                    ${letterheadHtml}
+                    
                     ${doc.revoked ? '<div class="watermark">REVOKED</div>' : ''}
                     
                     <div style="text-align: center; margin-bottom: 30px; color: ${company?.color || '#2563eb'};">
@@ -2928,6 +3669,7 @@
                         <div>
                             <p><strong>Currency:</strong> ${doc.currency || 'USD'}</p>
                             ${doc.type === 'receipt' ? `<p><strong>Payment Method:</strong> ${doc.paymentMethod || 'N/A'}</p>` : ''}
+                            ${doc.paymentDetails ? `<p><strong>Payment Details:</strong> ${doc.paymentDetails}</p>` : ''}
                         </div>
                     </div>
                     
@@ -3004,6 +3746,7 @@
                                     <tr>
                                         <th>Date</th>
                                         <th>Method</th>
+                                        <th>Details</th>
                                         <th>Reference</th>
                                         <th>Amount</th>
                                     </tr>
@@ -3013,6 +3756,7 @@
                                         <tr>
                                             <td>${utils.formatDate(p.date)}</td>
                                             <td>${p.method || ''}</td>
+                                            <td>${p.paymentDetails || '-'}</td>
                                             <td>${p.reference || '-'}</td>
                                             <td>${symbol}${(p.amount || 0).toFixed(2)}</td>
                                         </tr>
@@ -3022,7 +3766,18 @@
                         </div>
                     ` : ''}
                     
-                    <div style="margin-top: 50px; text-align: center;">
+                    <!-- Signature and Stamp Section -->
+                    <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div style="text-align: center;">
+                            <p><strong>Authorized Signature</strong></p>
+                            <img src="${COMPANY_SIGNATURE_URL}" style="max-height: 60px; max-width: 200px; display: block; margin: 10px auto; border: 1px solid var(--border); padding: 5px; border-radius: 4px; background: white;" onerror="this.style.display='none'">
+                        </div>
+                        <div style="text-align: center;">
+                            ${stampHtml}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center;">
                         <p style="color: ${company?.color || '#2563eb'};"><strong>Thank you for your business!</strong></p>
                         <p>For inquiries, please contact ${company?.email || 'support@starksgalaxy.com'}</p>
                     </div>
@@ -3036,33 +3791,18 @@
         const pdf = {
             generate: async () => {
                 try {
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF();
-                    
                     const element = document.getElementById('previewContent');
                     
-                    const canvas = await html2canvas(element, {
-                        scale: 2,
-                        backgroundColor: '#ffffff'
-                    });
+                    // Use html2pdf for better multi-page support
+                    const opt = {
+                        margin: [0.5, 0.5, 0.5, 0.5],
+                        filename: 'document.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+                        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                    };
                     
-                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    const ratio = canvas.width / canvas.height;
-                    let imgWidth = pdfWidth - 20;
-                    let imgHeight = imgWidth / ratio;
-                    
-                    if (imgHeight > pdfHeight - 20) {
-                        imgHeight = pdfHeight - 20;
-                        imgWidth = imgHeight * ratio;
-                    }
-                    
-                    const x = (pdfWidth - imgWidth) / 2;
-                    const y = (pdfHeight - imgHeight) / 2;
-                    
-                    pdf.addImage(imgData, 'JPEG', x, y, imgWidth, imgHeight);
-                    pdf.save('document.pdf');
+                    await html2pdf().set(opt).from(element).save();
                     
                 } catch (error) {
                     console.error('PDF error:', error);
@@ -3415,6 +4155,16 @@
                         settings.populateForm();
                     }
                     
+                    // Load termination settings
+                    const termQ = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'terminationSettings'),
+                        window.firebase.where('userId', '==', state.currentUser.uid)
+                    );
+                    const termSnapshot = await window.firebase.getDocs(termQ);
+                    if (!termSnapshot.empty) {
+                        state.terminationSettings = termSnapshot.docs[0].data();
+                    }
+                    
                     // Load payment methods
                     const paymentQ = window.firebase.query(
                         window.firebase.collection(window.firebase.db, 'paymentMethods'),
@@ -3524,6 +4274,39 @@
                 } catch (error) {
                     console.error('Save settings error:', error);
                     alert('Error saving settings: ' + error.message);
+                }
+            },
+            
+            saveTerminationSettings: async () => {
+                const noticeDays = document.getElementById('terminationNoticeDays').value;
+                const emailTemplate = document.getElementById('terminationEmailTemplate').value;
+                
+                const termData = {
+                    noticeDays: parseInt(noticeDays),
+                    emailTemplate,
+                    userId: state.currentUser.uid,
+                    updatedAt: window.firebase.Timestamp.now()
+                };
+                
+                try {
+                    const q = window.firebase.query(
+                        window.firebase.collection(window.firebase.db, 'terminationSettings'),
+                        window.firebase.where('userId', '==', state.currentUser.uid)
+                    );
+                    const snapshot = await window.firebase.getDocs(q);
+                    
+                    if (snapshot.empty) {
+                        termData.createdAt = window.firebase.Timestamp.now();
+                        await window.firebase.addDoc(window.firebase.collection(window.firebase.db, 'terminationSettings'), termData);
+                    } else {
+                        await window.firebase.updateDoc(window.firebase.doc(window.firebase.db, 'terminationSettings', snapshot.docs[0].id), termData);
+                    }
+                    
+                    state.terminationSettings = termData;
+                    alert('Termination settings saved successfully!');
+                } catch (error) {
+                    console.error('Save termination settings error:', error);
+                    alert('Error saving termination settings: ' + error.message);
                 }
             },
             
@@ -3640,6 +4423,40 @@
                         card.style.display = text.includes(search) ? 'block' : 'none';
                     });
                 });
+                
+                // Dashboard company filter
+                document.getElementById('dashboardCompanyFilter')?.addEventListener('change', (e) => {
+                    state.currentFilters.company.dashboard = e.target.value;
+                    data.updateDashboard();
+                });
+                
+                // Payment method change handler
+                document.getElementById('receiptPaymentMethod')?.addEventListener('change', (e) => {
+                    const detailsDiv = document.getElementById('paymentMethodDetails');
+                    const detailsText = document.getElementById('paymentDetailsText');
+                    
+                    if (e.target.value === 'Bank Transfer') {
+                        const bank = state.banks[0];
+                        if (bank) {
+                            detailsText.value = `${bank.bankName} - ${bank.accountName} (${bank.accountNumber})`;
+                            detailsDiv.style.display = 'block';
+                        }
+                    } else if (e.target.value === 'Mobile Money') {
+                        const bank = state.banks.find(b => b.mobileMoney);
+                        if (bank) {
+                            detailsText.value = bank.mobileMoney;
+                            detailsDiv.style.display = 'block';
+                        }
+                    } else if (e.target.value === 'Cash') {
+                        const bank = state.banks.find(b => b.cashInstructions);
+                        if (bank) {
+                            detailsText.value = bank.cashInstructions;
+                            detailsDiv.style.display = 'block';
+                        }
+                    } else {
+                        detailsDiv.style.display = 'none';
+                    }
+                });
             },
             
             switchAuthTab: (tab) => {
@@ -3668,13 +4485,26 @@
                 document.getElementById('companyAddress').value = '';
                 document.getElementById('companyLogo').value = '';
                 document.getElementById('companyColor').value = '#2563eb';
-                document.getElementById('companyBank').value = '';
-                document.getElementById('companyAccount').value = '';
-                document.getElementById('companySwift').value = '';
-                document.getElementById('companyIban').value = '';
+                document.getElementById('companyStampUrl').value = '';
+                document.getElementById('companyLetterheadUrl').value = '';
                 
                 document.getElementById('deleteCompanyBtn').style.display = 'none';
                 ui.openModal('companyModal');
+            },
+            
+            showBankModal: () => {
+                banks.currentId = null;
+                document.getElementById('bankName').value = '';
+                document.getElementById('bankAccountName').value = '';
+                document.getElementById('bankAccountNumber').value = '';
+                document.getElementById('bankBranch').value = '';
+                document.getElementById('bankSwift').value = '';
+                document.getElementById('bankIban').value = '';
+                document.getElementById('bankCurrency').value = 'USD';
+                document.getElementById('bankMobileMoney').value = '';
+                document.getElementById('bankCashInstructions').value = '';
+                
+                ui.openModal('bankModal');
             },
             
             showDocumentModal: (type) => {
@@ -3682,10 +4512,15 @@
                 document.getElementById('modalTitle').textContent = `Create ${type.charAt(0).toUpperCase() + type.slice(1)}`;
                 document.getElementById('receiptSpecific').classList.toggle('hidden', type !== 'receipt');
                 
-                // Set default due date (30 days from now)
-                const dueDate = new Date();
-                dueDate.setDate(dueDate.getDate() + 30);
-                document.getElementById('docDueDate').value = dueDate.toISOString().split('T')[0];
+                // Hide due date for receipts
+                document.getElementById('docDueDateGroup').style.display = type === 'receipt' ? 'none' : 'block';
+                
+                // Set default due date for non-receipts (30 days from now)
+                if (type !== 'receipt') {
+                    const dueDate = new Date();
+                    dueDate.setDate(dueDate.getDate() + 30);
+                    document.getElementById('docDueDate').value = dueDate.toISOString().split('T')[0];
+                }
                 
                 // Clear items except one
                 const tbody = document.getElementById('itemsBody');
@@ -3763,6 +4598,7 @@
         window.ui = ui;
         window.data = data;
         window.companies = companies;
+        window.banks = banks;
         window.documents = documents;
         window.invoices = invoices;
         window.quotes = quotes;
